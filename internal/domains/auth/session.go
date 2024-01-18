@@ -1,14 +1,11 @@
 package auth
 
 import (
-	"sort"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/validator"
-	"github.com/kgjoner/sphinx/internal/config"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -36,41 +33,11 @@ type SessionCreationFields struct {
 	Ip          string      `json:"ip" validator:"required"`
 }
 
-func (a *Account) InitSession(f *SessionCreationFields) (*authToken, *authToken, error) {
-	// Check if link exists
-	isLinked := false
-	for _, l := range a.Links {
-		if l.Application.Id == f.Application.Id {
-			isLinked = true
-			break
-		}
-	}
-
-	if !isLinked {
-		return nil, nil, normalizederr.NewRequestError("Account is not linked to desired application.", "")
-	}
-
-	// Terminate exceeding sessions
-	if concurrentSessions, maxConcurrentSessions := SessionSortableByAge(a.Sessions(f.Application)),
-		config.Environment.MAX_CONCURRENT_SESSIONS; maxConcurrentSessions > 0 && len(concurrentSessions) >= maxConcurrentSessions {
-		previousExcess := len(concurrentSessions) - maxConcurrentSessions
-		/* If all goes well, previousExcess will be zero. There will be only one session to terminate for preventing
-		new session to exceed max limit */
-		sort.Sort(concurrentSessions)
-		sessionsToTerminate := concurrentSessions[:(previousExcess + 1)]
-		for _, s := range sessionsToTerminate {
-			_, err := a.TerminateSession(s.Id)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-	}
-
-	// Create session
+func newSession(acc Account, f *SessionCreationFields) *Session {
 	now := time.Now()
 	s := &Session{
 		Id:          uuid.New(),
-		AccountId:   a.InternalId,
+		AccountId:   acc.InternalId,
 		Application: f.Application,
 		Device:      f.Device,
 		Ip:          f.Ip,
@@ -78,21 +45,7 @@ func (a *Account) InitSession(f *SessionCreationFields) (*authToken, *authToken,
 		UpdatedAt:   now,
 	}
 
-	// Generate tokens
-	refreshToken, err := newAuthToken(*a, s.Id, "refresh")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	s.updateRefreshToken(*refreshToken)
-
-	accessToken, err := newAuthToken(*a, s.Id)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	a.ActiveSessions = append(a.ActiveSessions, *s)
-	return accessToken, refreshToken, validator.Validate(s)
+	return s
 }
 
 /* ==============================================================================

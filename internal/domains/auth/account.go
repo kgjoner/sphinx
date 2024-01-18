@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,6 +10,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/validator"
 	"github.com/kgjoner/cornucopia/utils/sliceman"
 	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/sphinx/internal/config"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -167,11 +169,7 @@ func (a *Account) LinkTo(app Application) error {
 		}
 	}
 
-	link, err := newLink(a, app)
-	if err != nil {
-		return err
-	}
-
+	link := newLink(a, app)
 	a.Links = append(a.Links, *link)
 	return validator.Validate(a)
 }
@@ -207,6 +205,18 @@ func (a *Account) RemoveGranting(g string, app Application, actor Account) error
 	return a.updatePermission(app, actor, func(l *Link) error {
 		return l.removeGranting(g)
 	})
+}
+
+// Return links that have just been updated
+func (a *Account) LinksToPersist() []Link {
+	links := []Link{}
+	for _, l := range a.Links {
+		if l.UpdatedAt.After(time.Now().Add(time.Duration(-5) * time.Second)) {
+			links = append(links, l)
+		}
+	}
+
+	return links
 }
 
 // Prepare and execute desired role and/or granting updates
@@ -249,39 +259,71 @@ func (a *Account) link(app Application) *Link {
 	SESSION RELATED METHODS
 ============================================================================== */
 
-// Return desired active session or nil if it does not exist
-func (a *Account) Session(sessionId uuid.UUID) *Session {
-	for _, s := range a.ActiveSessions {
-		if s.Id == sessionId && s.IsActive {
-			return &s
+// Create a new session and generate tokens
+func (a *Account) InitSession(f *SessionCreationFields) (*authToken, *authToken, error) {
+	// Check if link exists
+	link := a.link(f.Application)
+	if link == nil {
+		return nil, nil, normalizederr.NewRequestError("Account is not linked to desired application.", "")
+	}
+
+	// Terminate exceeding sessions
+	if concurrentSessions :=
+		SessionSortableByAge(a.sessionsByApp(f.Application)); config.Environment.MAX_CONCURRENT_SESSIONS > 0 &&
+		len(concurrentSessions) >= config.Environment.MAX_CONCURRENT_SESSIONS {
+
+		previousExcess := len(concurrentSessions) - config.Environment.MAX_CONCURRENT_SESSIONS
+		/* If all goes well, previousExcess will be zero. There will be only one session to terminate
+		for preventing new session to exceed max limit */
+		sort.Sort(concurrentSessions)
+		sessionsToTerminate := concurrentSessions[:(previousExcess + 1)]
+		for _, s := range sessionsToTerminate {
+			_, err := a.TerminateSession(s.Id)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 
-	return nil
+	// Create session and tokens
+	session := newSession(*a, f)
+
+	refreshToken, err := newAuthToken(authTokenCreationFields{*a, session.Id, true})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	session.updateRefreshToken(*refreshToken)
+
+	accessToken, err := newAuthToken(authTokenCreationFields{*a, session.Id, false})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	a.ActiveSessions = append(a.ActiveSessions, *session)
+	return accessToken, refreshToken, validator.Validate(a)
 }
 
-// Return active sessions of the desired application
-func (a *Account) Sessions(app Application) []Session {
-	sessions := []Session{}
-	for _, s := range a.ActiveSessions {
-		if s.Application.Id == app.Id && s.IsActive {
-			sessions = append(sessions, s)
-		}
+// Generate new tokens for an existing session
+func (a *Account) IssueNewTokens(refreshToken *authToken) (*authToken, *authToken, error) {
+	s, err := a.verifyRefreshToken(refreshToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return sessions
-}
-
-// Return sessions that have just been updated
-func (a *Account) SessionsToPersist() []Session {
-	sessions := []Session{}
-	for _, s := range a.ActiveSessions {
-		if s.UpdatedAt.After(time.Now().Add(time.Duration(-5) * time.Second)) {
-			sessions = append(sessions, s)
-		}
+	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, s.Id, true})
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return sessions
+	s.updateRefreshToken(*newRefreshToken)
+
+	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, s.Id, false})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return newAccessToken, newRefreshToken, nil
 }
 
 func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
@@ -323,9 +365,25 @@ func (a *Account) TerminateAllSessions() error {
 	return nil
 }
 
+// Return sessions that have just been updated
+func (a *Account) SessionsToPersist() []Session {
+	sessions := []Session{}
+	for _, s := range a.ActiveSessions {
+		if s.UpdatedAt.After(time.Now().Add(time.Duration(-5) * time.Second)) {
+			sessions = append(sessions, s)
+		}
+	}
+
+	if a.justTerminatedSessions != nil {
+		sessions = append(sessions, a.justTerminatedSessions...)
+	}
+
+	return sessions
+}
+
 // Check if access token is valid and return its related session
 func (a *Account) VerifyAccessToken(token *authToken) (*Session, error) {
-	if token.Claims.Kind != "access" {
+	if token.IsRefresh() {
 		return nil, normalizederr.NewRequestError("Non access token.", "")
 	}
 
@@ -333,8 +391,8 @@ func (a *Account) VerifyAccessToken(token *authToken) (*Session, error) {
 }
 
 // Check if refresh token is valid and return its related session
-func (a *Account) VerifyRefreshToken(token *authToken) (*Session, error) {
-	if token.Claims.Kind != "refresh" {
+func (a *Account) verifyRefreshToken(token *authToken) (*Session, error) {
+	if !token.IsRefresh() {
 		return nil, normalizederr.NewRequestError("Non refresh token.", "")
 	}
 
@@ -356,7 +414,7 @@ func (a *Account) verifyToken(token *authToken) (*Session, error) {
 		return nil, normalizederr.NewUnauthorizedError("Expired token")
 	}
 
-	s := a.Session(token.Claims.SessionId)
+	s := a.session(token.Claims.SessionId)
 	if s == nil {
 		return nil, normalizederr.NewUnauthorizedError("Invalid session")
 	}
@@ -368,23 +426,25 @@ func (a *Account) verifyToken(token *authToken) (*Session, error) {
 	return s, nil
 }
 
-func (a *Account) IssueNewTokens(refreshToken *authToken) (*authToken, *authToken, error) {
-	s, err := a.VerifyRefreshToken(refreshToken)
-	if err != nil {
-		return nil, nil, err
+// Return desired active session or nil if it does not exist
+func (a *Account) session(sessionId uuid.UUID) *Session {
+	for _, s := range a.ActiveSessions {
+		if s.Id == sessionId && s.IsActive {
+			return &s
+		}
 	}
 
-	newRefreshToken, err := newAuthToken(*a, s.Id, "refresh")
-	if err != nil {
-		return nil, nil, err
+	return nil
+}
+
+// Return active sessions of the desired application
+func (a *Account) sessionsByApp(app Application) []Session {
+	sessions := []Session{}
+	for _, s := range a.ActiveSessions {
+		if s.Application.Id == app.Id && s.IsActive {
+			sessions = append(sessions, s)
+		}
 	}
 
-	s.updateRefreshToken(*newRefreshToken)
-
-	newAccessToken, err := newAuthToken(*a, s.Id)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return newAccessToken, newRefreshToken, nil
+	return sessions
 }

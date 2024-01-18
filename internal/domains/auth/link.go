@@ -25,7 +25,7 @@ type Link struct {
 	CONSTRUCTORS
 ============================================================================== */
 
-func newLink(acc *Account, app Application) (*Link, error) {
+func newLink(acc *Account, app Application) *Link {
 	now := time.Now()
 	link := &Link{
 		Id:          uuid.New(),
@@ -36,7 +36,7 @@ func newLink(acc *Account, app Application) (*Link, error) {
 		UpdatedAt: now,
 	}
 
-	return link, validator.Validate(link)
+	return link
 }
 
 /* ==============================================================================

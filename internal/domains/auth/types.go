@@ -15,7 +15,7 @@ import (
 
 type AccountCodeKind string
 
-type accountCodeKind struct {	
+type accountCodeKind struct {
 	EMAIL_VERIFICATION AccountCodeKind
 	PHONE_VERIFICATION AccountCodeKind
 	PASSWORD_RESET     AccountCodeKind
@@ -37,7 +37,7 @@ var AccountCodeKindValues = AccountCodeKind.Enumerate("").(accountCodeKind)
 
 type Role string
 
-type role struct {	
+type role struct {
 	ADMIN Role
 	STAFF Role
 }
@@ -61,8 +61,14 @@ type authToken struct {
 	signedString string
 }
 
-func newAuthToken(a Account, sessionId uuid.UUID, kindFlag ...string) (*authToken, error) {
-	s := a.Session(sessionId)
+type authTokenCreationFields struct {
+	Account   Account
+	SessionId uuid.UUID
+	IsRefresh bool
+}
+
+func newAuthToken(f authTokenCreationFields) (*authToken, error) {
+	s := f.Account.session(f.SessionId)
 	if s == nil {
 		return nil, normalizederr.NewRequestError("Account and session do not match.", "")
 	}
@@ -70,7 +76,7 @@ func newAuthToken(a Account, sessionId uuid.UUID, kindFlag ...string) (*authToke
 	now := time.Now()
 	var kind string
 	var duration time.Duration
-	if len(kindFlag) >= 1 && kindFlag[0] == "refresh" {
+	if f.IsRefresh {
 		kind = "refresh"
 		duration = time.Second * time.Duration(config.Environment.JWT.REFRESH_LIFE_TIME_IN_SEC)
 	} else {
@@ -79,7 +85,7 @@ func newAuthToken(a Account, sessionId uuid.UUID, kindFlag ...string) (*authToke
 	}
 
 	claims := jwtClaims{
-		a.Id,
+		f.Account.Id,
 		s.Application.Id,
 		now,
 		now.Add(duration),
@@ -119,6 +125,10 @@ func ParseAuthToken(str string) (*authToken, error) {
 func (t authToken) IsExpired() bool {
 	now := time.Now()
 	return t.Claims.Exp.Before(now)
+}
+
+func (t authToken) IsRefresh() bool {
+	return t.Claims.Kind == "refresh"
 }
 
 func (t authToken) String() string {
