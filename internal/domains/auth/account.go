@@ -29,9 +29,9 @@ type Account struct {
 	ActiveSessions         []Session                  `json:"-"`
 	justTerminatedSessions []Session                  `json:"-"`
 
-	PasswordResetAt time.Time `json:"-"`
-	CreatedAt       time.Time `json:"createdAt" validator:"required"`
-	UpdatedAt       time.Time `json:"updatedAt" validator:"required"`
+	PasswordUpdatedAt time.Time `json:"-"`
+	CreatedAt         time.Time `json:"createdAt" validator:"required"`
+	UpdatedAt         time.Time `json:"updatedAt" validator:"required"`
 }
 
 /* ==============================================================================
@@ -61,9 +61,9 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 		UpdatedAt: now,
 	}
 
-	acc.GenerateCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
-	if acc.Phone != "" {
-		acc.GenerateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+	acc.generateCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
+	if !acc.Phone.IsZero() {
+		acc.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
 	}
 
 	return acc, validator.Validate(acc)
@@ -81,6 +81,42 @@ func hashData(str string) string {
 func (a Account) DoesPasswordMatch(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(password))
 	return err == nil
+}
+
+func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
+	if !a.DoesPasswordMatch(oldPassword) {
+		return normalizederr.NewForbiddenError("Invalid credentials.")
+	}
+
+	a.Password = newPassword
+
+	now := time.Now()
+	a.PasswordUpdatedAt = now
+	a.UpdatedAt = now
+	return validator.Validate(a)
+}
+
+func (a *Account) RequestPasswordReset() (string, error) {
+	a.generateCodeFor(AccountCodeKindValues.PASSWORD_RESET)
+	a.UpdatedAt = time.Now()
+	return a.Codes[AccountCodeKindValues.PASSWORD_RESET], validator.Validate(a)
+}
+
+func (a *Account) ResetPassword(newPassword string, code string) error {
+	resetCode := a.Codes[AccountCodeKindValues.PASSWORD_RESET]
+	if resetCode == "" {
+		return normalizederr.NewRequestError("Account did not request a password reset.", "")
+	} else if code != a.Codes[AccountCodeKindValues.PASSWORD_RESET] {
+		return normalizederr.NewForbiddenError("Invalid code.")
+	}
+
+	a.Password = newPassword
+	a.clearCodeFor(AccountCodeKindValues.PASSWORD_RESET)
+
+	now := time.Now()
+	a.PasswordUpdatedAt = now
+	a.UpdatedAt = now
+	return validator.Validate(a)
 }
 
 type AccountMissableFields struct {
@@ -102,42 +138,104 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 
 	structop.New(a).Update(f)
 	a.UpdatedAt = time.Now()
+
+	if !f.Phone.IsZero() {
+		a.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+	}
 	return validator.Validate(a)
 }
 
 // It will generate an uuid and save it in the field Code, under the desired key (kind).
 // It overwrites old value, if any.
-func (a *Account) GenerateCodeFor(kind AccountCodeKind) {
+func (a *Account) generateCodeFor(kind AccountCodeKind) {
 	a.Codes[kind] = uuid.New().String()
 }
 
-func (a *Account) ClearCodeFor(kind AccountCodeKind) {
+func (a *Account) clearCodeFor(kind AccountCodeKind) {
 	delete(a.Codes, kind)
-}
-
-func (a *Account) ResetPassword(newPassword string, code string) error {
-	resetCode := a.Codes[AccountCodeKindValues.PASSWORD_RESET]
-	if resetCode == "" {
-		return normalizederr.NewRequestError("Account did not request a password reset.", "")
-	} else if code != a.Codes[AccountCodeKindValues.PASSWORD_RESET] {
-		return normalizederr.NewForbiddenError("Invalid code.")
-	}
-
-	a.Password = newPassword
-	a.ClearCodeFor(AccountCodeKindValues.PASSWORD_RESET)
-
-	now := time.Now()
-	a.PasswordResetAt = now
-	a.UpdatedAt = now
-	return validator.Validate(a)
 }
 
 /* ==============================================================================
 	LINK RELATED METHODS
 ============================================================================== */
 
-// Return link to desired application or nil if account is not linked to it.
-func (a *Account) Link(app Application) *Link {
+// Create link to desired application.
+func (a *Account) LinkTo(app Application) error {
+	for _, l := range a.Links {
+		if l.Application.Id == app.Id {
+			return normalizederr.NewRequestError("Account has already been linked to desired application.", "")
+		}
+	}
+
+	link, err := newLink(a, app)
+	if err != nil {
+		return err
+	}
+
+	a.Links = append(a.Links, *link)
+	return validator.Validate(a)
+}
+
+func (a Account) HasRole(app Application, roles ...Role) bool {
+	link := a.link(app)
+	if link == nil {
+		return false
+	}
+
+	return link.hasRole(roles...)
+}
+
+func (a *Account) AddRole(r Role, app Application, actor Account) error {
+	return a.updatePermission(app, actor, func(l *Link) error {
+		return l.addRole(r)
+	})
+}
+
+func (a *Account) RemoveRole(r Role, app Application, actor Account) error {
+	return a.updatePermission(app, actor, func(l *Link) error {
+		return l.removeRole(r)
+	})
+}
+
+func (a *Account) AddGranting(g string, app Application, actor Account) error {
+	return a.updatePermission(app, actor, func(l *Link) error {
+		return l.addGranting(g)
+	})
+}
+
+func (a *Account) RemoveGranting(g string, app Application, actor Account) error {
+	return a.updatePermission(app, actor, func(l *Link) error {
+		return l.removeGranting(g)
+	})
+}
+
+// Prepare and execute desired role and/or granting updates
+func (a *Account) updatePermission(app Application, actor Account, updaterFn func(*Link) error) error {
+	if !actor.HasRole(app, RoleValues.ADMIN) {
+		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+	}
+
+	link := a.link(app)
+	if link == nil {
+		return normalizederr.NewRequestError("Target account is not linked to desired application.", "")
+	}
+
+	err := updaterFn(link)
+	if err != nil {
+		return err
+	}
+
+	for i, l := range a.Links {
+		if l.Id == link.Id {
+			a.Links[i] = *link
+		}
+	}
+
+	return nil
+}
+
+// Return desired application link or nil if account is not linked to it.
+func (a *Account) link(app Application) *Link {
 	for _, l := range a.Links {
 		if l.Application.Id == app.Id {
 			return &l
@@ -145,21 +243,6 @@ func (a *Account) Link(app Application) *Link {
 	}
 
 	return nil
-}
-
-func (a *Account) IsAdminOn(app Application) bool {
-	link := a.Link(app)
-	if link == nil {
-		return false
-	}
-
-	for _, r := range link.Roles {
-		if r == RoleValues.ADMIN {
-			return true
-		}
-	}
-
-	return false
 }
 
 /* ==============================================================================
@@ -241,16 +324,16 @@ func (a *Account) TerminateAllSessions() error {
 }
 
 // Check if access token is valid and return its related session
-func (a *Account) VerifyAccessToken(token *Jwt) (*Session, error) {
+func (a *Account) VerifyAccessToken(token *authToken) (*Session, error) {
 	if token.Claims.Kind != "access" {
 		return nil, normalizederr.NewRequestError("Non access token.", "")
 	}
-	
+
 	return a.verifyToken(token)
 }
 
 // Check if refresh token is valid and return its related session
-func (a *Account) VerifyRefreshToken(token *Jwt) (*Session, error) {
+func (a *Account) VerifyRefreshToken(token *authToken) (*Session, error) {
 	if token.Claims.Kind != "refresh" {
 		return nil, normalizederr.NewRequestError("Non refresh token.", "")
 	}
@@ -268,7 +351,7 @@ func (a *Account) VerifyRefreshToken(token *Jwt) (*Session, error) {
 	return s, nil
 }
 
-func (a *Account) verifyToken(token *Jwt) (*Session, error) {
+func (a *Account) verifyToken(token *authToken) (*Session, error) {
 	if token.IsExpired() {
 		return nil, normalizederr.NewUnauthorizedError("Expired token")
 	}
@@ -285,20 +368,20 @@ func (a *Account) verifyToken(token *Jwt) (*Session, error) {
 	return s, nil
 }
 
-func (a *Account) IssueNewTokens(refreshToken *Jwt) (*Jwt, *Jwt, error) {
+func (a *Account) IssueNewTokens(refreshToken *authToken) (*authToken, *authToken, error) {
 	s, err := a.VerifyRefreshToken(refreshToken)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	newRefreshToken, err := newJwt(*a, s.Id, "refresh")
+	newRefreshToken, err := newAuthToken(*a, s.Id, "refresh")
 	if err != nil {
 		return nil, nil, err
 	}
 
 	s.updateRefreshToken(*newRefreshToken)
 
-	newAccessToken, err := newJwt(*a, s.Id)
+	newAccessToken, err := newAuthToken(*a, s.Id)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -25,35 +25,36 @@ type Link struct {
 	CONSTRUCTORS
 ============================================================================== */
 
-func (a *Account) CreateLinkTo(app Application) (*Link, error) {
-	for _, l := range a.Links {
-		if l.Application.Id == app.Id {
-			return nil, normalizederr.NewRequestError("Account has already been linked to desired application.", "")
-		}
-	}
-
+func newLink(acc *Account, app Application) (*Link, error) {
 	now := time.Now()
-	created := &Link{
+	link := &Link{
 		Id:          uuid.New(),
-		AccountId:   a.InternalId,
+		AccountId:   acc.InternalId,
 		Application: app,
 
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	return created, validator.Validate(created)
+	return link, validator.Validate(link)
 }
 
 /* ==============================================================================
 	METHODS
 ============================================================================== */
 
-func (l *Link) AddRole(r Role, actor Account) error {
-	if !actor.IsAdminOn(l.Application) {
-		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+func (l Link) hasRole(roles ...Role) bool {
+	for _, existingRole := range l.Roles {
+		for _, allowedRole := range roles {
+			if existingRole == allowedRole {
+				return true
+			}
+		}
 	}
+	return false
+}
 
+func (l *Link) addRole(r Role) error {
 	if sliceman.IndexOf(l.Roles, r) != -1 {
 		return normalizederr.NewRequestError("Role has already been added.", "")
 	}
@@ -63,11 +64,7 @@ func (l *Link) AddRole(r Role, actor Account) error {
 	return validator.Validate(l)
 }
 
-func (l *Link) RemoveRole(r Role, actor Account) error {
-	if !actor.IsAdminOn(l.Application) {
-		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
-	}
-
+func (l *Link) removeRole(r Role) error {
 	index := sliceman.IndexOf(l.Roles, r)
 	if index == -1 {
 		return normalizederr.NewRequestError("Role has not been added.", "")
@@ -78,11 +75,7 @@ func (l *Link) RemoveRole(r Role, actor Account) error {
 	return validator.Validate(l)
 }
 
-func (l *Link) AddGranting(g string, actor Account) error {
-	if !actor.IsAdminOn(l.Application) {
-		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
-	}
-
+func (l *Link) addGranting(g string) error {
 	if sliceman.IndexOf(l.Application.Grantings, g) == -1 {
 		return normalizederr.NewForbiddenError("Application does not support the desired granting.")
 	}
@@ -96,11 +89,7 @@ func (l *Link) AddGranting(g string, actor Account) error {
 	return validator.Validate(l)
 }
 
-func (l *Link) RemoveGranting(g string, actor Account) error {
-	if !actor.IsAdminOn(l.Application) {
-		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
-	}
-
+func (l *Link) removeGranting(g string) error {
 	if sliceman.IndexOf(l.Application.Grantings, g) == -1 {
 		return normalizederr.NewForbiddenError("Application does not support the desired granting.")
 	}
