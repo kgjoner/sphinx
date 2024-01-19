@@ -23,13 +23,16 @@ type Account struct {
 	Username   string             `json:"username" validator:"wordId"`
 	Document   htypes.Document    `json:"document"`
 
-	IsActive               bool                       `json:"isActive"`
-	HasEmailBeenVerified   bool                       `json:"hasEmailBeenVerified"`
-	HasPhoneBeenVerified   bool                       `json:"hasPhoneBeenVerified"`
-	Codes                  map[AccountCodeKind]string `json:"-"`
-	Links                  []Link                     `json:"-"`
-	ActiveSessions         []Session                  `json:"-"`
-	justTerminatedSessions []Session                  `json:"-"`
+	IsActive             bool                       `json:"isActive"`
+	HasEmailBeenVerified bool                       `json:"hasEmailBeenVerified"`
+	HasPhoneBeenVerified bool                       `json:"hasPhoneBeenVerified"`
+	Codes                map[AccountCodeKind]string `json:"-"`
+	Links                []Link                     `json:"-"`
+	ActiveSessions       []Session                  `json:"-"`
+
+	justTerminatedSessions []Session  `json:"-"`
+	authedSession          *Session   `json:"-"`
+	authToken              *authToken `json:"-"`
 
 	PasswordUpdatedAt time.Time `json:"-"`
 	CreatedAt         time.Time `json:"createdAt" validator:"required"`
@@ -80,13 +83,8 @@ func hashData(str string) string {
 	METHODS
 ============================================================================== */
 
-func (a Account) DoesPasswordMatch(password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(password))
-	return err == nil
-}
-
 func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
-	if !a.DoesPasswordMatch(oldPassword) {
+	if !a.doesPasswordMatch(oldPassword) {
 		return normalizederr.NewForbiddenError("Invalid credentials.")
 	}
 
@@ -147,6 +145,11 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 	return validator.Validate(a)
 }
 
+func (a Account) doesPasswordMatch(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(password))
+	return err == nil
+}
+
 // It will generate an uuid and save it in the field Code, under the desired key (kind).
 // It overwrites old value, if any.
 func (a *Account) generateCodeFor(kind AccountCodeKind) {
@@ -183,26 +186,26 @@ func (a Account) HasRole(app Application, roles ...Role) bool {
 	return link.hasRole(roles...)
 }
 
-func (a *Account) AddRole(r Role, app Application, actor Account) error {
-	return a.updatePermission(app, actor, func(l *Link) error {
+func (a *Account) AddRole(r Role, actor Account) error {
+	return a.updatePermission(actor, func(l *Link) error {
 		return l.addRole(r)
 	})
 }
 
-func (a *Account) RemoveRole(r Role, app Application, actor Account) error {
-	return a.updatePermission(app, actor, func(l *Link) error {
+func (a *Account) RemoveRole(r Role, actor Account) error {
+	return a.updatePermission(actor, func(l *Link) error {
 		return l.removeRole(r)
 	})
 }
 
-func (a *Account) AddGranting(g string, app Application, actor Account) error {
-	return a.updatePermission(app, actor, func(l *Link) error {
+func (a *Account) AddGranting(g string, actor Account) error {
+	return a.updatePermission(actor, func(l *Link) error {
 		return l.addGranting(g)
 	})
 }
 
-func (a *Account) RemoveGranting(g string, app Application, actor Account) error {
-	return a.updatePermission(app, actor, func(l *Link) error {
+func (a *Account) RemoveGranting(g string, actor Account) error {
+	return a.updatePermission(actor, func(l *Link) error {
 		return l.removeGranting(g)
 	})
 }
@@ -220,7 +223,8 @@ func (a *Account) LinksToPersist() []Link {
 }
 
 // Prepare and execute desired role and/or granting updates
-func (a *Account) updatePermission(app Application, actor Account, updaterFn func(*Link) error) error {
+func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) error {
+	app := actor.authedSession.Application
 	if !actor.HasRole(app, RoleValues.ADMIN) {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
@@ -255,28 +259,43 @@ func (a *Account) link(app Application) *Link {
 	return nil
 }
 
+// Return link related to auth token or nil if account is not authenticated
+func (a *Account) authedLink() *Link {
+	if !a.IsAuthenticated() {
+		return nil
+	}
+
+	return a.link(a.authedSession.Application)
+}
+
 /* ==============================================================================
 	SESSION RELATED METHODS
 ============================================================================== */
 
 // Create a new session and generate tokens
-func (a *Account) InitSession(f *SessionCreationFields) (*authToken, *authToken, error) {
+func (a *Account) InitSession(password string, f *SessionCreationFields) (access *authToken, refresh *authToken, err error) {
+	if !a.doesPasswordMatch(password) {
+		return nil, nil, normalizederr.NewForbiddenError("Invalid credentials.")
+	}
+
 	// Check if link exists
-	link := a.link(f.Application)
-	if link == nil {
-		return nil, nil, normalizederr.NewRequestError("Account is not linked to desired application.", "")
+	if link := a.link(f.Application); link == nil {
+		err := a.LinkTo(f.Application)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// Terminate exceeding sessions
-	if concurrentSessions :=
+	if conauthedSessions :=
 		SessionSortableByAge(a.sessionsByApp(f.Application)); config.Environment.MAX_CONCURRENT_SESSIONS > 0 &&
-		len(concurrentSessions) >= config.Environment.MAX_CONCURRENT_SESSIONS {
+		len(conauthedSessions) >= config.Environment.MAX_CONCURRENT_SESSIONS {
 
-		previousExcess := len(concurrentSessions) - config.Environment.MAX_CONCURRENT_SESSIONS
+		previousExcess := len(conauthedSessions) - config.Environment.MAX_CONCURRENT_SESSIONS
 		/* If all goes well, previousExcess will be zero. There will be only one session to terminate
 		for preventing new session to exceed max limit */
-		sort.Sort(concurrentSessions)
-		sessionsToTerminate := concurrentSessions[:(previousExcess + 1)]
+		sort.Sort(conauthedSessions)
+		sessionsToTerminate := conauthedSessions[:(previousExcess + 1)]
 		for _, s := range sessionsToTerminate {
 			_, err := a.TerminateSession(s.Id)
 			if err != nil {
@@ -301,27 +320,54 @@ func (a *Account) InitSession(f *SessionCreationFields) (*authToken, *authToken,
 	}
 
 	a.ActiveSessions = append(a.ActiveSessions, *session)
+	a.authedSession = session
+	a.authToken = accessToken
 	return accessToken, refreshToken, validator.Validate(a)
 }
 
+func (a *Account) Authenticate(token *authToken) error {
+	s, err := a.verifyToken(token)
+	if err != nil {
+		return err
+	}
+
+	if token.IsRefresh() {
+		doesMatch := s.doesRefreshTokenMatch(token.String())
+		if !doesMatch {
+			return normalizederr.NewUnauthorizedError("Revoked token.")
+		}
+	}
+
+	a.authToken = token
+	a.authedSession = s
+	return nil
+}
+
+func (a Account) IsAuthenticated() bool {
+	return a.authToken != nil
+}
+
 // Generate new tokens for an existing session
-func (a *Account) IssueNewTokens(refreshToken *authToken) (*authToken, *authToken, error) {
-	s, err := a.verifyRefreshToken(refreshToken)
+func (a *Account) IssueNewTokens() (access *authToken, refresh *authToken, err error) {
+	if !a.IsAuthenticated() {
+		return nil, nil, normalizederr.NewUnauthorizedError("Unauthenticated.")
+	} else if !a.authToken.IsRefresh() {
+		return nil, nil, normalizederr.NewForbiddenError("Non refresh token")
+	}
+
+	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.authedSession.Id, true})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, s.Id, true})
+	a.authedSession.updateRefreshToken(*newRefreshToken)
+
+	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, a.authedSession.Id, false})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	s.updateRefreshToken(*newRefreshToken)
-
-	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, s.Id, false})
-	if err != nil {
-		return nil, nil, err
-	}
+	a.authToken = newAccessToken
 
 	return newAccessToken, newRefreshToken, nil
 }
@@ -340,11 +386,29 @@ func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
 			a.justTerminatedSessions = append(a.justTerminatedSessions, s)
 			sliceman.Remove(a.ActiveSessions, i)
 
+			if a.authedSession != nil && sessionId == a.authedSession.Id {
+				a.authedSession = nil
+				a.authToken = nil
+			}
+
 			return &s, nil
 		}
 	}
 
 	return nil, normalizederr.NewRequestError("Session not found.", "")
+}
+
+func (a *Account) TerminateAuthedSession() (*Session, error) {
+	if a.IsAuthenticated() {
+		return nil, normalizederr.NewUnauthorizedError("Unauthenticated")
+	}
+
+	s, err := a.TerminateSession(a.authedSession.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func (a *Account) TerminateAllSessions() error {
@@ -362,6 +426,8 @@ func (a *Account) TerminateAllSessions() error {
 	}
 
 	a.ActiveSessions = []Session{}
+	a.authToken = nil
+	a.authedSession = nil
 	return nil
 }
 
@@ -378,35 +444,11 @@ func (a *Account) SessionsToPersist() []Session {
 		sessions = append(sessions, a.justTerminatedSessions...)
 	}
 
+	if a.authedSession != nil && a.authedSession.UpdatedAt.After(time.Now().Add(time.Duration(-5)*time.Second)) {
+		sessions = append(sessions, *a.authedSession)
+	}
+
 	return sessions
-}
-
-// Check if access token is valid and return its related session
-func (a *Account) VerifyAccessToken(token *authToken) (*Session, error) {
-	if token.IsRefresh() {
-		return nil, normalizederr.NewRequestError("Non access token.", "")
-	}
-
-	return a.verifyToken(token)
-}
-
-// Check if refresh token is valid and return its related session
-func (a *Account) verifyRefreshToken(token *authToken) (*Session, error) {
-	if !token.IsRefresh() {
-		return nil, normalizederr.NewRequestError("Non refresh token.", "")
-	}
-
-	s, err := a.verifyToken(token)
-	if err != nil {
-		return nil, err
-	}
-
-	doesMatch := s.doesRefreshTokenMatch(token.String())
-	if !doesMatch {
-		return nil, normalizederr.NewUnauthorizedError("Revoked token.")
-	}
-
-	return s, nil
 }
 
 func (a *Account) verifyToken(token *authToken) (*Session, error) {
@@ -447,4 +489,40 @@ func (a *Account) sessionsByApp(app Application) []Session {
 	}
 
 	return sessions
+}
+
+/* ==============================================================================
+	VIEWS
+============================================================================== */
+
+type AccountPrivateView struct {
+	Id       uuid.UUID          `json:"id" validator:"required"`
+	Email    htypes.Email       `json:"email" validator:"required"`
+	Phone    htypes.PhoneNumber `json:"phone"`
+	Username string             `json:"username" validator:"wordId"`
+	Document htypes.Document    `json:"document"`
+
+	IsActive             bool  `json:"isActive"`
+	HasEmailBeenVerified bool  `json:"hasEmailBeenVerified"`
+	HasPhoneBeenVerified bool  `json:"hasPhoneBeenVerified"`
+	Link                 *Link `json:"link"`
+}
+
+func (a Account) PrivateView(actor Account) *AccountPrivateView {
+	app := actor.authedSession.Application
+	if a.Id != actor.Id && actor.HasRole(app, RoleValues.ADMIN) {
+		return nil
+	}
+
+	return &AccountPrivateView{
+		a.Id,
+		a.Email,
+		a.Phone,
+		a.Username,
+		a.Document,
+		a.IsActive,
+		a.HasEmailBeenVerified,
+		a.HasPhoneBeenVerified,
+		a.authedLink(),
+	}
 }
