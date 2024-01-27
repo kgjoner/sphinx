@@ -6,8 +6,8 @@ github.com/golang-jwt/jwt/v5 v5.2.0 h1:d/ix8ftRUorsN+5eMIlF4T6J8CAt9rch3My2winC1
 github.com/golang-jwt/jwt/v5 v5.2.0/go.mod h1:pqrtFR0X4osieyHYxtmOUWsAWrfe1Q5UVIyoH402zdk=
 github.com/google/uuid v1.5.0 h1:1p67kYwdtXjb0gL0BPiP1Av9wiZPo5A8z2cWkTZ+eyU=
 github.com/google/uuid v1.5.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/kgjoner/cornucopia v0.0.0-20240111175140-9500d1f91aba h1:MyIIaoAjEWbd40eJXqtfy9yTGry1ayshc94I2b/K+g4=
-github.com/kgjoner/cornucopia v0.0.0-20240111175140-9500d1f91aba/go.mod h1:ZRYV2ake2zqOTf7GWzEEDRydWfpthTak6zqvHNrMl80=
+github.com/kgjoner/cornucopia v0.0.0-20240127120628-c01dfd9990b8 h1:6pqw+h9HkuahxOOcOAUU2mcOT4KKskmUCKu1mnuTPqY=
+github.com/kgjoner/cornucopia v0.0.0-20240127120628-c01dfd9990b8/go.mod h1:ZRYV2ake2zqOTf7GWzEEDRydWfpthTak6zqvHNrMl80=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
