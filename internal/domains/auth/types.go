@@ -93,7 +93,7 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 		kind,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenAsSignedString, err := token.SignedString([]byte(config.Environment.JWT.SECRET))
 	if err != nil {
 		return nil, err
