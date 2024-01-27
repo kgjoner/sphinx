@@ -4,8 +4,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/validator"
 	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/sphinx/internal/config"
 )
 
 type Application struct {
@@ -27,7 +29,12 @@ type ApplicationCreationFields struct {
 	Grantings []string
 }
 
-func NewApplication(f *ApplicationCreationFields) (*Application, error) {
+func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, error) {
+	actorApp := actor.authedSession.Application
+	if !actorApp.isRoot() || !actor.HasRole(actorApp, RoleValues.ADMIN) {
+		return nil, normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+	}
+
 	now := time.Now()
 	created := &Application{
 		Id:        uuid.New(),
@@ -50,8 +57,17 @@ type ApplicationEditableFields struct {
 	Grantings []string
 }
 
-func (e *Application) Edit(f *ApplicationEditableFields) error {
-	structop.New(e).Update(f)
-	e.UpdatedAt = time.Now()
-	return validator.Validate(e)
+func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
+	actorApp := actor.authedSession.Application
+	if !actorApp.isRoot() || !actor.HasRole(actorApp, RoleValues.ADMIN) {
+		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+	}
+
+	structop.New(a).Update(f)
+	a.UpdatedAt = time.Now()
+	return validator.Validate(a)
+}
+
+func (a Application) isRoot() bool {
+	return a.Id.String() == config.Environment.ROOT_APP_TOKEN
 }
