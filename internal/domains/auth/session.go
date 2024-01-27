@@ -10,17 +10,20 @@ import (
 )
 
 type Session struct {
-	InternalId   int             `json:"-"`
-	Id           uuid.UUID       `json:"id" validator:"required"`
-	AccountId    int             `json:"-" validator:"required"`
-	Application  Application     `json:"-" validator:"required"`
-	RefreshToken string          `json:"-" validator:"required"`
-	Device       string          `json:"device" validator:"required"`
-	Ip           string          `json:"ip" validator:"required"`
-	IsActive     bool            `json:"-"`
-	TerminatedAt htypes.NullTime `json:"terminatedAt"`
-	CreatedAt    time.Time       `json:"createdAt" validator:"required"`
-	UpdatedAt    time.Time       `json:"updatedAt" validator:"required"`
+	InternalId                     int             `json:"-"`
+	Id                             uuid.UUID       `json:"id" validator:"required"`
+	AccountId                      int             `json:"-" validator:"required"`
+	Application                    Application     `json:"-" validator:"required"`
+	RefreshToken                   string          `json:"-" validator:"required"`
+	RefreshedAt                    htypes.NullTime `json:"-"`
+	ElapsedMinutesBetweenRefreshes []int           `json:"-"`
+	RefreshesCount                 int             `json:"-"`
+	Device                         string          `json:"device" validator:"required"`
+	Ip                             string          `json:"ip" validator:"required"`
+	IsActive                       bool            `json:"-"`
+	TerminatedAt                   htypes.NullTime `json:"terminatedAt"`
+	CreatedAt                      time.Time       `json:"createdAt" validator:"required"`
+	UpdatedAt                      time.Time       `json:"updatedAt" validator:"required"`
 }
 
 /* ==============================================================================
@@ -36,13 +39,14 @@ type SessionCreationFields struct {
 func newSession(acc Account, f *SessionCreationFields) *Session {
 	now := time.Now()
 	s := &Session{
-		Id:          uuid.New(),
-		AccountId:   acc.InternalId,
-		Application: f.Application,
-		Device:      f.Device,
-		Ip:          f.Ip,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Id:                             uuid.New(),
+		AccountId:                      acc.InternalId,
+		Application:                    f.Application,
+		Device:                         f.Device,
+		Ip:                             f.Ip,
+		CreatedAt:                      now,
+		UpdatedAt:                      now,
+		ElapsedMinutesBetweenRefreshes: []int{},
 	}
 
 	return s
@@ -62,7 +66,25 @@ func (s *Session) terminate() error {
 }
 
 func (s *Session) updateRefreshToken(token authToken) {
+	if len(s.ElapsedMinutesBetweenRefreshes) >= 1000 {
+		sum := 0
+		for _, minutes := range s.ElapsedMinutesBetweenRefreshes {
+			sum += minutes
+		}
+
+		s.ElapsedMinutesBetweenRefreshes = []int{sum / len(s.ElapsedMinutesBetweenRefreshes)}
+	}
+
+	now := time.Now()
+	lastRefreshTime := s.RefreshedAt.Time
+	if lastRefreshTime.IsZero() {
+		lastRefreshTime = s.CreatedAt
+	}
+	elapsedTime := now.Sub(lastRefreshTime)
+
 	s.RefreshToken = hashData(token.String())
+	s.ElapsedMinutesBetweenRefreshes = append(s.ElapsedMinutesBetweenRefreshes, int(elapsedTime.Minutes()))
+	s.RefreshesCount += 1
 	s.UpdatedAt = time.Now()
 }
 
