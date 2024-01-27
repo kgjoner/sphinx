@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"errors"
+	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,7 +23,7 @@ type Account struct {
 	Email      htypes.Email       `json:"email" validator:"required"`
 	Phone      htypes.PhoneNumber `json:"phone"`
 	Password   string             `json:"password"`
-	Username   string             `json:"username" validator:"wordId"`
+	Username   string             `json:"username" validator:"wordId,atLeastOne=letter"`
 	Document   htypes.Document    `json:"document"`
 
 	IsActive             bool                       `json:"isActive"`
@@ -52,13 +55,18 @@ type AccountCreationFields struct {
 }
 
 func NewAccount(a *AccountCreationFields) (*Account, error) {
+	err := validatePasswordInput(a.Password)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	acc := &Account{
 		Id:       uuid.New(),
-		Email:    a.Email,
+		Email:    a.Email.Normalize(),
 		Phone:    a.Phone,
 		Password: hashData(a.Password),
-		Username: a.Username,
+		Username: strings.ToLower(a.Username),
 		Document: a.Document,
 
 		IsActive:  true,
@@ -79,6 +87,16 @@ func hashData(str string) string {
 	return string(bytes)
 }
 
+func validatePasswordInput(password string) error {
+	err := validator.Validate(password, "min=8,atLeastOne=letter,number,specialChar")
+	if err == nil {
+		return nil
+	}
+
+	msg := fmt.Sprintf("Password: %v", err.Error())
+	return errors.New(msg)
+}
+
 /* ==============================================================================
 	METHODS
 ============================================================================== */
@@ -86,6 +104,11 @@ func hashData(str string) string {
 func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
 	if !a.doesPasswordMatch(oldPassword) {
 		return normalizederr.NewForbiddenError("Invalid credentials.")
+	}
+
+	err := validatePasswordInput(newPassword)
+	if err != nil {
+		return err
 	}
 
 	a.Password = newPassword
@@ -108,6 +131,11 @@ func (a *Account) ResetPassword(newPassword string, code string) error {
 		return normalizederr.NewRequestError("Account did not request a password reset.", "")
 	} else if code != a.Codes[AccountCodeKindValues.PASSWORD_RESET] {
 		return normalizederr.NewForbiddenError("Invalid code.")
+	}
+
+	err := validatePasswordInput(newPassword)
+	if err != nil {
+		return err
 	}
 
 	a.Password = newPassword
@@ -134,6 +162,10 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 	}
 	if !f.Document.IsZero() && !a.Document.IsZero() {
 		return normalizederr.NewRequestError("Document was already added.", "")
+	}
+
+	if f.Username != "" {
+		f.Username = strings.ToLower(f.Username)
 	}
 
 	structop.New(a).Update(f)
