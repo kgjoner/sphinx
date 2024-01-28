@@ -28,9 +28,15 @@ func (r *AuthRepo) AddContext(ctx context.Context) {
 ========================================================================= */
 
 func (r AuthRepo) UpsertLinks(links ...auth.Link) error {
+	if len(links) == 0 {
+		return nil
+	}
 	return r.q.UpsertLinks(r.ctx, datatransform.ToRawMessage(links))
 }
 
 func (r AuthRepo) UpsertSessions(sessions ...auth.Session) error {
+	if len(sessions) == 0 {
+		return nil
+	}
 	return r.q.UpsertSessions(r.ctx, datatransform.ToRawMessage(sessions))
 }
