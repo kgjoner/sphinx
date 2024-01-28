@@ -70,6 +70,7 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 		Document: a.Document,
 
 		IsActive:  true,
+		Codes: map[AccountCodeKind]string{},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
