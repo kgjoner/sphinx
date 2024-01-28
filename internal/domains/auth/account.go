@@ -367,7 +367,8 @@ func (a *Account) Authenticate(token *authToken) error {
 	if token.IsRefresh() {
 		doesMatch := s.doesRefreshTokenMatch(token.String())
 		if !doesMatch {
-			return normalizederr.NewUnauthorizedError("Revoked token.")
+			a.TerminateAllSessions()
+			return normalizederr.NewFatalUnauthorizedError("Revoked token.")
 		}
 	}
 
