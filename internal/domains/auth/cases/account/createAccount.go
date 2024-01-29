@@ -32,5 +32,10 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		return nil, err
 	}
 	
+	err = i.AuthRepo.UpsertLinks(acc.LinksToPersist()...)
+	if err != nil {
+		return nil, err
+	}
+	
 	return acc, nil
 }
