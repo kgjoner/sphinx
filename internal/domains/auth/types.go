@@ -111,12 +111,12 @@ func ParseAuthToken(str string) (*authToken, error) {
 	}
 
 	if !token.Valid {
-		return nil, normalizederr.NewRequestError("Invalid authToken", "")
+		return nil, normalizederr.NewUnauthorizedError("Invalid authToken")
 	}
 
 	claims, ok := token.Claims.(jwtClaims)
 	if !ok {
-		return nil, normalizederr.NewRequestError("Badly formatted authToken", "")
+		return nil, normalizederr.NewUnauthorizedError("Badly formatted authToken")
 	}
 
 	return &authToken{*token, claims, str}, nil
