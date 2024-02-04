@@ -12,18 +12,18 @@ import (
 type Session struct {
 	InternalId                     int             `json:"-"`
 	Id                             uuid.UUID       `json:"id" validator:"required"`
-	AccountId                      int             `json:"-" validator:"required"`
-	Application                    Application     `json:"-" validator:"required"`
-	RefreshToken                   string          `json:"-" validator:"required"`
-	RefreshedAt                    htypes.NullTime `json:"-"`
-	ElapsedMinutesBetweenRefreshes []int           `json:"-"`
-	RefreshesCount                 int             `json:"-"`
+	AccountId                      int             `json:"account_id" validator:"required"`
+	Application                    Application     `json:"application" validator:"required"`
+	RefreshToken                   string          `json:"refresh_token" validator:"required"`
+	RefreshedAt                    htypes.NullTime `json:"refreshed_at"`
+	ElapsedMinutesBetweenRefreshes []int           `json:"elapsed_minutes_between_refreshes"`
+	RefreshesCount                 int             `json:"refreshes_count"`
 	Device                         string          `json:"device" validator:"required"`
 	Ip                             string          `json:"ip" validator:"required"`
-	IsActive                       bool            `json:"-"`
-	TerminatedAt                   htypes.NullTime `json:"terminatedAt"`
-	CreatedAt                      time.Time       `json:"createdAt" validator:"required"`
-	UpdatedAt                      time.Time       `json:"updatedAt" validator:"required"`
+	IsActive                       bool            `json:"is_active"`
+	TerminatedAt                   htypes.NullTime `json:"terminated_at"`
+	CreatedAt                      time.Time       `json:"created_at" validator:"required"`
+	UpdatedAt                      time.Time       `json:"updated_at" validator:"required"`
 }
 
 /* ==============================================================================
@@ -31,7 +31,7 @@ type Session struct {
 ============================================================================== */
 
 type SessionCreationFields struct {
-	Application Application `json:"-" validator:"required"`
+	Application Application `json:"application" validator:"required"`
 	Device      string      `json:"device" validator:"required"`
 	Ip          string      `json:"ip" validator:"required"`
 }
@@ -44,6 +44,7 @@ func newSession(acc Account, f *SessionCreationFields) *Session {
 		Application:                    f.Application,
 		Device:                         f.Device,
 		Ip:                             f.Ip,
+		IsActive:                       true,
 		CreatedAt:                      now,
 		UpdatedAt:                      now,
 		ElapsedMinutesBetweenRefreshes: []int{},
