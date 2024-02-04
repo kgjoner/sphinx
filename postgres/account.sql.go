@@ -82,15 +82,15 @@ SELECT
   json_agg(s.*) active_sessions
 FROM
   account a
-  LEFT JOIN session s ON s.account_id = a.id AND s.is_active IS TRUE
-  LEFT JOIN link l ON l.account_id = a.id 
+  LEFT JOIN session s ON s.account_id = a.internal_id AND s.is_active IS TRUE
+  LEFT JOIN link l ON l.account_id = a.internal_id 
 WHERE
   a.email = $1 OR
   a.phone = $1 OR
   a.username = $1 OR
   a.document = $1
 GROUP BY
-  a.id
+  a.internal_id
 `
 
 type GetAccountByEntryRow struct {
