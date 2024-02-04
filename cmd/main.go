@@ -10,12 +10,12 @@ import (
 
 func main() {
 	config.Must()
-	db := setupPostgres()
+	db := SetupPostgres()
 
 	server.New(db).Start()
 }
 
-func setupPostgres() *sql.DB {
+func SetupPostgres() *sql.DB {
 	db, err := sql.Open("postgres", config.Environment.DATABASE_URL)
 	if err != nil {
 		log.Fatalf("Unable to parse database url: %v", err)
