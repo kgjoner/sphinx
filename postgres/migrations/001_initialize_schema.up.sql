@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS link (
   id uuid NOT NULL UNIQUE,
   account_id int NOT NULL,
   application_id int NOT NULL,
-  roles text[] NOT NULL,
-  grantings text[] NOT NULL,
+  roles text[],
+  grantings text[],
 
   created_at timestamp NOT NULL DEFAULT NOW(),
   updated_at timestamp NOT NULL DEFAULT NOW(),
