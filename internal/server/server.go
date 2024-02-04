@@ -19,15 +19,18 @@ import (
 
 type Server struct {
 	queries *psqlrepo.Queries
+	Handler http.Handler
 }
 
 func New(pool *sql.DB) *Server {
-	return &Server{
+	s := &Server{
 		queries: psqlrepo.New(pool),
 	}
+	s.Setup()
+	return s
 }
 
-func (s *Server) Start() {
+func (s *Server) Setup() {
 	repos := common.Repos{
 		AuthRepo: authrepo.New(s.queries),
 	}
@@ -51,8 +54,12 @@ func (s *Server) Start() {
 
 	r.Mount("/metrics", promhttp.Handler())
 
+	s.Handler = r
+}
+
+func (s *Server) Start() {
 	fmt.Println("Server running at port 8080")
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(":8080", s.Handler)
 }
 
 func addContextToReposAndServices(repos *common.Repos) func(http.Handler) http.Handler {
