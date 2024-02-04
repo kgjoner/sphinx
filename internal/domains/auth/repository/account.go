@@ -12,6 +12,7 @@ func (r AuthRepo) InsertAccount(acc auth.Account) (int, error) {
 	return r.q.CreateAccount(r.ctx, psqlrepo.CreateAccountParams{
 		ID:                   acc.Id,
 		Email:                acc.Email.String(),
+		Password:             acc.Password,
 		Phone:                datatransform.ToNullString(acc.Phone.String()),
 		Username:             datatransform.ToNullString(acc.Username),
 		Document:             datatransform.ToNullString(acc.Document.String()),
@@ -26,6 +27,7 @@ func (r AuthRepo) UpdateAccount(acc auth.Account) error {
 	return r.q.UpdateAccount(r.ctx, psqlrepo.UpdateAccountParams{
 		ID:                   acc.Id,
 		Email:                acc.Email.String(),
+		Password:             acc.Password,
 		Phone:                datatransform.ToNullString(acc.Phone.String()),
 		Username:             datatransform.ToNullString(acc.Username),
 		Document:             datatransform.ToNullString(acc.Document.String()),
