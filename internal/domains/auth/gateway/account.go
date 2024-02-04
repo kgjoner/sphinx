@@ -10,14 +10,8 @@ import (
 	accountcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/account"
 )
 
-func (g AuthGateway) accountHandler() *chi.Mux {
-	r := chi.NewRouter()
-
-	r.Group(func(r chi.Router) {
-		r.With(g.mid.AppToken).Post("/", g.createAccount)
-	})
-
-	return r
+func (g AuthGateway) accountHandler(r chi.Router) {
+	r.With(g.mid.AppToken).Post("/", g.createAccount)	
 }
 
 func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
