@@ -21,10 +21,10 @@ type Account struct {
 	InternalId int                `json:"-"`
 	Id         uuid.UUID          `json:"id" validator:"required"`
 	Email      htypes.Email       `json:"email" validator:"required"`
-	Phone      htypes.PhoneNumber `json:"phone"`
-	Password   string             `json:"password"`
-	Username   string             `json:"username" validator:"wordId,atLeastOne=letter"`
-	Document   htypes.Document    `json:"document"`
+	Phone      htypes.PhoneNumber `json:"phone,omitempty"`
+	Password   string             `json:"-"`
+	Username   string             `json:"username,omitempty" validator:"wordId,atLeastOne=letter"`
+	Document   htypes.Document    `json:"document,omitempty"`
 
 	IsActive             bool                       `json:"isActive"`
 	HasEmailBeenVerified bool                       `json:"hasEmailBeenVerified"`
@@ -103,8 +103,8 @@ func validatePasswordInput(password string) error {
 ============================================================================== */
 
 func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
-	if !a.doesPasswordMatch(oldPassword) {
-		return normalizederr.NewForbiddenError("Invalid credentials.")
+	if !a.DoesPasswordMatch(oldPassword) {
+		return normalizederr.NewUnauthorizedError("Invalid credentials.")
 	}
 
 	err := validatePasswordInput(newPassword)
@@ -131,7 +131,7 @@ func (a *Account) ResetPassword(newPassword string, code string) error {
 	if resetCode == "" {
 		return normalizederr.NewRequestError("Account did not request a password reset.", "")
 	} else if code != a.Codes[AccountCodeKindValues.PASSWORD_RESET] {
-		return normalizederr.NewForbiddenError("Invalid code.")
+		return normalizederr.NewUnauthorizedError("Invalid code.")
 	}
 
 	err := validatePasswordInput(newPassword)
@@ -178,7 +178,7 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 	return validator.Validate(a)
 }
 
-func (a Account) doesPasswordMatch(password string) bool {
+func (a Account) DoesPasswordMatch(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(a.Password), []byte(password))
 	return err == nil
 }
@@ -259,7 +259,7 @@ func (a *Account) LinksToPersist() []Link {
 func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) error {
 	app := actor.authedSession.Application
 	if !actor.HasRole(app, RoleValues.ADMIN) {
-		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+		return normalizederr.NewUnauthorizedError("Does not have permission to execute this action.")
 	}
 
 	link := a.link(app)
@@ -307,8 +307,8 @@ func (a *Account) authedLink() *Link {
 
 // Create a new session and generate tokens
 func (a *Account) InitSession(password string, f *SessionCreationFields) (access *authToken, refresh *authToken, err error) {
-	if !a.doesPasswordMatch(password) {
-		return nil, nil, normalizederr.NewForbiddenError("Invalid credentials.")
+	if !a.DoesPasswordMatch(password) {
+		return nil, nil, normalizederr.NewUnauthorizedError("Invalid credentials.")
 	}
 
 	// Check if link exists
@@ -320,15 +320,15 @@ func (a *Account) InitSession(password string, f *SessionCreationFields) (access
 	}
 
 	// Terminate exceeding sessions
-	if conauthedSessions :=
+	if concurrentSessions :=
 		SessionSortableByAge(a.sessionsByApp(f.Application)); config.Environment.MAX_CONCURRENT_SESSIONS > 0 &&
-		len(conauthedSessions) >= config.Environment.MAX_CONCURRENT_SESSIONS {
+		len(concurrentSessions) >= config.Environment.MAX_CONCURRENT_SESSIONS {
 
-		previousExcess := len(conauthedSessions) - config.Environment.MAX_CONCURRENT_SESSIONS
+		previousExcess := len(concurrentSessions) - config.Environment.MAX_CONCURRENT_SESSIONS
 		/* If all goes well, previousExcess will be zero. There will be only one session to terminate
 		for preventing new session to exceed max limit */
-		sort.Sort(conauthedSessions)
-		sessionsToTerminate := conauthedSessions[:(previousExcess + 1)]
+		sort.Sort(concurrentSessions)
+		sessionsToTerminate := concurrentSessions[:(previousExcess + 1)]
 		for _, s := range sessionsToTerminate {
 			_, err := a.TerminateSession(s.Id)
 			if err != nil {
@@ -339,6 +339,7 @@ func (a *Account) InitSession(password string, f *SessionCreationFields) (access
 
 	// Create session and tokens
 	session := newSession(*a, f)
+	a.ActiveSessions = append(a.ActiveSessions, *session)
 
 	refreshToken, err := newAuthToken(authTokenCreationFields{*a, session.Id, true})
 	if err != nil {
@@ -346,13 +347,13 @@ func (a *Account) InitSession(password string, f *SessionCreationFields) (access
 	}
 
 	session.updateRefreshToken(*refreshToken)
+	a.ActiveSessions[len(a.ActiveSessions) - 1] = *session
 
 	accessToken, err := newAuthToken(authTokenCreationFields{*a, session.Id, false})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	a.ActiveSessions = append(a.ActiveSessions, *session)
 	a.authedSession = session
 	a.authToken = accessToken
 	return accessToken, refreshToken, validator.Validate(a)
@@ -386,7 +387,7 @@ func (a *Account) IssueNewTokens() (access *authToken, refresh *authToken, err e
 	if !a.IsAuthenticated() {
 		return nil, nil, normalizederr.NewUnauthorizedError("Unauthenticated.")
 	} else if !a.authToken.IsRefresh() {
-		return nil, nil, normalizederr.NewForbiddenError("Non refresh token")
+		return nil, nil, normalizederr.NewUnauthorizedError("Non refresh token")
 	}
 
 	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.authedSession.Id, true})
@@ -469,6 +470,10 @@ func (a *Account) TerminateAllSessions() error {
 func (a *Account) SessionsToPersist() []Session {
 	sessions := []Session{}
 	for _, s := range a.ActiveSessions {
+		if a.authedSession != nil && a.authedSession.Id == s.Id {
+			continue
+		}
+	
 		if s.UpdatedAt.After(time.Now().Add(time.Duration(-5) * time.Second)) {
 			sessions = append(sessions, s)
 		}
