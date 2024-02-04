@@ -31,12 +31,42 @@ func (r AuthRepo) UpsertLinks(links ...auth.Link) error {
 	if len(links) == 0 {
 		return nil
 	}
-	return r.q.UpsertLinks(r.ctx, datatransform.ToRawMessage(links))
+
+	type formattedLink struct{
+		auth.Link
+		ApplicationId int `json:"application_id"`
+	}
+	
+	formattedLinks := []formattedLink{}
+	for _, l := range links {
+		formattedLink := formattedLink{
+			l,
+			l.Application.InternalId,
+		}
+		formattedLinks = append(formattedLinks, formattedLink)
+	}
+
+	return r.q.UpsertLinks(r.ctx, datatransform.ToRawMessage(formattedLinks))
 }
 
 func (r AuthRepo) UpsertSessions(sessions ...auth.Session) error {
 	if len(sessions) == 0 {
 		return nil
 	}
-	return r.q.UpsertSessions(r.ctx, datatransform.ToRawMessage(sessions))
+
+	type formattedSession struct{
+		auth.Session
+		ApplicationId int `json:"application_id"`
+	}
+	
+	formattedSessions := []formattedSession{}
+	for _, s := range sessions {
+		formattedSession := formattedSession{
+			s,
+			s.Application.InternalId,
+		}
+		formattedSessions = append(formattedSessions, formattedSession)
+	}
+
+	return r.q.UpsertSessions(r.ctx, datatransform.ToRawMessage(formattedSessions))
 }
