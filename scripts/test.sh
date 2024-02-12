@@ -11,7 +11,7 @@ else
   docker run -d --name test -p 5432:5432 \
     -e POSTGRES_PASSWORD=postgres \
     -e POSTGRES_USER=postgres \
-    -e POSTGRES_DB=sphinx postgres
+    -e POSTGRES_DB=sphinx postgres:16
   until docker logs --tail 1 test 2>&1 | grep -q "database system is ready to accept connections"; do
     echo "wait for database to initialize..."
   done;
