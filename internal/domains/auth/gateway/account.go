@@ -12,6 +12,9 @@ import (
 
 func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.AppToken).Post("/", g.createAccount)	
+	
+	r.With(g.mid.Authenticate).Get("/self", g.getPrivateAccount)	
+	r.With(g.mid.Authenticate).Get("/{id}", g.getPrivateAccount)	
 }
 
 func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
@@ -38,4 +41,29 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	presenter.HttpSuccess(output, w, r, http.StatusCreated)
+}
+
+func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
+ c := controller.New(r).
+  AddActor().
+  ParseUrlParam("id")
+
+ var input accountcase.GetPrivateAccountInput
+ err := c.Write(&input)
+ if err != nil {
+  presenter.HttpError(err, w, r)
+  return
+ }
+
+ i := accountcase.GetPrivateAccount{
+  AuthRepo: g.AuthRepo,
+ }
+
+ output, err := i.Execute(input)
+ if err != nil {
+  presenter.HttpError(err, w, r)
+  return
+ }
+
+ presenter.HttpSuccess(output, w, r)
 }
