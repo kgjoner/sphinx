@@ -76,14 +76,35 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (i
 }
 
 const getAccountByEntry = `-- name: GetAccountByEntry :one
+WITH la AS (
+  SELECT
+    l.internal_id, l.id, l.account_id, l.application_id, l.roles, l.grantings, l.created_at, l.updated_at,
+    json_agg(app.*)->0 application
+  FROM
+    link l
+    JOIN application app ON app.internal_id = l.application_id
+  GROUP BY
+    l.internal_id
+), sa AS (
+  SELECT
+    s.internal_id, s.id, s.account_id, s.application_id, s.refresh_token, s.refreshed_at, s.elapsed_minutes_between_refreshes, s.refreshes_count, s.device, s.ip, s.is_active, s.terminated_at, s.created_at, s.updated_at,
+    json_agg(app.*)->0 application
+  FROM
+    session s
+    JOIN application app ON app.internal_id = s.application_id
+  WHERE
+    s.is_active IS TRUE
+  GROUP BY
+    s.internal_id
+)
 SELECT
   a.internal_id, a.id, a.email, a.password, a.phone, a.username, a.document, a.is_active, a.has_email_been_verified, a.has_phone_been_verified, a.codes, a.password_updated_at, a.created_at, a.updated_at,
-  json_agg(l.*) links,
-  json_agg(s.*) active_sessions
+  json_agg(la.*) links,
+  json_agg(sa.*) active_sessions
 FROM
   account a
-  LEFT JOIN session s ON s.account_id = a.internal_id AND s.is_active IS TRUE
-  LEFT JOIN link l ON l.account_id = a.internal_id 
+  JOIN la ON la.account_id = a.internal_id
+  JOIN sa ON sa.account_id = a.internal_id 
 WHERE
   a.email = $1 OR
   a.phone = $1 OR
@@ -137,18 +158,39 @@ func (q *Queries) GetAccountByEntry(ctx context.Context, email string) (GetAccou
 }
 
 const getAccountById = `-- name: GetAccountById :one
+WITH la AS (
+  SELECT
+    l.internal_id, l.id, l.account_id, l.application_id, l.roles, l.grantings, l.created_at, l.updated_at,
+    json_agg(app.*)->0 application
+  FROM
+    link l
+    JOIN application app ON app.internal_id = l.application_id
+  GROUP BY
+    l.internal_id
+), sa AS (
+  SELECT
+    s.internal_id, s.id, s.account_id, s.application_id, s.refresh_token, s.refreshed_at, s.elapsed_minutes_between_refreshes, s.refreshes_count, s.device, s.ip, s.is_active, s.terminated_at, s.created_at, s.updated_at,
+    json_agg(app.*)->0 application
+  FROM
+    session s
+    JOIN application app ON app.internal_id = s.application_id
+  WHERE
+    s.is_active IS TRUE
+  GROUP BY
+    s.internal_id
+)
 SELECT
   a.internal_id, a.id, a.email, a.password, a.phone, a.username, a.document, a.is_active, a.has_email_been_verified, a.has_phone_been_verified, a.codes, a.password_updated_at, a.created_at, a.updated_at,
-  json_agg(l.*) links,
-  json_agg(s.*) active_sessions
+  json_agg(la.*) links,
+  json_agg(sa.*) active_sessions
 FROM
   account a
-  LEFT JOIN session s ON s.account_id = a.id AND s.is_active IS TRUE
-  LEFT JOIN link l ON l.account_id = a.id 
+  JOIN la ON la.account_id = a.internal_id
+  JOIN sa ON sa.account_id = a.internal_id
 WHERE
   a.id = $1
 GROUP BY
-  a.id
+  a.internal_id
 `
 
 type GetAccountByIdRow struct {

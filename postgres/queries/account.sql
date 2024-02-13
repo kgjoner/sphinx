@@ -46,28 +46,70 @@ WHERE
   id = $1;
 
 -- name: GetAccountById :one
+WITH la AS (
+  SELECT
+    l.*,
+    json_agg(app.*)->0 application
+  FROM
+    link l
+    JOIN application app ON app.internal_id = l.application_id
+  GROUP BY
+    l.internal_id
+), sa AS (
+  SELECT
+    s.*,
+    json_agg(app.*)->0 application
+  FROM
+    session s
+    JOIN application app ON app.internal_id = s.application_id
+  WHERE
+    s.is_active IS TRUE
+  GROUP BY
+    s.internal_id
+)
 SELECT
   a.*,
-  json_agg(l.*) links,
-  json_agg(s.*) active_sessions
+  json_agg(la.*) links,
+  json_agg(sa.*) active_sessions
 FROM
   account a
-  LEFT JOIN session s ON s.account_id = a.id AND s.is_active IS TRUE
-  LEFT JOIN link l ON l.account_id = a.id 
+  JOIN la ON la.account_id = a.internal_id
+  JOIN sa ON sa.account_id = a.internal_id
 WHERE
   a.id = $1
 GROUP BY
-  a.id;
+  a.internal_id;
 
 -- name: GetAccountByEntry :one
+WITH la AS (
+  SELECT
+    l.*,
+    json_agg(app.*)->0 application
+  FROM
+    link l
+    JOIN application app ON app.internal_id = l.application_id
+  GROUP BY
+    l.internal_id
+), sa AS (
+  SELECT
+    s.*,
+    json_agg(app.*)->0 application
+  FROM
+    session s
+    JOIN application app ON app.internal_id = s.application_id
+  WHERE
+    s.is_active IS TRUE
+  GROUP BY
+    s.internal_id
+)
 SELECT
   a.*,
-  json_agg(l.*) links,
-  json_agg(s.*) active_sessions
+  json_agg(la.*) links,
+  json_agg(sa.*) active_sessions
 FROM
   account a
-  LEFT JOIN session s ON s.account_id = a.internal_id AND s.is_active IS TRUE
-  LEFT JOIN link l ON l.account_id = a.internal_id 
+  JOIN la ON la.account_id = a.internal_id
+  JOIN sa ON sa.account_id = a.internal_id 
 WHERE
   a.email = $1 OR
   a.phone = $1 OR
