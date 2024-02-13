@@ -30,7 +30,7 @@ type ApplicationCreationFields struct {
 }
 
 func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, error) {
-	actorApp := actor.authedSession.Application
+	actorApp := actor.AuthedSession.Application
 	if !actorApp.isRoot() || !actor.HasRole(actorApp, RoleValues.ADMIN) {
 		return nil, normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
@@ -58,7 +58,7 @@ type ApplicationEditableFields struct {
 }
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
-	actorApp := actor.authedSession.Application
+	actorApp := actor.AuthedSession.Application
 	if !actorApp.isRoot() || !actor.HasRole(actorApp, RoleValues.ADMIN) {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}

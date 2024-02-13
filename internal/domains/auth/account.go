@@ -20,11 +20,11 @@ import (
 type Account struct {
 	InternalId int                `json:"-"`
 	Id         uuid.UUID          `json:"id" validator:"required"`
-	Email      htypes.Email       `json:"email" validator:"required"`
-	Phone      htypes.PhoneNumber `json:"phone,omitempty"`
-	Password   string             `json:"-"`
-	Username   string             `json:"username,omitempty" validator:"wordId,atLeastOne=letter"`
-	Document   htypes.Document    `json:"document,omitempty"`
+	Email      htypes.Email       `json:"-" validator:"required"`
+	Phone      htypes.PhoneNumber `json:"-"`
+	Password   string             `json:"-" validator:"required"`
+	Username   string             `json:"username" validator:"wordId,atLeastOne=letter"`
+	Document   htypes.Document    `json:"-"`
 
 	IsActive             bool                       `json:"isActive"`
 	HasEmailBeenVerified bool                       `json:"hasEmailBeenVerified"`
@@ -34,8 +34,8 @@ type Account struct {
 	ActiveSessions       []Session                  `json:"-"`
 
 	justTerminatedSessions []Session  `json:"-"`
-	authedSession          *Session   `json:"-"`
-	authToken              *authToken `json:"-"`
+	AuthedSession          *Session   `json:"-"`
+	AuthToken              *authToken `json:"-"`
 
 	PasswordUpdatedAt time.Time `json:"-"`
 	CreatedAt         time.Time `json:"createdAt" validator:"required"`
@@ -70,7 +70,7 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 		Document: a.Document,
 
 		IsActive:  true,
-		Codes: map[AccountCodeKind]string{},
+		Codes:     map[AccountCodeKind]string{},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -89,7 +89,7 @@ func hashData(str string) string {
 }
 
 func validatePasswordInput(password string) error {
-	err := validator.Validate(password, "min=8,atLeastOne=letter,number,specialChar")
+	err := validator.Validate(password, "required,min=8,atLeastOne=letter,number,specialChar")
 	if err == nil {
 		return nil
 	}
@@ -210,6 +210,17 @@ func (a *Account) LinkTo(app Application) error {
 	return validator.Validate(a)
 }
 
+// Check whether account has role on application related to their authed session
+func (a Account) HasRoleOnAuth(roles ...Role) bool {
+	link := a.authedLink()
+	if link == nil {
+		return false
+	}
+
+	return link.hasRole(roles...)
+}
+
+// Check whether account has role on a target application
 func (a Account) HasRole(app Application, roles ...Role) bool {
 	link := a.link(app)
 	if link == nil {
@@ -257,7 +268,7 @@ func (a *Account) LinksToPersist() []Link {
 
 // Prepare and execute desired role and/or granting updates
 func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) error {
-	app := actor.authedSession.Application
+	app := actor.AuthedSession.Application
 	if !actor.HasRole(app, RoleValues.ADMIN) {
 		return normalizederr.NewUnauthorizedError("Does not have permission to execute this action.")
 	}
@@ -298,7 +309,7 @@ func (a *Account) authedLink() *Link {
 		return nil
 	}
 
-	return a.link(a.authedSession.Application)
+	return a.link(a.AuthedSession.Application)
 }
 
 /* ==============================================================================
@@ -347,15 +358,15 @@ func (a *Account) InitSession(password string, f *SessionCreationFields) (access
 	}
 
 	session.updateRefreshToken(*refreshToken)
-	a.ActiveSessions[len(a.ActiveSessions) - 1] = *session
+	a.ActiveSessions[len(a.ActiveSessions)-1] = *session
 
 	accessToken, err := newAuthToken(authTokenCreationFields{*a, session.Id, false})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	a.authedSession = session
-	a.authToken = accessToken
+	a.AuthedSession = session
+	a.AuthToken = accessToken
 	return accessToken, refreshToken, validator.Validate(a)
 }
 
@@ -373,36 +384,36 @@ func (a *Account) Authenticate(token *authToken) error {
 		}
 	}
 
-	a.authToken = token
-	a.authedSession = s
+	a.AuthToken = token
+	a.AuthedSession = s
 	return nil
 }
 
 func (a Account) IsAuthenticated() bool {
-	return a.authToken != nil
+	return a.AuthToken != nil
 }
 
 // Generate new tokens for an existing session
 func (a *Account) IssueNewTokens() (access *authToken, refresh *authToken, err error) {
 	if !a.IsAuthenticated() {
 		return nil, nil, normalizederr.NewUnauthorizedError("Unauthenticated.")
-	} else if !a.authToken.IsRefresh() {
+	} else if !a.AuthToken.IsRefresh() {
 		return nil, nil, normalizederr.NewUnauthorizedError("Non refresh token")
 	}
 
-	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.authedSession.Id, true})
+	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.Id, true})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	a.authedSession.updateRefreshToken(*newRefreshToken)
+	a.AuthedSession.updateRefreshToken(*newRefreshToken)
 
-	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, a.authedSession.Id, false})
+	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.Id, false})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	a.authToken = newAccessToken
+	a.AuthToken = newAccessToken
 
 	return newAccessToken, newRefreshToken, nil
 }
@@ -421,9 +432,9 @@ func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
 			a.justTerminatedSessions = append(a.justTerminatedSessions, s)
 			sliceman.Remove(a.ActiveSessions, i)
 
-			if a.authedSession != nil && sessionId == a.authedSession.Id {
-				a.authedSession = nil
-				a.authToken = nil
+			if a.AuthedSession != nil && sessionId == a.AuthedSession.Id {
+				a.AuthedSession = nil
+				a.AuthToken = nil
 			}
 
 			return &s, nil
@@ -438,7 +449,7 @@ func (a *Account) TerminateAuthedSession() (*Session, error) {
 		return nil, normalizederr.NewUnauthorizedError("Unauthenticated")
 	}
 
-	s, err := a.TerminateSession(a.authedSession.Id)
+	s, err := a.TerminateSession(a.AuthedSession.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -461,8 +472,8 @@ func (a *Account) TerminateAllSessions() error {
 	}
 
 	a.ActiveSessions = []Session{}
-	a.authToken = nil
-	a.authedSession = nil
+	a.AuthToken = nil
+	a.AuthedSession = nil
 	return nil
 }
 
@@ -470,10 +481,10 @@ func (a *Account) TerminateAllSessions() error {
 func (a *Account) SessionsToPersist() []Session {
 	sessions := []Session{}
 	for _, s := range a.ActiveSessions {
-		if a.authedSession != nil && a.authedSession.Id == s.Id {
+		if a.AuthedSession != nil && a.AuthedSession.Id == s.Id {
 			continue
 		}
-	
+
 		if s.UpdatedAt.After(time.Now().Add(time.Duration(-5) * time.Second)) {
 			sessions = append(sessions, s)
 		}
@@ -483,8 +494,8 @@ func (a *Account) SessionsToPersist() []Session {
 		sessions = append(sessions, a.justTerminatedSessions...)
 	}
 
-	if a.authedSession != nil && a.authedSession.UpdatedAt.After(time.Now().Add(time.Duration(-5)*time.Second)) {
-		sessions = append(sessions, *a.authedSession)
+	if a.AuthedSession != nil && a.AuthedSession.UpdatedAt.After(time.Now().Add(time.Duration(-5)*time.Second)) {
+		sessions = append(sessions, *a.AuthedSession)
 	}
 
 	return sessions
@@ -537,9 +548,9 @@ func (a *Account) sessionsByApp(app Application) []Session {
 type AccountPrivateView struct {
 	Id       uuid.UUID          `json:"id" validator:"required"`
 	Email    htypes.Email       `json:"email" validator:"required"`
-	Phone    htypes.PhoneNumber `json:"phone"`
-	Username string             `json:"username" validator:"wordId"`
-	Document htypes.Document    `json:"document"`
+	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
+	Username string             `json:"username,omitempty" validator:"wordId"`
+	Document htypes.Document    `json:"document,omitempty"`
 
 	IsActive             bool  `json:"isActive"`
 	HasEmailBeenVerified bool  `json:"hasEmailBeenVerified"`
@@ -547,10 +558,14 @@ type AccountPrivateView struct {
 	Link                 *Link `json:"link"`
 }
 
-func (a Account) PrivateView(actor Account) *AccountPrivateView {
-	app := actor.authedSession.Application
-	if a.Id != actor.Id && actor.HasRole(app, RoleValues.ADMIN) {
-		return nil
+func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
+	if a.Id != actor.Id && actor.HasRoleOnAuth(RoleValues.ADMIN) {
+		return nil, normalizederr.NewForbiddenError("Does not have permission to view this user information.")
+	}
+
+	link := actor.authedLink()
+	if a.Id != actor.Id {
+		link = a.link(link.Application)
 	}
 
 	return &AccountPrivateView{
@@ -562,6 +577,6 @@ func (a Account) PrivateView(actor Account) *AccountPrivateView {
 		a.IsActive,
 		a.HasEmailBeenVerified,
 		a.HasPhoneBeenVerified,
-		a.authedLink(),
-	}
+		link,
+	}, nil
 }
