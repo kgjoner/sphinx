@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -87,8 +88,8 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	claims := jwtClaims{
 		f.Account.Id,
 		s.Application.Id,
-		now,
-		now.Add(duration),
+		now.Unix(),
+		now.Add(duration).Unix(),
 		s.Id,
 		kind,
 	}
@@ -114,8 +115,10 @@ func ParseAuthToken(str string) (*authToken, error) {
 		return nil, normalizederr.NewUnauthorizedError("Invalid authToken")
 	}
 
-	claims, ok := token.Claims.(jwtClaims)
-	if !ok {
+	var claims jwtClaims
+	ms, _ := json.Marshal(token.Claims)
+	err = json.Unmarshal(ms, &claims)
+	if err != nil {
 		return nil, normalizederr.NewUnauthorizedError("Badly formatted authToken")
 	}
 
@@ -124,7 +127,7 @@ func ParseAuthToken(str string) (*authToken, error) {
 
 func (t authToken) IsExpired() bool {
 	now := time.Now()
-	return t.Claims.Exp.Before(now)
+	return time.Unix(t.Claims.Exp, 0).Before(now)
 }
 
 func (t authToken) IsRefresh() bool {
@@ -138,8 +141,8 @@ func (t authToken) String() string {
 type jwtClaims struct {
 	Sub       uuid.UUID `json:"sub"`
 	Aud       uuid.UUID `json:"aud"`
-	Iat       time.Time `json:"iat"`
-	Exp       time.Time `json:"exp"`
+	Iat       int64     `json:"iat"`
+	Exp       int64     `json:"exp"`
 	SessionId uuid.UUID `json:"sessionId"`
 	Kind      string    `json:"kind" validate:"oneof=refresh access"`
 }
@@ -148,10 +151,10 @@ func (c jwtClaims) GetAudience() (jwt.ClaimStrings, error) {
 	return jwt.ClaimStrings{c.Aud.String()}, nil
 }
 func (c jwtClaims) GetExpirationTime() (*jwt.NumericDate, error) {
-	return &jwt.NumericDate{Time: c.Exp}, nil
+	return &jwt.NumericDate{Time: time.Unix(c.Exp, 0)}, nil
 }
 func (c jwtClaims) GetIssuedAt() (*jwt.NumericDate, error) {
-	return &jwt.NumericDate{Time: c.Iat}, nil
+	return &jwt.NumericDate{Time: time.Unix(c.Iat, 0)}, nil
 }
 func (c jwtClaims) GetIssuer() (string, error) {
 	return "", nil
