@@ -90,6 +90,9 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		err = account.Authenticate(token)
 		m.AuthRepo.UpsertSessions(account.SessionsToPersist()...)
 		if err != nil {
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, "actor", *account)
+			r = r.WithContext(ctx)
 			presenter.HttpError(err, w, r)
 			return
 		}
