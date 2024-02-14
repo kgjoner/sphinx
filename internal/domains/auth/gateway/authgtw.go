@@ -24,6 +24,7 @@ func Raise(router chi.Router, repos common.Repos) {
 	}
 
 	router.Route("/account", authgtw.accountHandler)
+	router.Route("/application", authgtw.applicationHandler)
 
 	router.Route("/auth", func(r chi.Router) {
 		r.With(authgtw.mid.AppToken).Post("/login", authgtw.login)
