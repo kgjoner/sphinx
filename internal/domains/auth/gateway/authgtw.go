@@ -37,8 +37,8 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseBody("entry", "password").
 		AddApplication().
-		AddHeader("ip").
-		AddHeader("device")
+		AddHeader("x-forwarded-for", "ip").
+		AddHeader("user-agent", "device")
 
 	var input authcase.LoginInput
 	err := c.Write(&input)
@@ -85,25 +85,25 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
- c := controller.New(r).
-  AddActor()
+	c := controller.New(r).
+		AddActor()
 
- var input authcase.RefreshInput
- err := c.Write(&input)
- if err != nil {
-  presenter.HttpError(err, w, r)
-  return
- }
+	var input authcase.RefreshInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
 
- i := authcase.Refresh{
-  AuthRepo: g.AuthRepo,
- }
+	i := authcase.Refresh{
+		AuthRepo: g.AuthRepo,
+	}
 
- output, err := i.Execute(input)
- if err != nil {
-  presenter.HttpError(err, w, r)
-  return
- }
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
 
- presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r)
 }
