@@ -5,7 +5,7 @@ go 1.22
 require github.com/google/uuid v1.5.0
 
 require (
-	github.com/kgjoner/cornucopia v0.0.0-20240204135132-2f82769b17a4
+	github.com/kgjoner/cornucopia v0.0.0-20240214232501-b693bba4541a
 	github.com/lib/pq v1.10.9
 	golang.org/x/crypto v0.17.0
 )
