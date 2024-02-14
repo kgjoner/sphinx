@@ -6,24 +6,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/validator"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Session struct {
 	InternalId                     int             `json:"-"`
-	Id                             uuid.UUID       `json:"id" validator:"required"`
-	AccountId                      int             `json:"account_id" validator:"required"`
-	Application                    Application     `json:"application" validator:"required"`
-	RefreshToken                   string          `json:"refresh_token" validator:"required"`
+	Id                             uuid.UUID       `json:"id" validate:"required"`
+	AccountId                      int             `json:"account_id" validate:"required"`
+	Application                    Application     `json:"application" validate:"required"`
+	RefreshToken                   string          `json:"refresh_token" validate:"required"`
 	RefreshedAt                    htypes.NullTime `json:"refreshed_at"`
 	ElapsedMinutesBetweenRefreshes []int           `json:"elapsed_minutes_between_refreshes"`
 	RefreshesCount                 int             `json:"refreshes_count"`
-	Device                         string          `json:"device" validator:"required"`
-	Ip                             string          `json:"ip" validator:"required"`
+	Device                         string          `json:"device" validate:"required"`
+	Ip                             string          `json:"ip"`
 	IsActive                       bool            `json:"is_active"`
 	TerminatedAt                   htypes.NullTime `json:"terminated_at"`
-	CreatedAt                      time.Time       `json:"created_at" validator:"required"`
-	UpdatedAt                      time.Time       `json:"updated_at" validator:"required"`
+	CreatedAt                      time.Time       `json:"created_at" validate:"required"`
+	UpdatedAt                      time.Time       `json:"updated_at" validate:"required"`
 }
 
 /* ==============================================================================
@@ -31,9 +30,9 @@ type Session struct {
 ============================================================================== */
 
 type SessionCreationFields struct {
-	Application Application `json:"application" validator:"required"`
-	Device      string      `json:"device" validator:"required"`
-	Ip          string      `json:"ip" validator:"required"`
+	Application Application `json:"application" validate:"required"`
+	Device      string      `json:"device" validate:"required"`
+	Ip          string      `json:"ip" validate:"required"`
 }
 
 func newSession(acc Account, f *SessionCreationFields) *Session {
@@ -60,7 +59,6 @@ func newSession(acc Account, f *SessionCreationFields) *Session {
 func (s *Session) terminate() error {
 	now := time.Now()
 	s.IsActive = false
-	s.RefreshToken = ""
 	s.TerminatedAt = htypes.NullTime{Time: now}
 	s.UpdatedAt = now
 	return validator.Validate(s)
@@ -90,8 +88,7 @@ func (s *Session) updateRefreshToken(token authToken) {
 }
 
 func (s Session) doesRefreshTokenMatch(signedString string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(s.RefreshToken), []byte(signedString))
-	return err == nil
+	return s.RefreshToken == hashData(signedString)
 }
 
 /* ==============================================================================

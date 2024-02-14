@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -15,15 +14,16 @@ import (
 	"github.com/kgjoner/cornucopia/utils/structop"
 	"github.com/kgjoner/sphinx/internal/config"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/sha3"
 )
 
 type Account struct {
 	InternalId int                `json:"-"`
-	Id         uuid.UUID          `json:"id" validator:"required"`
-	Email      htypes.Email       `json:"-" validator:"required"`
+	Id         uuid.UUID          `json:"id" validate:"required"`
+	Email      htypes.Email       `json:"-" validate:"required"`
 	Phone      htypes.PhoneNumber `json:"-"`
-	Password   string             `json:"-" validator:"required"`
-	Username   string             `json:"username" validator:"wordId,atLeastOne=letter"`
+	Password   string             `json:"-" validate:"required"`
+	Username   string             `json:"username" validate:"wordId,atLeastOne=letter"`
 	Document   htypes.Document    `json:"-"`
 
 	IsActive             bool                       `json:"isActive"`
@@ -38,8 +38,8 @@ type Account struct {
 	AuthToken              *authToken `json:"-"`
 
 	PasswordUpdatedAt time.Time `json:"-"`
-	CreatedAt         time.Time `json:"createdAt" validator:"required"`
-	UpdatedAt         time.Time `json:"updatedAt" validator:"required"`
+	CreatedAt         time.Time `json:"createdAt" validate:"required"`
+	UpdatedAt         time.Time `json:"updatedAt" validate:"required"`
 }
 
 /* ==============================================================================
@@ -65,7 +65,7 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 		Id:       uuid.New(),
 		Email:    a.Email.Normalize(),
 		Phone:    a.Phone,
-		Password: hashData(a.Password),
+		Password: hashPassword(a.Password),
 		Username: strings.ToLower(a.Username),
 		Document: a.Document,
 
@@ -83,19 +83,25 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 	return acc, validator.Validate(acc)
 }
 
+func hashPassword(str string) string {
+	hash, _ := bcrypt.GenerateFromPassword([]byte(str), 14)
+	return string(hash)
+}
+
 func hashData(str string) string {
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(str), 14)
-	return string(bytes)
+	hash := make([]byte, 64)
+	sha3.ShakeSum256(hash, []byte(str))
+	return fmt.Sprintf("%x", hash)
 }
 
 func validatePasswordInput(password string) error {
-	err := validator.Validate(password, "required,min=8,atLeastOne=letter,number,specialChar")
+	err := validator.Validate(password, "required", "min=8", "max=32", "atLeastOne=letter number specialChar")
 	if err == nil {
 		return nil
 	}
 
 	msg := fmt.Sprintf("Password: %v", err.Error())
-	return errors.New(msg)
+	return normalizederr.NewValidationError(msg)
 }
 
 /* ==============================================================================
@@ -445,7 +451,7 @@ func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
 }
 
 func (a *Account) TerminateAuthedSession() (*Session, error) {
-	if a.IsAuthenticated() {
+	if !a.IsAuthenticated() {
 		return nil, normalizederr.NewUnauthorizedError("Unauthenticated")
 	}
 
@@ -546,10 +552,10 @@ func (a *Account) sessionsByApp(app Application) []Session {
 ============================================================================== */
 
 type AccountPrivateView struct {
-	Id       uuid.UUID          `json:"id" validator:"required"`
-	Email    htypes.Email       `json:"email" validator:"required"`
+	Id       uuid.UUID          `json:"id" validate:"required"`
+	Email    htypes.Email       `json:"email" validate:"required"`
 	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
-	Username string             `json:"username,omitempty" validator:"wordId"`
+	Username string             `json:"username,omitempty" validate:"wordId"`
 	Document htypes.Document    `json:"document,omitempty"`
 
 	IsActive             bool  `json:"isActive"`
