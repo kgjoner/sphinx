@@ -12,18 +12,24 @@ type GetPrivateAccount struct {
 }
 
 type GetPrivateAccountInput struct {
-	Id    uuid.UUID
+	Entry string
 	Actor auth.Account
 }
 
 func (i GetPrivateAccount) Execute(input GetPrivateAccountInput) (*auth.AccountPrivateView, error) {
-	target := input.Actor
-	if input.Id != uuid.Nil && input.Id != input.Actor.Id {
+	target := &input.Actor
+	if input.Entry != "" {
 		if !input.Actor.HasRoleOnAuth(auth.RoleValues.ADMIN) {
 			return nil, normalizederr.NewForbiddenError("Does not have permission to access this content.")
 		}
 
-		target, err := i.AuthRepo.GetAccountById(input.Id)
+		var err error 
+		if id, err := uuid.Parse(input.Entry); err != nil {
+			target, err = i.AuthRepo.GetAccountById(id)
+		} else {
+			target, err = i.AuthRepo.GetAccountByEntry(input.Entry)
+		}
+		
 		if err != nil {
 			return nil, err
 		} else if target == nil {
