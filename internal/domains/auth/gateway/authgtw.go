@@ -28,6 +28,7 @@ func Raise(router chi.Router, repos common.Repos) {
 	router.Route("/auth", func(r chi.Router) {
 		r.With(authgtw.mid.AppToken).Post("/login", authgtw.login)
 		r.With(authgtw.mid.Authenticate).Post("/logout", authgtw.logout)
+		r.With(authgtw.mid.Authenticate).Post("/refresh", authgtw.refresh)
 	})
 }
 
@@ -80,4 +81,28 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	presenter.HttpSuccess(output, w, r)
+}
+
+func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
+ c := controller.New(r).
+  AddActor()
+
+ var input authcase.RefreshInput
+ err := c.Write(&input)
+ if err != nil {
+  presenter.HttpError(err, w, r)
+  return
+ }
+
+ i := authcase.Refresh{
+  AuthRepo: g.AuthRepo,
+ }
+
+ output, err := i.Execute(input)
+ if err != nil {
+  presenter.HttpError(err, w, r)
+  return
+ }
+
+ presenter.HttpSuccess(output, w, r)
 }
