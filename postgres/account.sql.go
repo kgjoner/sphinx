@@ -100,11 +100,15 @@ WITH la AS (
 SELECT
   a.internal_id, a.id, a.email, a.password, a.phone, a.username, a.document, a.is_active, a.has_email_been_verified, a.has_phone_been_verified, a.codes, a.password_updated_at, a.created_at, a.updated_at,
   json_agg(la.*) links,
-  json_agg(sa.*) active_sessions
+  CASE 
+    WHEN json_agg(sa.*)::text <> '[null]' 
+      THEN json_agg(sa.*)
+    ELSE NULL
+  END AS active_sessions
 FROM
   account a
-  JOIN la ON la.account_id = a.internal_id
-  JOIN sa ON sa.account_id = a.internal_id 
+  LEFT JOIN la ON la.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id 
 WHERE
   a.email = $1 OR
   a.phone = $1 OR
@@ -130,7 +134,7 @@ type GetAccountByEntryRow struct {
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 	Links                json.RawMessage
-	ActiveSessions       json.RawMessage
+	ActiveSessions       interface{}
 }
 
 func (q *Queries) GetAccountByEntry(ctx context.Context, email string) (GetAccountByEntryRow, error) {
@@ -182,11 +186,15 @@ WITH la AS (
 SELECT
   a.internal_id, a.id, a.email, a.password, a.phone, a.username, a.document, a.is_active, a.has_email_been_verified, a.has_phone_been_verified, a.codes, a.password_updated_at, a.created_at, a.updated_at,
   json_agg(la.*) links,
-  json_agg(sa.*) active_sessions
+  CASE 
+    WHEN json_agg(sa.*)::text <> '[null]' 
+      THEN json_agg(sa.*)
+    ELSE NULL
+  END AS active_sessions
 FROM
   account a
-  JOIN la ON la.account_id = a.internal_id
-  JOIN sa ON sa.account_id = a.internal_id
+  LEFT JOIN la ON la.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id
 WHERE
   a.id = $1
 GROUP BY
@@ -209,7 +217,7 @@ type GetAccountByIdRow struct {
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 	Links                json.RawMessage
-	ActiveSessions       json.RawMessage
+	ActiveSessions       interface{}
 }
 
 func (q *Queries) GetAccountById(ctx context.Context, id uuid.UUID) (GetAccountByIdRow, error) {

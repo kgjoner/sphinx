@@ -70,11 +70,15 @@ WITH la AS (
 SELECT
   a.*,
   json_agg(la.*) links,
-  json_agg(sa.*) active_sessions
+  CASE 
+    WHEN json_agg(sa.*)::text <> '[null]' 
+      THEN json_agg(sa.*)
+    ELSE NULL
+  END AS active_sessions
 FROM
   account a
-  JOIN la ON la.account_id = a.internal_id
-  JOIN sa ON sa.account_id = a.internal_id
+  LEFT JOIN la ON la.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id
 WHERE
   a.id = $1
 GROUP BY
@@ -105,11 +109,15 @@ WITH la AS (
 SELECT
   a.*,
   json_agg(la.*) links,
-  json_agg(sa.*) active_sessions
+  CASE 
+    WHEN json_agg(sa.*)::text <> '[null]' 
+      THEN json_agg(sa.*)
+    ELSE NULL
+  END AS active_sessions
 FROM
   account a
-  JOIN la ON la.account_id = a.internal_id
-  JOIN sa ON sa.account_id = a.internal_id 
+  LEFT JOIN la ON la.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id 
 WHERE
   a.email = $1 OR
   a.phone = $1 OR
