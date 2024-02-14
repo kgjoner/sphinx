@@ -108,7 +108,7 @@ func ParseAuthToken(str string) (*authToken, error) {
 		return []byte(config.Environment.JWT.SECRET), nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, normalizederr.NewUnauthorizedError(err.Error())
 	}
 
 	if !token.Valid {
