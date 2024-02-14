@@ -50,7 +50,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 }
 
 type LoginOutput struct {
-	AccountId    uuid.UUID
-	AccessToken  string
-	RefreshToken string
+	AccountId    uuid.UUID `json:"accountId"`
+	AccessToken  string    `json:"accessToken"`
+	RefreshToken string    `json:"refreshToken"`
 }
