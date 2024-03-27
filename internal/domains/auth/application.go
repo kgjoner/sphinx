@@ -12,12 +12,12 @@ import (
 
 type Application struct {
 	InternalId int       `json:"-"`
-	Id         uuid.UUID `json:"-" validator:"required"`
-	Name       string    `json:"name" validator:"required"`
+	Id         uuid.UUID `json:"-" validate:"required"`
+	Name       string    `json:"name" validate:"required"`
 	Grantings  []string  `json:"grantings"`
 
-	CreatedAt time.Time `json:"createdAt" validator:"required"`
-	UpdatedAt time.Time `json:"updatedAt" validator:"required"`
+	CreatedAt time.Time `json:"createdAt" validate:"required"`
+	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
 }
 
 /* ==============================================================================
