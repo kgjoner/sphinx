@@ -12,7 +12,7 @@ import (
 
 func (g AuthGateway) applicationHandler(r chi.Router) {
 	r.With(g.mid.Authenticate).Post("/", g.createApplication)
-	r.With(g.mid.Authenticate).Patch("/{id}", g.getPrivateAccount)
+	r.With(g.mid.Authenticate).Patch("/{id}", g.editApplication)
 
 }
 
