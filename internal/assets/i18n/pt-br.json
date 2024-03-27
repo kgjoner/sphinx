@@ -1,0 +1,11 @@
+{
+  "Mail": {
+    "Welcome": {
+      "Subject": "Bem-vindo a",
+      "Title": "Saudações,",
+      "Button": "Confirmar email",
+      "P1": "É bom te ver por aqui. Esperamos que goste dos nossos serviços. Clique no botão abaixo para validar o seu email.",
+      "P2": "Caso não esteja abrindo, copie o endereço a seguir e cole no seu navegador:"
+    }
+  }
+}
