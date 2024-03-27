@@ -12,15 +12,15 @@ import (
 
 type AuthGateway struct {
 	common.Repos
+	common.Services
 	mid common.Middlewares
 }
 
-func Raise(router chi.Router, repos common.Repos) {
+func Raise(router chi.Router, repos common.Repos, services common.Services) {
 	authgtw := &AuthGateway{
 		repos,
-		common.Middlewares{
-			AuthRepo: repos.AuthRepo,
-		},
+		services,
+		common.Middlewares(repos),
 	}
 
 	router.Route("/account", authgtw.accountHandler)

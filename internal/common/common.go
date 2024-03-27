@@ -8,12 +8,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type Repos struct {
 	AuthRepo authcase.AuthRepo
+}
+
+type Services struct {
+	MailService hermes.MailService
 }
 
 type Middlewares struct {
@@ -63,14 +68,14 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 			presenter.HttpError(err, w, r)
 			return
 		}
-		
+
 		tokenStr := authHeaderParts[1]
 		token, err := auth.ParseAuthToken(tokenStr)
 		if err != nil {
 			presenter.HttpError(err, w, r)
 			return
 		}
-		
+
 		if token.IsRefresh() && !strings.Contains(r.URL.Path, "refresh") {
 			err := normalizederr.NewUnauthorizedError("Must provide an access token.")
 			presenter.HttpError(err, w, r)

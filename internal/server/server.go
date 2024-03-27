@@ -8,7 +8,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common"
+	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth/gateway"
 	authrepo "github.com/kgjoner/sphinx/internal/domains/auth/repository"
 	"github.com/kgjoner/sphinx/postgres"
@@ -35,6 +37,10 @@ func (s *Server) Setup() {
 		AuthRepo: authrepo.New(s.queries),
 	}
 
+	services := common.Services{
+		MailService: hermes.New(config.Environment.HERMES.BASE_URL, config.Environment.HERMES.API_KEY),
+	}
+
 	r := chi.NewRouter()
 	r.Use(addContextToReposAndServices(&repos))
 	r.Use(cors.Handler(cors.Options{
@@ -49,7 +55,7 @@ func (s *Server) Setup() {
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(countRequestMetric())
 
-		authgtw.Raise(r, repos)
+		authgtw.Raise(r, repos, services)
 	})
 
 	r.Mount("/metrics", promhttp.Handler())
