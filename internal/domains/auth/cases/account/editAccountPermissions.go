@@ -28,7 +28,7 @@ func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*aut
 
 	var targetAcc *auth.Account
 	var err error
-	if id, err := uuid.Parse(input.TargetAccountEntry); err != nil {
+	if id, errif := uuid.Parse(input.TargetAccountEntry); errif != nil {
 		targetAcc, err = i.AuthRepo.GetAccountById(id)
 	} else {
 		targetAcc, err = i.AuthRepo.GetAccountByEntry(input.TargetAccountEntry)

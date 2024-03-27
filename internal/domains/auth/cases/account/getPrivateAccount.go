@@ -24,7 +24,7 @@ func (i GetPrivateAccount) Execute(input GetPrivateAccountInput) (*auth.AccountP
 		}
 
 		var err error 
-		if id, err := uuid.Parse(input.Entry); err != nil {
+		if id, errif := uuid.Parse(input.Entry); errif != nil {
 			target, err = i.AuthRepo.GetAccountById(id)
 		} else {
 			target, err = i.AuthRepo.GetAccountByEntry(input.Entry)
