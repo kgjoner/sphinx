@@ -26,6 +26,8 @@ var (
 	mockedAccount    = &auth.Account{
 		Email:    "test@test.com",
 		Username: "test",
+		Phone:    "+5511999999999",
+		Document: "cpf:02496946031",
 		Password: unhashedPassword,
 		IsActive: true,
 	}
@@ -39,10 +41,12 @@ func TestAccount(t *testing.T) {
 
 	t.Run("it should create an account", func(t *testing.T) {
 		var respData presenter.Success[auth.Account]
-		resp, err := api.Post("/account", map[string]string{
+		resp, err := api.Post("/account", map[string]any{
 			"email":    mockedAccount.Email.String(),
 			"password": unhashedPassword,
 			"username": mockedAccount.Username,
+			"phone":    mockedAccount.Phone,
+			"document": mockedAccount.Document,
 		}, &httputil.Options{
 			Headers: map[string]string{
 				"authorization": config.Environment.ROOT_APP_TOKEN,
@@ -57,7 +61,7 @@ func TestAccount(t *testing.T) {
 
 	t.Run("it should log in", func(t *testing.T) {
 		var respData presenter.Success[authcase.LoginOutput]
-		resp, err := api.Post("/auth/login", map[string]string{
+		resp, err := api.Post("/auth/login", map[string]any{
 			"entry":    mockedAccount.Email.String(),
 			"password": unhashedPassword,
 		}, &httputil.Options{
