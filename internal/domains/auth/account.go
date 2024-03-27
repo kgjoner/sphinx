@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -107,6 +108,16 @@ func validatePasswordInput(password string) error {
 /* ==============================================================================
 	METHODS
 ============================================================================== */
+
+func (a Account) Name() string {
+	if a.Username == "" {
+		return a.Username
+	}
+
+	pattern := regexp.MustCompile("^(.+)@")
+	matches := pattern.FindStringSubmatch(a.Email.String())
+	return matches[1]
+}
 
 func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
 	if !a.DoesPasswordMatch(oldPassword) {
