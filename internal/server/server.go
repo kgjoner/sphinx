@@ -8,8 +8,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/docs"
+	"github.com/kgjoner/sphinx/internal/assets/img"
+	"github.com/kgjoner/sphinx/internal/assets/style"
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth/gateway"
@@ -86,6 +89,18 @@ func (s *Server) Setup() {
 	})
 
 	r.Mount("/metrics", promhttp.Handler())
+
+	// Root app files
+	r.Route("/root", func(r chi.Router) {
+		r.Get("/logo.svg", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "image/svg+xml")
+			w.Header().Set("Content-Length", fmt.Sprintf("%v", len(img.Logo)))
+			w.Write(img.Logo)
+		})
+		r.Get("/style", func(w http.ResponseWriter, r *http.Request) {
+			presenter.HttpSuccess(style.Root, w, r);
+		})
+	})
 
 	// Docs
 	docs.SwaggerInfo.Host = config.Environment.SWAGGER_HOST

@@ -1,0 +1,38 @@
+{
+  "colors": {
+    "primaryPure": "#114868",
+    "secondaryPure": "#CDE3EF",
+    "backgroundLight": "#CDE3EF",
+    "backgroundDark": "#0E0E0E",
+    "neutralPure": "#333333",
+    "neutral50": "#F3F3F3",
+    "neutral100": "#D6D6D6",
+    "neutral200": "#BABABA",
+    "neutral300": "#9E9E9E",
+    "neutral400": "#848484",
+    "neutral500": "#6A6A6A",
+    "neutral600": "#525252",
+    "neutral700": "#3A3A3A",
+    "neutral800": "#242424",
+    "neutral900": "#0E0E0E",
+    "positivePure": "#0bb556",
+    "warningPure": "#FF9040",
+    "dangerPure": "#D94141",
+    "infoPure": "#41A6D9"
+  },
+  "fonts": {
+    "headlineLarge": "700 3rem/3.5rem sans-serif",
+    "headline": "500 2.5rem/3rem sans-serif",
+    "headlineSmall": "500 2rem/2.5rem sans-serif",
+    "subtitleLarge": "500 1.75rem/2.125rem sans-serif",
+    "subtitle": "500 1.5rem/2rem sans-serif",
+    "subtitleSmall": "500 1rem/1.5rem sans-serif",
+    "bodyLarge": "500 1rem/1.5rem sans-serif",
+    "body": "500 0.875rem/1.5rem sans-serif",
+    "bodySmall": "500 0.75rem/1.125rem sans-serif",
+    "captionLarge": "400 1rem/0.875rem sans-serif",
+    "caption": "400 0.75rem/0.875rem sans-serif",
+    "button": "500 1rem/1.5rem sans-serif"
+  },
+  "outline": "auto 5px -webkit-focus-ring-color"
+}
