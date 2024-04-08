@@ -13,9 +13,9 @@ var Environment struct {
 	MAX_CONCURRENT_SESSIONS int    `envconfig:"default=0"`
 	FALLBACK_LANGUAGE       string `envconfig:"default=pt-br"`
 	JWT                     struct {
-		SECRET                   string `envconfig:"default=topsecret"`
-		ACCESS_LIFE_TIME_IN_SEC  int    `envconfig:"default=300"`
-		REFRESH_LIFE_TIME_IN_SEC int    `envconfig:"default=172800"`
+		SECRET                  string `envconfig:"default=topsecret"`
+		ACCESS_LIFETIME_IN_SEC  int    `envconfig:"default=300"`
+		REFRESH_LIFETIME_IN_SEC int    `envconfig:"default=172800"`
 	}
 	CLIENT_URI struct {
 		DATA_VERIFICATION string `envconfig:"default=localhost:8080/verification"`

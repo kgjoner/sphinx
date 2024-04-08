@@ -79,10 +79,10 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	var duration time.Duration
 	if f.IsRefresh {
 		kind = "refresh"
-		duration = time.Second * time.Duration(config.Environment.JWT.REFRESH_LIFE_TIME_IN_SEC)
+		duration = time.Second * time.Duration(config.Environment.JWT.REFRESH_LIFETIME_IN_SEC)
 	} else {
 		kind = "access"
-		duration = time.Second * time.Duration(config.Environment.JWT.ACCESS_LIFE_TIME_IN_SEC)
+		duration = time.Second * time.Duration(config.Environment.JWT.ACCESS_LIFETIME_IN_SEC)
 	}
 
 	claims := jwtClaims{
