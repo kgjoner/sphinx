@@ -77,7 +77,7 @@ func (l *Link) removeRole(r Role) error {
 
 func (l *Link) addGranting(g string) error {
 	if sliceman.IndexOf(l.Application.Grantings, g) == -1 {
-		return normalizederr.NewForbiddenError("Application does not support the desired granting.")
+		return normalizederr.NewRequestError("Application does not support the desired granting.", "")
 	}
 
 	if sliceman.IndexOf(l.Grantings, g) != -1 {
@@ -91,7 +91,7 @@ func (l *Link) addGranting(g string) error {
 
 func (l *Link) removeGranting(g string) error {
 	if sliceman.IndexOf(l.Application.Grantings, g) == -1 {
-		return normalizederr.NewForbiddenError("Application does not support the desired granting.")
+		return normalizederr.NewRequestError("Application does not support the desired granting.", "")
 	}
 
 	index := sliceman.IndexOf(l.Grantings, g)
