@@ -13,7 +13,7 @@ type Login struct {
 type LoginInput struct {
 	Entry    string
 	Password string
-	auth.SessionCreationFields
+	auth.SessionCreationFields `json:"-"`
 }
 
 func (i Login) Execute(input LoginInput) (*LoginOutput, error) {

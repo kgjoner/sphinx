@@ -48,9 +48,9 @@ type Account struct {
 ============================================================================== */
 
 type AccountCreationFields struct {
-	Email    htypes.Email       `json:"email"`
+	Email    htypes.Email       `json:"email" validate:"required"`
 	Phone    htypes.PhoneNumber `json:"phone"`
-	Password string             `json:"password"`
+	Password string             `json:"password" validate:"required"`
 	Username string             `json:"username"`
 	Document htypes.Document    `json:"document"`
 }
@@ -110,7 +110,7 @@ func validatePasswordInput(password string) error {
 ============================================================================== */
 
 func (a Account) Name() string {
-	if a.Username == "" {
+	if a.Username != "" {
 		return a.Username
 	}
 

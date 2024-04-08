@@ -33,6 +33,20 @@ func Raise(router chi.Router, repos common.Repos, services common.Services) {
 	})
 }
 
+// Login godoc
+//
+//	@Summary		Log user in
+//	@Description	Exchange user credentials for auth tokens
+//	@Router			/auth/login [post]
+//	@Tags			Auth
+//	@Security		AppToken
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		authcase.LoginInput	true	"Credentials. Entry can be: email, phone, username or document"
+//	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseBody("entry", "password").
@@ -60,6 +74,19 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	presenter.HttpSuccess(output, w, r)
 }
 
+// Logout godoc
+//
+//	@Summary		Log user out
+//	@Description	Invalidate current session and their tokens
+//	@Router			/auth/logout [post]
+//	@Tags			Auth
+//	@Security		Bearer
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	presenter.Success[bool]
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		401	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddActor()
@@ -84,6 +111,19 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	presenter.HttpSuccess(output, w, r)
 }
 
+// Refresh godoc
+//
+//	@Summary		Issue new auth tokens
+//	@Description	Get new auth tokens from a refresh one. This is invalidated.
+//	@Router			/auth/refresh [post]
+//	@Tags			Auth
+//	@Security		BearerRefresh
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	presenter.Success[authcase.LoginOutput]
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		401	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddActor()

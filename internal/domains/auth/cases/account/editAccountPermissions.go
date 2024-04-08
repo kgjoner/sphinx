@@ -14,11 +14,11 @@ type EditAccountPermissions struct {
 }
 
 type EditAccountPermissionsInput struct {
-	TargetAccountEntry string
 	Roles              []auth.Role
-	Grantings         []string
-	ShouldRemove       sql.NullBool
-	Actor              auth.Account
+	Grantings          []string
+	ShouldRemove       sql.NullBool `validate:"required"`
+	TargetAccountEntry string       `json:"-"`
+	Actor              auth.Account `json:"-"`
 }
 
 func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*auth.AccountPrivateView, error) {
@@ -33,11 +33,11 @@ func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*aut
 	} else {
 		targetAcc, err = i.AuthRepo.GetAccountByEntry(input.TargetAccountEntry)
 	}
-	
+
 	if err != nil {
-	 return nil, err
+		return nil, err
 	} else if targetAcc == nil {
-	 return nil, normalizederr.NewRequestError("Account does not exist", "")
+		return nil, normalizederr.NewRequestError("Account does not exist", "")
 	}
 
 	if input.Roles != nil {
@@ -69,7 +69,7 @@ func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*aut
 
 	err = i.AuthRepo.UpsertLinks(targetAcc.LinksToPersist()...)
 	if err != nil {
-	 return nil, err
+		return nil, err
 	}
 
 	return targetAcc.PrivateView(input.Actor)

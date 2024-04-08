@@ -16,6 +16,21 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 
 }
 
+// CreateApplication godoc
+//
+//	@Summary		Create an application
+//	@Description	Register a new application that share auth details with this server.
+//	@Router			/application [post]
+//	@Tags			Application
+//	@Security		AppToken
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		auth.ApplicationCreationFields	true	"Name and possible grantings."
+//	@Success		200		{object}	presenter.Success[auth.Application]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		403		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 	bodyKeys := structop.New(appcase.CreateApplicationInput{}.ApplicationCreationFields).Keys()
 	c := controller.New(r).
@@ -42,6 +57,23 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 	presenter.HttpSuccess(output, w, r)
 }
 
+
+// EditApplication godoc
+//
+//	@Summary		Edit an application
+//	@Description	Update name or grantings of target application.
+//	@Router			/application/{id} [patch]
+//	@Tags			Application
+//	@Security		AppToken
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string							true	"Id of target application"
+//	@Param			payload	body		auth.ApplicationEditableFields	true	"If grantings are passed, the new ones (even if empty array) will overwrite old ones."
+//	@Success		200		{object}	presenter.Success[auth.Application]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		403		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 	bodyKeys := structop.New(appcase.EditAppInput{}.ApplicationEditableFields).Keys()
 	c := controller.New(r).

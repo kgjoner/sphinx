@@ -1,6 +1,8 @@
 package authcase
 
-import "github.com/kgjoner/sphinx/internal/domains/auth"
+import (
+	"github.com/kgjoner/sphinx/internal/domains/auth"
+)
 
 type Logout struct {
 	AuthRepo AuthRepo
