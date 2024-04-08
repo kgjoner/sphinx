@@ -26,7 +26,7 @@ type resourceMap map[i18n.Language]resource
 var files embed.FS
 
 var AcceptedLanguages = []i18n.Language{i18n.LanguageValues.PT_BR, i18n.LanguageValues.EN_US}
-var Resources resourceMap
+var Resources = resourceMap{}
 
 func init() {
 	for _, lng := range AcceptedLanguages {
