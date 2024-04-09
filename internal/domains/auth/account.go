@@ -119,6 +119,33 @@ func (a Account) Name() string {
 	return matches[1]
 }
 
+func (a *Account) VerifyAccount(kind AccountCodeKind, code string) error {
+	err := validator.Validate(code, "required")
+	if err != nil {
+		return err
+	}
+
+	err = validator.Validate(kind)
+	if err != nil {
+		return err
+	}
+
+	if code != a.Codes[kind] {
+		return normalizederr.NewRequestError("Invalid code.", "")
+	}
+
+	switch kind {
+	case AccountCodeKindValues.EMAIL_VERIFICATION:
+		a.HasEmailBeenVerified = true
+	case AccountCodeKindValues.PHONE_VERIFICATION:
+		a.HasPhoneBeenVerified = true
+	}
+	a.clearCodeFor(kind)
+	a.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
 	if !a.DoesPasswordMatch(oldPassword) {
 		return normalizederr.NewUnauthorizedError("Invalid credentials.")
@@ -148,7 +175,7 @@ func (a *Account) ResetPassword(newPassword string, code string) error {
 	if resetCode == "" {
 		return normalizederr.NewRequestError("Account did not request a password reset.", "")
 	} else if code != a.Codes[AccountCodeKindValues.PASSWORD_RESET] {
-		return normalizederr.NewUnauthorizedError("Invalid code.")
+		return normalizederr.NewRequestError("Invalid code.", "")
 	}
 
 	err := validatePasswordInput(newPassword)

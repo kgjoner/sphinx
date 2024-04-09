@@ -14,6 +14,7 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.AppToken).Post("/", g.createAccount)
 
 	r.With(g.mid.Authenticate).Get("/self", g.getPrivateAccount)
+	r.With(g.mid.Authenticate).Post("/{id}/verification", g.verifyAccount)
 	r.With(g.mid.Authenticate).Get("/{entry}", g.getPrivateAccount)
 	r.With(g.mid.Authenticate).Patch("/{entry}/permission", g.editAccountPermissions)
 }
@@ -90,6 +91,43 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := accountcase.GetPrivateAccount{
+		AuthRepo: g.AuthRepo,
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// VerifyAccounnt godoc
+//
+//	@Summary		Verify account data
+//	@Description	Verify email or phone of target account
+//	@Router			/account/{id}/verification [post]
+//	@Tags			Account
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		accountcase.VerifyAccountInput	true	"Code kind must be email or phone."
+//	@Success		200		{object}	presenter.Success[bool]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseUrlParam("id", "accountId").
+		ParseBody("code", "codeKind")
+
+	var input accountcase.VerifyAccountInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := accountcase.VerifyAccount{
 		AuthRepo: g.AuthRepo,
 	}
 
