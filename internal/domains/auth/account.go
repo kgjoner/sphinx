@@ -156,7 +156,7 @@ func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
 		return err
 	}
 
-	a.Password = newPassword
+	a.Password = hashPassword(newPassword)
 
 	now := time.Now()
 	a.PasswordUpdatedAt = now
@@ -183,7 +183,7 @@ func (a *Account) ResetPassword(newPassword string, code string) error {
 		return err
 	}
 
-	a.Password = newPassword
+	a.Password = hashPassword(newPassword)
 	a.clearCodeFor(AccountCodeKindValues.PASSWORD_RESET)
 
 	now := time.Now()
