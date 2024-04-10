@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -63,8 +62,8 @@ func New(pool *sql.DB) *Server {
 // @host		{{ .Host }}
 // @basePath	/v1
 func (s *Server) Setup() {
-	repos := common.Repos{
-		AuthRepo: authrepo.New(s.queries),
+	repos := common.RepoFactories{
+		AuthRepo: authrepo.NewFactory(s.queries),
 	}
 
 	services := common.Services{
@@ -72,7 +71,6 @@ func (s *Server) Setup() {
 	}
 
 	r := chi.NewRouter()
-	r.Use(addContextToReposAndServices(&repos))
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -117,27 +115,6 @@ func (s *Server) Setup() {
 func (s *Server) Start() {
 	fmt.Println("Server running at port 8080")
 	http.ListenAndServe(":8080", s.Handler)
-}
-
-func addContextToReposAndServices(repos *common.Repos) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-
-			type WithContext interface {
-				AddContext(context.Context)
-			}
-
-			repos := []any{repos.AuthRepo}
-			for _, repo := range repos {
-				if ctxRepo, ok := repo.(WithContext); ok {
-					ctxRepo.AddContext(ctx)
-				}
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
 }
 
 var (

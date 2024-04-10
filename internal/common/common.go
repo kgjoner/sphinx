@@ -13,8 +13,12 @@ import (
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type Repos struct {
-	AuthRepo authcase.AuthRepo
+type RepoFactory[T any] interface {
+	New(context.Context) T
+}
+
+type RepoFactories struct {
+	AuthRepo RepoFactory[authcase.AuthRepo]
 }
 
 type Services struct {
@@ -22,7 +26,7 @@ type Services struct {
 }
 
 type Middlewares struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo RepoFactory[authcase.AuthRepo]
 }
 
 func (m Middlewares) AppToken(next http.Handler) http.Handler {
@@ -41,7 +45,8 @@ func (m Middlewares) AppToken(next http.Handler) http.Handler {
 			return
 		}
 
-		application, err := m.AuthRepo.GetApplicationById(appId)
+		authRepo := m.AuthRepo.New(r.Context())
+		application, err := authRepo.GetApplicationById(appId)
 		if err != nil {
 			presenter.HttpError(err, w, r)
 			return
@@ -82,7 +87,8 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		account, err := m.AuthRepo.GetAccountById(token.Claims.Sub)
+		authRepo := m.AuthRepo.New(r.Context())
+		account, err := authRepo.GetAccountById(token.Claims.Sub)
 		if err != nil {
 			presenter.HttpError(err, w, r)
 			return
@@ -93,7 +99,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		err = account.Authenticate(token)
-		m.AuthRepo.UpsertSessions(account.SessionsToPersist()...)
+		authRepo.UpsertSessions(account.SessionsToPersist()...)
 		if err != nil {
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, "actor", *account)

@@ -49,7 +49,7 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := accountcase.CreateAccount{
-		AuthRepo:    g.AuthRepo,
+		AuthRepo:    g.AuthRepo.New(r.Context()),
 		MailService: g.MailService,
 	}
 
@@ -91,7 +91,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := accountcase.GetPrivateAccount{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -128,7 +128,7 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := accountcase.VerifyAccount{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -171,7 +171,7 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 	}
 
 	i := accountcase.EditAccountPermissions{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)

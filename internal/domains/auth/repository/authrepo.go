@@ -5,22 +5,30 @@ import (
 
 	"github.com/kgjoner/cornucopia/utils/datatransform"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
+	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	psqlrepo "github.com/kgjoner/sphinx/postgres"
 )
 
-type AuthRepo struct {
-	q   *psqlrepo.Queries
-	ctx context.Context
+type AuthFactory struct {
+	q *psqlrepo.Queries
 }
 
-func New(q *psqlrepo.Queries) *AuthRepo {
-	return &AuthRepo{
+func NewFactory(q *psqlrepo.Queries) *AuthFactory {
+	return &AuthFactory{
 		q: q,
 	}
 }
 
-func (r *AuthRepo) AddContext(ctx context.Context) {
-	r.ctx = ctx
+func (f AuthFactory) New(ctx context.Context) authcase.AuthRepo {
+	return &AuthRepo{
+		q:   f.q,
+		ctx: ctx,
+	}
+}
+
+type AuthRepo struct {
+	q   *psqlrepo.Queries
+	ctx context.Context
 }
 
 /* =========================================================================

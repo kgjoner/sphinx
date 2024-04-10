@@ -11,12 +11,12 @@ import (
 )
 
 type AuthGateway struct {
-	common.Repos
+	common.RepoFactories
 	common.Services
 	mid common.Middlewares
 }
 
-func Raise(router chi.Router, repos common.Repos, services common.Services) {
+func Raise(router chi.Router, repos common.RepoFactories, services common.Services) {
 	authgtw := &AuthGateway{
 		repos,
 		services,
@@ -62,7 +62,7 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := authcase.Login{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -99,7 +99,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := authcase.Logout{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -136,7 +136,7 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := authcase.Refresh{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)

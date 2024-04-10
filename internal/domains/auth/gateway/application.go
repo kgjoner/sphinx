@@ -45,7 +45,7 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := appcase.CreateApplication{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -89,7 +89,7 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := appcase.EditApp{
-		AuthRepo: g.AuthRepo,
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)
