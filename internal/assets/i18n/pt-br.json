@@ -1,11 +1,45 @@
 {
-  "Mail": {
-    "Welcome": {
-      "Subject": "Bem-vindo a",
-      "Title": "Saudações,",
-      "Button": "Confirmar email",
-      "P1": "É bom te ver por aqui. Esperamos que goste dos nossos serviços. Clique no botão abaixo para validar o seu email.",
-      "P2": "Caso não esteja abrindo, copie o endereço a seguir e cole no seu navegador:"
-    }
+  "mail": {
+    "welcome": {
+      "subject": {
+        "content": "Bem-vindo a {{ .AppName }}"
+      },
+      "body": [
+        {
+          "kind": "title",
+          "content": "Saudações, {{ .UserName }}"
+        },
+        {
+          "kind": "text",
+          "content": "É bom te ver por aqui. Esperamos que goste dos nossos serviços. Clique no botão abaixo para validar o seu email."
+        },
+        {
+          "kind": "button",
+          "key": "email-verification",
+          "content": "Confirmar email"
+        }
+      ]
+    },
+    "passwordReset": {
+      "subject": {
+        "content": "Redefinição de senha"
+      },
+      "body": [
+        {
+          "kind": "text",
+          "content": "Olá, {{ .UserName }}! Você deseja redefinir sua senha?"
+        },
+        {
+          "kind": "text",
+          "content": "Recebemos uma solicitação para redefinir a senha da sua conta. Clique no botão abaixo para prosseguir. Se você não fez esta solicitação, basta ignorar esse email."
+        },
+        {
+          "kind": "button",
+          "key": "password-reset",
+          "content": "Redefinir senha"
+        }
+      ]
+    },
+    "linkAlt": "Ou copie e cole esse link no seu navegador"
   }
 }

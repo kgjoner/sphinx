@@ -1,11 +1,45 @@
 {
-  "Mail": {
-    "Welcome": {
-      "Subject": "Welcome to",
-      "Title": "Greetings,",
-      "Button": "Confirm email",
-      "P1": "It's good to see you here. We hope you like our services. Click on the button below to validate your email.",
-      "P2": "If you can't open it with the button, try to copy the following address and paste on your browser:"
-    }
+  "mail": {
+    "welcome": {
+      "subject": {
+        "content": "Welcome to {{ .AppName }}"
+      },
+      "body": [
+        {
+          "kind": "title",
+          "content": "Greetings, {{ .UserName }}"
+        },
+        {
+          "kind": "text",
+          "content": "It's good to see you here. We hope you like our services. Click on the button below to validate your email."
+        },
+        {
+          "kind": "button",
+          "key": "email-verification",
+          "content": "Confirm email"
+        }
+      ]
+    },
+    "passwordReset": {
+      "subject": {
+        "content": "Password reset"
+      },
+      "body": [
+        {
+          "kind": "text",
+          "content": "Hi, {{ .UserName }}! Would you like to reset your password?"
+        },
+        {
+          "kind": "text",
+          "content": "We receive a request for a password reset. Click on the button below to procced. If you didn't make this request, just ignore this email."
+        },
+        {
+          "kind": "button",
+          "key": "password-reset",
+          "content": "Reset password"
+        }
+      ]
+    },
+    "linkAlt": "Or copy and paste the following link into your browser"
   }
 }

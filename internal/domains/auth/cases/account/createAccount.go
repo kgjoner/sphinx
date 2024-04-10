@@ -53,33 +53,21 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		return nil, err
 	}
 
-	t := i18n.Resource(input.Languages).Mail.Welcome
-	emailVerificationLink := fmt.Sprintf(
-		"%v?kind=email&id=%v&code=%v",
-		config.Environment.CLIENT_URI.DATA_VERIFICATION,
-		acc.Id,
-		acc.Codes[auth.AccountCodeKindValues.EMAIL_VERIFICATION],
-	)
-
-	err = i.MailService.SendCustomEmail(acc.Email, fmt.Sprintf("%v %v!", t.Subject, config.Environment.APP_NAME), []hermes.CustomTemplateDescriptor{
-		{
-			Kind:    "title",
-			Content: fmt.Sprintf("%v %v", t.Title, acc.Name()),
-		},
-		{
-			Kind:    "text",
-			Content: t.P1,
-		},
-		{
-			Kind:    "button",
-			Content: t.Button,
-			Link:    emailVerificationLink,
-		},
-		{
-			Kind:    "text",
-			Content: fmt.Sprintf("%v %v", t.P2, emailVerificationLink),
-		},
+	// Send email
+	t := i18n.Resource(input.Languages).Mails["welcome"];
+	t.ParseContent(i18n.ResourceParams{
+		UserName: acc.Name(),
 	})
+	
+	err = i.MailService.SendCustomEmail(acc.Email, t.Subject.Content, t.FormatBody(i18n.CustomLink{
+		Key: "email-verification",
+		Link: fmt.Sprintf(
+			"%v?kind=email&id=%v&code=%v",
+			config.Environment.CLIENT_URI.DATA_VERIFICATION,
+			acc.Id,
+			acc.Codes[auth.AccountCodeKindValues.EMAIL_VERIFICATION],
+		),
+	}))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"Kind":  "Mail Failed",
