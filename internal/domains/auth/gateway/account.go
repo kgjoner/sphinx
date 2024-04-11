@@ -15,10 +15,11 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.Authenticate).Get("/", g.getPrivateAccount)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
 	r.With(g.mid.Authenticate).Patch("/permission", g.editAccountPermissions)
-
+	
+	r.Get("/existence", g.checkEntryExistence)
 	r.Post("/password/request", g.requestPasswordReset)
 	r.Patch("/{id}/password", g.resetPassword)
-	r.Post("/{id}/verification", g.verifyAccount)
+	r.Patch("/{id}/verification", g.verifyAccount)
 }
 
 // CreateAccount godoc
@@ -62,6 +63,43 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	presenter.HttpSuccess(output, w, r, http.StatusCreated)
+}
+
+// CheckEntryExistence godoc
+//
+//	@Summary		Check whether an entry already is registered
+//	@Description	Check whether email, username, phone or document has already been registered.
+//	@Router			/account [post]
+//	@Tags			Account
+//	@Security		AppToken
+//	@Accept			json
+//	@Produce		json
+//	@Param			x-entry			header		string	true	"Email, username, phone or document."
+//	@Success		200				{object}	presenter.Success[bool]
+//	@Failure		400				{object}	normalizederr.NormalizedError
+//	@Failure		500				{object}	normalizederr.NormalizedError
+func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		AddHeader("X-Entry", "entry")
+
+	var input accountcase.CheckEntryExistenceInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := accountcase.CheckEntryExistence{
+		AuthRepo:    g.AuthRepo.New(r.Context()),
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
 }
 
 // GetPrivateAccounnt godoc
@@ -108,7 +146,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Verify account data
 //	@Description	Verify email or phone of target account
-//	@Router			/account/{id}/verification [post]
+//	@Router			/account/{id}/verification [patch]
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
