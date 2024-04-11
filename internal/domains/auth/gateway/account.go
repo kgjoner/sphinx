@@ -13,8 +13,12 @@ import (
 func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.AppToken).Post("/", g.createAccount)
 
+	r.Post("/unknown/password", g.requestPasswordReset)
+	r.Patch("/{id}/password", g.resetPassword)
+	r.Post("/{id}/verification", g.verifyAccount)
+	
 	r.With(g.mid.Authenticate).Get("/self", g.getPrivateAccount)
-	r.With(g.mid.Authenticate).Post("/{id}/verification", g.verifyAccount)
+	r.With(g.mid.Authenticate).Patch("/self/password", g.changePassword)
 	r.With(g.mid.Authenticate).Get("/{entry}", g.getPrivateAccount)
 	r.With(g.mid.Authenticate).Patch("/{entry}/permission", g.editAccountPermissions)
 }
@@ -28,7 +32,7 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 //	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
-//	@Param			accept-language	header		string						false	"pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		auth.AccountCreationFields	true	"Email and password are mandatory."
 //	@Success		200				{object}	presenter.Success[auth.Account]
 //	@Failure		400				{object}	normalizederr.NormalizedError
@@ -72,7 +76,7 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 //	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
-//	@Param			entry	path		string	true	"Email, username, phone or document"
+//	@Param			entry	path		string	true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
 //	@Success		200		{object}	presenter.Success[auth.AccountPrivateView]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError
@@ -111,6 +115,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
+//	@Param			id	path		string									true "Account ID"
 //	@Param			payload	body		accountcase.VerifyAccountInput	true	"Code kind must be email or phone."
 //	@Success		200		{object}	presenter.Success[bool]
 //	@Failure		400		{object}	normalizederr.NormalizedError
@@ -118,7 +123,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseUrlParam("id", "accountId").
-		ParseBody("code", "codeKind")
+		ParseBody(structop.New(accountcase.VerifyAccountInput{}).JsonKeys()...)
 
 	var input accountcase.VerifyAccountInput
 	err := c.Write(&input)
@@ -140,7 +145,125 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	presenter.HttpSuccess(output, w, r)
 }
 
-// EditAccounntPermissions godoc
+// ChangePassword godoc
+//
+//	@Summary		Update password of logged account.
+//	@Description	Update password of logged account. It must provide the current password.
+//	@Router			/account/self/password [patch]
+//	@Tags			Account
+//	@Accept			json
+//	@Produce		json
+//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			payload	body		accountcase.ChangePasswordInput	true	"Old password and new one."
+//	@Success		200		{object}	presenter.Success[bool]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseBody(structop.New(accountcase.ChangePasswordInput{}).JsonKeys()...).
+		AddActor().
+		AddLanguages()
+
+	var input accountcase.ChangePasswordInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := accountcase.ChangePassword{
+		AuthRepo: g.AuthRepo.New(r.Context()),
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// RequestPasswordReset godoc
+//
+//	@Summary		Request for a password reset.
+//	@Description	Request for a password reset. An email is sent with instructions.
+//	@Router			/account/unknown/password [post]
+//	@Tags			Account
+//	@Accept			json
+//	@Produce		json
+//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			payload	body		accountcase.RequestPasswordResetInput	true	"Old password and new one."
+//	@Success		200		{object}	presenter.Success[bool]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseBody(structop.New(accountcase.RequestPasswordResetInput{}).JsonKeys()...).
+		AddLanguages()
+
+	var input accountcase.RequestPasswordResetInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := accountcase.RequestPasswordReset{
+		AuthRepo: g.AuthRepo.New(r.Context()),
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// ResetPassword godoc
+//
+//	@Summary		Update password with a reset code.
+//	@Description	Update password with a reset code.
+//	@Router			/account/{id}/password [post]
+//	@Tags			Account
+//	@Accept			json
+//	@Produce		json
+//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			id	path		string									true "Account ID"
+//	@Param			payload	body		accountcase.ResetPasswordInput	true	"Old password and new one."
+//	@Success		200		{object}	presenter.Success[bool]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseUrlParam("id", "accountId").
+		ParseBody(structop.New(accountcase.ResetPasswordInput{}).JsonKeys()...).
+		AddLanguages()
+
+	var input accountcase.ResetPasswordInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := accountcase.ResetPassword{
+		AuthRepo: g.AuthRepo.New(r.Context()),
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// EditAccountPermissions godoc
 //
 //	@Summary		Add or remove roles and grantings
 //	@Description	Add or remove roles and/or grantings of the target account. Must be a high user.
@@ -149,7 +272,7 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 //	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
-//	@Param			entry	path		string									true	"Email, username, phone or document"
+//	@Param			entry	path		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
 //	@Param			payload	body		accountcase.EditAccountPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		200		{object}	presenter.Success[auth.AccountPrivateView]
 //	@Failure		400		{object}	normalizederr.NormalizedError
