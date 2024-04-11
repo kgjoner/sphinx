@@ -51,7 +51,7 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseBody("entry", "password").
 		AddApplication().
-		AddHeader("x-forwarded-for", "ip").
+		AddIp().
 		AddHeader("user-agent", "device")
 
 	var input authcase.LoginInput

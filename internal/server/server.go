@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/hermes/pkg/hermes"
@@ -71,10 +73,12 @@ func (s *Server) Setup() {
 	}
 
 	r := chi.NewRouter()
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Timeout(60 * time.Second))
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-Forwarded-For"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-Entry"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
