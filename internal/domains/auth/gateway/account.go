@@ -12,15 +12,13 @@ import (
 
 func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.AppToken).Post("/", g.createAccount)
+	r.With(g.mid.Authenticate).Get("/", g.getPrivateAccount)
+	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
+	r.With(g.mid.Authenticate).Patch("/permission", g.editAccountPermissions)
 
-	r.Post("/unknown/password", g.requestPasswordReset)
+	r.Post("/password/request", g.requestPasswordReset)
 	r.Patch("/{id}/password", g.resetPassword)
 	r.Post("/{id}/verification", g.verifyAccount)
-	
-	r.With(g.mid.Authenticate).Get("/self", g.getPrivateAccount)
-	r.With(g.mid.Authenticate).Patch("/self/password", g.changePassword)
-	r.With(g.mid.Authenticate).Get("/{entry}", g.getPrivateAccount)
-	r.With(g.mid.Authenticate).Patch("/{entry}/permission", g.editAccountPermissions)
 }
 
 // CreateAccount godoc
@@ -69,14 +67,13 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 // GetPrivateAccounnt godoc
 //
 //	@Summary		Get account private data
-//	@Description	Retrieve private data associated with logged account (or target one, if high user)
-//	@Router			/account/self [get]
-//	@Router			/account/{entry} [get]
+//	@Description	Retrieve private data associated with logged account or target one, if x-entry header is informed. The latter require special permission.
+//	@Router			/account [get]
 //	@Tags			Account
 //	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
-//	@Param			entry	path		string	true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
+//	@Param			x-entry	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
 //	@Success		200		{object}	presenter.Success[auth.AccountPrivateView]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError
@@ -85,7 +82,7 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddActor().
-		ParseUrlParam("entry")
+		AddHeader("X-Entry", "entry")
 
 	var input accountcase.GetPrivateAccountInput
 	err := c.Write(&input)
@@ -149,7 +146,7 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Update password of logged account.
 //	@Description	Update password of logged account. It must provide the current password.
-//	@Router			/account/self/password [patch]
+//	@Router			/account/password [patch]
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
@@ -189,7 +186,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Request for a password reset.
 //	@Description	Request for a password reset. An email is sent with instructions.
-//	@Router			/account/unknown/password [post]
+//	@Router			/account/password/request [post]
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
@@ -267,12 +264,12 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Add or remove roles and grantings
 //	@Description	Add or remove roles and/or grantings of the target account. Must be a high user.
-//	@Router			/account/{entry}/permission [patch]
+//	@Router			/account/permission [patch]
 //	@Tags			Account
 //	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
-//	@Param			entry	path		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
+//	@Param			x-entry	header		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
 //	@Param			payload	body		accountcase.EditAccountPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		200		{object}	presenter.Success[auth.AccountPrivateView]
 //	@Failure		400		{object}	normalizederr.NormalizedError
@@ -283,7 +280,7 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 	bodyKeys := structop.New(accountcase.EditAccountPermissionsInput{}).Keys()
 	c := controller.New(r).
 		ParseBody(bodyKeys...).
-		ParseUrlParam("entry", "targetAccountEntry").
+		AddHeader("X-Entry", "targetAccountEntry").
 		AddActor()
 
 	var input accountcase.EditAccountPermissionsInput
