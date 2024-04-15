@@ -15,7 +15,7 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.Authenticate).Get("/", g.getPrivateAccount)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
 	r.With(g.mid.Authenticate).Patch("/permission", g.editAccountPermissions)
-	
+
 	r.Get("/existence", g.checkEntryExistence)
 	r.Post("/password/request", g.requestPasswordReset)
 	r.Patch("/{id}/password", g.resetPassword)
@@ -69,9 +69,8 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Check whether an entry already is registered
 //	@Description	Check whether email, username, phone or document has already been registered.
-//	@Router			/account [post]
+//	@Router			/account/existence [get]
 //	@Tags			Account
-//	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-entry			header		string	true	"Email, username, phone or document."
@@ -90,7 +89,7 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 	}
 
 	i := accountcase.CheckEntryExistence{
-		AuthRepo:    g.AuthRepo.New(r.Context()),
+		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -108,7 +107,7 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 //	@Description	Retrieve private data associated with logged account or target one, if x-entry header is informed. The latter require special permission.
 //	@Router			/account [get]
 //	@Tags			Account
-//	@Security		AppToken
+//	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-entry	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
@@ -157,8 +156,8 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseUrlParam("id", "accountId").
-		ParseBody(structop.New(accountcase.VerifyAccountInput{}).JsonKeys()...)
+		ParseBody(structop.New(accountcase.VerifyAccountInput{}).Keys()...).
+		ParseUrlParam("id", "accountId")
 
 	var input accountcase.VerifyAccountInput
 	err := c.Write(&input)
@@ -182,21 +181,22 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 
 // ChangePassword godoc
 //
-//	@Summary		Update password of logged account.
-//	@Description	Update password of logged account. It must provide the current password.
-//	@Router			/account/password [patch]
-//	@Tags			Account
-//	@Accept			json
-//	@Produce		json
-//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload	body		accountcase.ChangePasswordInput	true	"Old password and new one."
-//	@Success		200		{object}	presenter.Success[bool]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		401		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//		@Summary		Update password of logged account.
+//		@Description	Update password of logged account. It must provide the current password.
+//		@Router			/account/password [patch]
+//		@Tags			Account
+//	 @Security Bearer
+//		@Accept			json
+//		@Produce		json
+//		@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//		@Param			payload	body		accountcase.ChangePasswordInput	true	"Old password and new one."
+//		@Success		200		{object}	presenter.Success[bool]
+//		@Failure		400		{object}	normalizederr.NormalizedError
+//		@Failure		401		{object}	normalizederr.NormalizedError
+//		@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.ChangePasswordInput{}).JsonKeys()...).
+		ParseBody(structop.New(accountcase.ChangePasswordInput{}).Keys()...).
 		AddActor().
 		AddLanguages()
 
@@ -235,7 +235,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.RequestPasswordResetInput{}).JsonKeys()...).
+		ParseBody(structop.New(accountcase.RequestPasswordResetInput{}).Keys()...).
 		AddLanguages()
 
 	var input accountcase.RequestPasswordResetInput
@@ -274,8 +274,8 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
+		ParseBody(structop.New(accountcase.ResetPasswordInput{}).Keys()...).
 		ParseUrlParam("id", "accountId").
-		ParseBody(structop.New(accountcase.ResetPasswordInput{}).JsonKeys()...).
 		AddLanguages()
 
 	var input accountcase.ResetPasswordInput
