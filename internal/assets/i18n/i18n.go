@@ -44,7 +44,7 @@ func (a *resourceMail) fillTemplate() {
 
 func (a *resourceMail) ParseContent(params ResourceParams) {
 	if params.AppName == "" {
-		params.AppName = config.Environment.APP_NAME
+		params.AppName = config.Env.APP_NAME
 	}
 
 	a.Subject.Content = executeTemplate(a.Subject.Template, params)
@@ -128,5 +128,5 @@ func Resource(lngs []string) resource {
 		}
 	}
 
-	return Resources[i18n.Language(config.Environment.FALLBACK_LANGUAGE)]
+	return Resources[i18n.Language(config.Env.FALLBACK_LANGUAGE)]
 }

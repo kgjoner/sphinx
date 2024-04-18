@@ -16,39 +16,39 @@ type RequestPasswordReset struct {
 }
 
 type RequestPasswordResetInput struct {
-	Entry string
+	Entry     string
 	Languages []string `json:"-"`
 }
 
 func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, error) {
-	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry);
+	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry)
 	if err != nil {
-	 return false, err
+		return false, err
 	} else if acc == nil {
-	 return false, normalizederr.NewRequestError("Account does not exist", "")
+		return false, normalizederr.NewRequestError("Account does not exist", "")
 	}
 
-	code, err := acc.RequestPasswordReset();
+	code, err := acc.RequestPasswordReset()
 	if err != nil {
-	 return false, err
+		return false, err
 	}
 
-	err = i.AuthRepo.UpdateAccount(*acc);
+	err = i.AuthRepo.UpdateAccount(*acc)
 	if err != nil {
-	 return false, err
+		return false, err
 	}
 
 	// Send email
-	t := i18n.Resource(input.Languages).Mails["passwordReset"];
+	t := i18n.Resource(input.Languages).Mails["passwordReset"]
 	t.ParseContent(i18n.ResourceParams{
 		UserName: acc.Name(),
 	})
-	
+
 	err = i.MailService.SendCustomEmail(acc.Email, t.Subject.Content, t.FormatBody(i18n.CustomLink{
 		Key: "password-reset",
 		Link: fmt.Sprintf(
 			"%v?id=%v&code=%v",
-			config.Environment.CLIENT_URI.PASSWORD_RESET,
+			config.Env.CLIENT_URI.PASSWORD_RESET,
 			acc.Id,
 			code,
 		),

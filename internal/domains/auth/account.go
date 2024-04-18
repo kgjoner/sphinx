@@ -376,10 +376,10 @@ func (a *Account) InitSession(password string, f *SessionCreationFields) (access
 
 	// Terminate exceeding sessions
 	if concurrentSessions :=
-		SessionSortableByAge(a.sessionsByApp(f.Application)); config.Environment.MAX_CONCURRENT_SESSIONS > 0 &&
-		len(concurrentSessions) >= config.Environment.MAX_CONCURRENT_SESSIONS {
+		SessionSortableByAge(a.sessionsByApp(f.Application)); config.Env.MAX_CONCURRENT_SESSIONS > 0 &&
+		len(concurrentSessions) >= config.Env.MAX_CONCURRENT_SESSIONS {
 
-		previousExcess := len(concurrentSessions) - config.Environment.MAX_CONCURRENT_SESSIONS
+		previousExcess := len(concurrentSessions) - config.Env.MAX_CONCURRENT_SESSIONS
 		/* If all goes well, previousExcess will be zero. There will be only one session to terminate
 		for preventing new session to exceed max limit */
 		sort.Sort(concurrentSessions)

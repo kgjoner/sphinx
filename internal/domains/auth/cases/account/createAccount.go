@@ -54,16 +54,16 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 	}
 
 	// Send email
-	t := i18n.Resource(input.Languages).Mails["welcome"];
+	t := i18n.Resource(input.Languages).Mails["welcome"]
 	t.ParseContent(i18n.ResourceParams{
 		UserName: acc.Name(),
 	})
-	
+
 	err = i.MailService.SendCustomEmail(acc.Email, t.Subject.Content, t.FormatBody(i18n.CustomLink{
 		Key: "email-verification",
 		Link: fmt.Sprintf(
 			"%v?kind=email&id=%v&code=%v",
-			config.Environment.CLIENT_URI.DATA_VERIFICATION,
+			config.Env.CLIENT_URI.DATA_VERIFICATION,
 			acc.Id,
 			acc.Codes[auth.AccountCodeKindValues.EMAIL_VERIFICATION],
 		),

@@ -16,13 +16,13 @@ import (
 	"github.com/kgjoner/sphinx/internal/assets/style"
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/domains/auth/gateway"
+	authgtw "github.com/kgjoner/sphinx/internal/domains/auth/gateway"
 	authrepo "github.com/kgjoner/sphinx/internal/domains/auth/repository"
-	"github.com/kgjoner/sphinx/postgres"
+	psqlrepo "github.com/kgjoner/sphinx/postgres"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/swaggo/http-swagger/v2"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Server struct {
@@ -69,7 +69,7 @@ func (s *Server) Setup() {
 	}
 
 	services := common.Services{
-		MailService: hermes.New(config.Environment.HERMES.BASE_URL, config.Environment.HERMES.API_KEY),
+		MailService: hermes.New(config.Env.HERMES.BASE_URL, config.Env.HERMES.API_KEY),
 	}
 
 	r := chi.NewRouter()
@@ -100,12 +100,12 @@ func (s *Server) Setup() {
 			w.Write(img.Logo)
 		})
 		r.Get("/style", func(w http.ResponseWriter, r *http.Request) {
-			presenter.HttpSuccess(style.Root, w, r);
+			presenter.HttpSuccess(style.Root, w, r)
 		})
 	})
 
 	// Docs
-	docs.SwaggerInfo.Host = config.Environment.SWAGGER_HOST
+	docs.SwaggerInfo.Host = config.Env.SWAGGER_HOST
 	r.Get("/docs/*", httpSwagger.Handler(
 		httpSwagger.URL("/docs/doc.json"),
 	))

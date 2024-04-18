@@ -25,8 +25,8 @@ type Application struct {
 ============================================================================== */
 
 type ApplicationCreationFields struct {
-	Name             string `validate:"required"`
-	Grantings        []string
+	Name      string `validate:"required"`
+	Grantings []string
 }
 
 func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, error) {
@@ -53,8 +53,8 @@ func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, 
 ============================================================================== */
 
 type ApplicationEditableFields struct {
-	Name             string
-	Grantings        []string
+	Name      string
+	Grantings []string
 }
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
@@ -69,5 +69,5 @@ func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 }
 
 func (a Application) isRoot() bool {
-	return a.Id.String() == config.Environment.ROOT_APP_TOKEN
+	return a.Id.String() == config.Env.ROOT_APP_TOKEN
 }

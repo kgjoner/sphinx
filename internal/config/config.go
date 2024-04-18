@@ -4,7 +4,7 @@ import (
 	"github.com/vrischmann/envconfig"
 )
 
-var Environment struct {
+var Env struct {
 	APP_NAME       string `envconfig:"default=Sphinx"`
 	DATABASE_URL   string `envconfig:"default=postgres://postgres:postgres@db:5432/sphynx?sslmode=disable&pool_max_conns=20"`
 	ROOT_APP_TOKEN string `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
@@ -28,7 +28,7 @@ var Environment struct {
 }
 
 func Must() {
-	if err := envconfig.Init(&Environment); err != nil {
+	if err := envconfig.Init(&Env); err != nil {
 		panic(err)
 	}
 }

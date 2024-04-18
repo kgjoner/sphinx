@@ -49,7 +49,7 @@ func TestAccount(t *testing.T) {
 			"document": mockedAccount.Document,
 		}, &httputil.Options{
 			Headers: map[string]string{
-				"authorization": config.Environment.ROOT_APP_TOKEN,
+				"authorization": config.Env.ROOT_APP_TOKEN,
 			},
 		})(&respData)
 
@@ -66,7 +66,7 @@ func TestAccount(t *testing.T) {
 			"password": unhashedPassword,
 		}, &httputil.Options{
 			Headers: map[string]string{
-				"authorization": config.Environment.ROOT_APP_TOKEN,
+				"authorization": config.Env.ROOT_APP_TOKEN,
 			},
 		})(&respData)
 

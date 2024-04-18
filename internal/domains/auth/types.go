@@ -79,10 +79,10 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	var duration time.Duration
 	if f.IsRefresh {
 		kind = "refresh"
-		duration = time.Second * time.Duration(config.Environment.JWT.REFRESH_LIFETIME_IN_SEC)
+		duration = time.Second * time.Duration(config.Env.JWT.REFRESH_LIFETIME_IN_SEC)
 	} else {
 		kind = "access"
-		duration = time.Second * time.Duration(config.Environment.JWT.ACCESS_LIFETIME_IN_SEC)
+		duration = time.Second * time.Duration(config.Env.JWT.ACCESS_LIFETIME_IN_SEC)
 	}
 
 	claims := jwtClaims{
@@ -95,7 +95,7 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenAsSignedString, err := token.SignedString([]byte(config.Environment.JWT.SECRET))
+	tokenAsSignedString, err := token.SignedString([]byte(config.Env.JWT.SECRET))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 
 func ParseAuthToken(str string) (*authToken, error) {
 	token, err := jwt.Parse(str, func(t *jwt.Token) (interface{}, error) {
-		return []byte(config.Environment.JWT.SECRET), nil
+		return []byte(config.Env.JWT.SECRET), nil
 	})
 	if err != nil {
 		return nil, normalizederr.NewUnauthorizedError(err.Error())

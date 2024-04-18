@@ -16,7 +16,7 @@ func main() {
 }
 
 func SetupPostgres() *sql.DB {
-	db, err := sql.Open("postgres", config.Environment.DATABASE_URL)
+	db, err := sql.Open("postgres", config.Env.DATABASE_URL)
 	if err != nil {
 		log.Fatalf("Unable to parse database url: %v", err)
 	}
