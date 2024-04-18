@@ -3,6 +3,7 @@ package authcase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
@@ -21,7 +22,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 	if err != nil {
 		return nil, err
 	} else if acc == nil {
-		return nil, normalizederr.NewUnauthorizedError("Invalid credentials")
+		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
 	access, refresh, err := acc.InitSession(input.Password, &input.SessionCreationFields)

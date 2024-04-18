@@ -7,6 +7,7 @@ import (
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
@@ -25,7 +26,7 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 	if err != nil {
 		return false, err
 	} else if acc == nil {
-		return false, normalizederr.NewRequestError("Account does not exist", "")
+		return false, normalizederr.NewRequestError("Account does not exist", errcode.AccountNotFound)
 	}
 
 	code, err := acc.RequestPasswordReset()

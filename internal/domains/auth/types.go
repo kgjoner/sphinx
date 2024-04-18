@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 )
 
 /* ==============================================================================
@@ -71,7 +72,7 @@ type authTokenCreationFields struct {
 func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	s := f.Account.session(f.SessionId)
 	if s == nil {
-		return nil, normalizederr.NewRequestError("Account and session do not match.", "")
+		return nil, normalizederr.NewRequestError("Account and session do not match.")
 	}
 
 	now := time.Now()
@@ -108,18 +109,18 @@ func ParseAuthToken(str string) (*authToken, error) {
 		return []byte(config.Env.JWT.SECRET), nil
 	})
 	if err != nil {
-		return nil, normalizederr.NewUnauthorizedError(err.Error())
+		return nil, normalizederr.NewUnauthorizedError(err.Error(), errcode.InvalidAccess)
 	}
 
 	if !token.Valid {
-		return nil, normalizederr.NewUnauthorizedError("Invalid authToken")
+		return nil, normalizederr.NewUnauthorizedError("Invalid authToken", errcode.InvalidAccess)
 	}
 
 	var claims jwtClaims
 	ms, _ := json.Marshal(token.Claims)
 	err = json.Unmarshal(ms, &claims)
 	if err != nil {
-		return nil, normalizederr.NewUnauthorizedError("Badly formatted authToken")
+		return nil, normalizederr.NewUnauthorizedError("Badly formatted authToken", errcode.InvalidAccess)
 	}
 
 	return &authToken{*token, claims, str}, nil

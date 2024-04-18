@@ -9,6 +9,7 @@ import (
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	"github.com/sirupsen/logrus"
@@ -37,7 +38,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 			pattern := regexp.MustCompile("account_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
-			return nil, normalizederr.NewRequestError(msg, "")
+			return nil, normalizederr.NewRequestError(msg, errcode.DuplicateKey)
 		}
 		return nil, err
 	}

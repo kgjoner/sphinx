@@ -7,6 +7,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/validator"
 	"github.com/kgjoner/cornucopia/utils/sliceman"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 )
 
 type Link struct {
@@ -56,7 +57,7 @@ func (l Link) hasRole(roles ...Role) bool {
 
 func (l *Link) addRole(r Role) error {
 	if sliceman.IndexOf(l.Roles, r) != -1 {
-		return normalizederr.NewRequestError("Role has already been added.", "")
+		return normalizederr.NewRequestError("Role has already been added.")
 	}
 
 	l.Roles = append(l.Roles, r)
@@ -67,7 +68,7 @@ func (l *Link) addRole(r Role) error {
 func (l *Link) removeRole(r Role) error {
 	index := sliceman.IndexOf(l.Roles, r)
 	if index == -1 {
-		return normalizederr.NewRequestError("Role has not been added.", "")
+		return normalizederr.NewRequestError("Role has not been added.")
 	}
 
 	l.Roles = sliceman.Remove(l.Roles, index)
@@ -77,11 +78,11 @@ func (l *Link) removeRole(r Role) error {
 
 func (l *Link) addGranting(g string) error {
 	if sliceman.IndexOf(l.Application.Grantings, g) == -1 {
-		return normalizederr.NewRequestError("Application does not support the desired granting.", "")
+		return normalizederr.NewRequestError("Application does not support the desired granting.", errcode.InvalidGranting)
 	}
 
 	if sliceman.IndexOf(l.Grantings, g) != -1 {
-		return normalizederr.NewRequestError("Granting has already been added.", "")
+		return normalizederr.NewRequestError("Granting has already been added.")
 	}
 
 	l.Grantings = append(l.Grantings, g)
@@ -91,12 +92,12 @@ func (l *Link) addGranting(g string) error {
 
 func (l *Link) removeGranting(g string) error {
 	if sliceman.IndexOf(l.Application.Grantings, g) == -1 {
-		return normalizederr.NewRequestError("Application does not support the desired granting.", "")
+		return normalizederr.NewRequestError("Application does not support the desired granting.", errcode.InvalidGranting)
 	}
 
 	index := sliceman.IndexOf(l.Grantings, g)
 	if index == -1 {
-		return normalizederr.NewRequestError("Granting has not been added.", "")
+		return normalizederr.NewRequestError("Granting has not been added.")
 	}
 
 	l.Grantings = sliceman.Remove(l.Grantings, index)

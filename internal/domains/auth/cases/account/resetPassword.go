@@ -5,6 +5,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
@@ -25,7 +26,7 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	if err != nil {
 		return false, err
 	} else if acc == nil {
-		return false, normalizederr.NewRequestError("Account does not exist", "")
+		return false, normalizederr.NewRequestError("Account does not exist", errcode.AccountNotFound)
 	}
 
 	err = acc.ResetPassword(input.NewPassword, input.Code)

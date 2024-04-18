@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
@@ -23,7 +24,7 @@ type EditAccountPermissionsInput struct {
 
 func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*auth.AccountPrivateView, error) {
 	if !input.ShouldRemove.Valid {
-		return nil, normalizederr.NewRequestError("Must inform whether permissions should be added or removed.", "")
+		return nil, normalizederr.NewRequestError("Must inform whether permissions should be added or removed.")
 	}
 
 	var targetAcc *auth.Account
@@ -37,7 +38,7 @@ func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*aut
 	if err != nil {
 		return nil, err
 	} else if targetAcc == nil {
-		return nil, normalizederr.NewRequestError("Account does not exist", "")
+		return nil, normalizederr.NewRequestError("Account does not exist", errcode.AccountNotFound)
 	}
 
 	if input.Roles != nil {

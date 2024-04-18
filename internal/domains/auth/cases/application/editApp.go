@@ -3,6 +3,7 @@ package appcase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
@@ -22,7 +23,7 @@ func (i EditApp) Execute(input EditAppInput) (*auth.Application, error) {
 	if err != nil {
 		return nil, err
 	} else if app == nil {
-		return nil, normalizederr.NewRequestError("Application does not exist", "")
+		return nil, normalizederr.NewRequestError("Application does not exist", errcode.ApplicationNotFound)
 	}
 
 	err = app.Edit(&input.ApplicationEditableFields, input.Actor)

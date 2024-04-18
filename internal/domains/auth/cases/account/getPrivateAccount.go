@@ -3,6 +3,7 @@ package accountcase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
@@ -33,7 +34,7 @@ func (i GetPrivateAccount) Execute(input GetPrivateAccountInput) (*auth.AccountP
 		if err != nil {
 			return nil, err
 		} else if target == nil {
-			return nil, normalizederr.NewRequestError("Account does not exist", "")
+			return nil, normalizederr.NewRequestError("Account does not exist", errcode.AccountNotFound)
 		}
 	}
 

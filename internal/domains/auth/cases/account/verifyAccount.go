@@ -3,6 +3,7 @@ package accountcase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
@@ -22,7 +23,7 @@ func (i VerifyAccount) Execute(input VerifyAccountInput) (bool, error) {
 	if err != nil {
 		return false, err
 	} else if acc == nil {
-		return false, normalizederr.NewRequestError("Account does not exit", "")
+		return false, normalizederr.NewRequestError("Account does not exit", errcode.AccountNotFound)
 	}
 
 	err = acc.VerifyAccount(input.CodeKind, input.Code)

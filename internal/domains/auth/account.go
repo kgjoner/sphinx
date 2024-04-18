@@ -14,6 +14,7 @@ import (
 	"github.com/kgjoner/cornucopia/utils/sliceman"
 	"github.com/kgjoner/cornucopia/utils/structop"
 	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/sha3"
 )
@@ -314,12 +315,12 @@ func (a *Account) LinksToPersist() []Link {
 func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) error {
 	app := actor.AuthedSession.Application
 	if !actor.HasRole(app, RoleValues.ADMIN) {
-		return normalizederr.NewUnauthorizedError("Does not have permission to execute this action.")
+		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
 	link := a.link(app)
 	if link == nil {
-		return normalizederr.NewRequestError("Target account is not linked to desired application.", "")
+		return normalizederr.NewRequestError("Target account is not linked to desired application.")
 	}
 
 	err := updaterFn(link)
@@ -363,7 +364,7 @@ func (a *Account) authedLink() *Link {
 // Create a new session and generate tokens
 func (a *Account) InitSession(password string, f *SessionCreationFields) (access *authToken, refresh *authToken, err error) {
 	if !a.DoesPasswordMatch(password) {
-		return nil, nil, normalizederr.NewUnauthorizedError("Invalid credentials.")
+		return nil, nil, normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
 	}
 
 	// Check if link exists
@@ -424,7 +425,7 @@ func (a *Account) Authenticate(token *authToken) error {
 		doesMatch := s.doesRefreshTokenMatch(token.String())
 		if !doesMatch {
 			a.TerminateAllSessions()
-			return normalizederr.NewFatalUnauthorizedError("Revoked token.")
+			return normalizederr.NewFatalUnauthorizedError("Revoked token.", errcode.ExpiredSession)
 		}
 	}
 
@@ -442,7 +443,7 @@ func (a *Account) IssueNewTokens() (access *authToken, refresh *authToken, err e
 	if !a.IsAuthenticated() {
 		return nil, nil, normalizederr.NewUnauthorizedError("Unauthenticated.")
 	} else if !a.AuthToken.IsRefresh() {
-		return nil, nil, normalizederr.NewUnauthorizedError("Non refresh token")
+		return nil, nil, normalizederr.NewUnauthorizedError("Non refresh token", errcode.InvalidAccess)
 	}
 
 	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.Id, true})
@@ -485,7 +486,7 @@ func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
 		}
 	}
 
-	return nil, normalizederr.NewRequestError("Session not found.", "")
+	return nil, normalizederr.NewRequestError("Session not found.", errcode.SessionNotFound)
 }
 
 func (a *Account) TerminateAuthedSession() (*Session, error) {
@@ -547,16 +548,20 @@ func (a *Account) SessionsToPersist() []Session {
 
 func (a *Account) verifyToken(token *authToken) (*Session, error) {
 	if token.IsExpired() {
-		return nil, normalizederr.NewUnauthorizedError("Expired token")
+		code := errcode.ExpiredAccess
+		if token.IsRefresh() {
+			code = errcode.ExpiredSession
+		}
+		return nil, normalizederr.NewUnauthorizedError("Expired token", code)
 	}
 
 	s := a.session(token.Claims.SessionId)
 	if s == nil {
-		return nil, normalizederr.NewUnauthorizedError("Invalid session")
+		return nil, normalizederr.NewUnauthorizedError("Invalid session", errcode.InvalidAccess)
 	}
 
 	if token.Claims.Sub != a.Id || token.Claims.Aud != s.Application.Id {
-		return nil, normalizederr.NewUnauthorizedError("Mismatched authentication")
+		return nil, normalizederr.NewUnauthorizedError("Mismatched authentication", errcode.InvalidAccess)
 	}
 
 	return s, nil
