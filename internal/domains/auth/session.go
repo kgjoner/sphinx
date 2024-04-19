@@ -11,18 +11,18 @@ import (
 type Session struct {
 	InternalId                     int             `json:"-"`
 	Id                             uuid.UUID       `json:"id" validate:"required"`
-	AccountId                      int             `json:"account_id" validate:"required"`
+	AccountId                      int             `json:"accountId" validate:"required"`
 	Application                    Application     `json:"application" validate:"required"`
-	RefreshToken                   string          `json:"refresh_token" validate:"required"`
-	RefreshedAt                    htypes.NullTime `json:"refreshed_at"`
-	ElapsedMinutesBetweenRefreshes []int           `json:"elapsed_minutes_between_refreshes"`
-	RefreshesCount                 int             `json:"refreshes_count"`
+	RefreshToken                   string          `json:"refreshToken" validate:"required"`
+	RefreshedAt                    htypes.NullTime `json:"refreshedAt"`
+	ElapsedMinutesBetweenRefreshes []int           `json:"elapsedMinutesBetweenRefreshes"`
+	RefreshesCount                 int             `json:"refreshesCount"`
 	Device                         string          `json:"device" validate:"required"`
 	Ip                             string          `json:"ip"`
-	IsActive                       bool            `json:"is_active"`
-	TerminatedAt                   htypes.NullTime `json:"terminated_at"`
-	CreatedAt                      time.Time       `json:"created_at" validate:"required"`
-	UpdatedAt                      time.Time       `json:"updated_at" validate:"required"`
+	IsActive                       bool            `json:"isActive"`
+	TerminatedAt                   htypes.NullTime `json:"terminatedAt"`
+	CreatedAt                      time.Time       `json:"createdAt" validate:"required"`
+	UpdatedAt                      time.Time       `json:"updatedAt" validate:"required"`
 }
 
 /* ==============================================================================

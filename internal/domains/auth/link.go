@@ -13,13 +13,13 @@ import (
 type Link struct {
 	InternalId  int         `json:"-"`
 	Id          uuid.UUID   `json:"id" validate:"required"`
-	AccountId   int         `json:"account_id" validate:"required"`
+	AccountId   int         `json:"-" validate:"required"`
 	Application Application `json:"application" validate:"required"`
 	Roles       []Role      `json:"roles"`
 	Grantings   []string    `json:"grantings"`
 
-	CreatedAt time.Time `json:"created_at" validate:"required"`
-	UpdatedAt time.Time `json:"updated_at" validate:"required"`
+	CreatedAt time.Time `json:"createdAt" validate:"required"`
+	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
 }
 
 /* ==============================================================================

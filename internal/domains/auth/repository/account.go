@@ -1,6 +1,8 @@
 package authrepo
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/utils/datatransform"
 	"github.com/kgjoner/cornucopia/utils/dbhandler"
@@ -48,6 +50,6 @@ func (r AuthRepo) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 
 func (r AuthRepo) GetAccountByEntry(entry string) (*auth.Account, error) {
 	return dbhandler.HandleSingleQuery[auth.Account](
-		r.q.GetAccountByEntry(r.ctx, entry),
+		r.q.GetAccountByEntry(r.ctx, strings.ToLower(entry)),
 	)
 }
