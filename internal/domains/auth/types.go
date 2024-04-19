@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -109,7 +110,12 @@ func ParseAuthToken(str string) (*authToken, error) {
 		return []byte(config.Env.JWT.SECRET), nil
 	})
 	if err != nil {
-		return nil, normalizederr.NewUnauthorizedError(err.Error(), errcode.InvalidAccess)
+		msg := err.Error();
+		code := errcode.InvalidAccess
+		if strings.Contains(msg, "token is expired") {
+			code = errcode.ExpiredAccess
+		}
+		return nil, normalizederr.NewUnauthorizedError(msg, code)
 	}
 
 	if !token.Valid {
