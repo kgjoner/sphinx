@@ -84,7 +84,8 @@ func (s *Session) updateRefreshToken(token authToken) {
 	s.RefreshToken = hashData(token.String())
 	s.ElapsedMinutesBetweenRefreshes = append(s.ElapsedMinutesBetweenRefreshes, int(elapsedTime.Minutes()))
 	s.RefreshesCount += 1
-	s.UpdatedAt = time.Now()
+	s.RefreshedAt = htypes.NullTime{Time: now}
+	s.UpdatedAt = now
 }
 
 func (s Session) doesRefreshTokenMatch(signedString string) bool {
