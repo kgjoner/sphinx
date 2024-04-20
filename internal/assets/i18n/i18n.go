@@ -112,8 +112,9 @@ func init() {
 		var res resource
 		json.Unmarshal(rawFile, &res)
 
-		for _, resourceMail := range res.Mails {
+		for key, resourceMail := range res.Mails {
 			resourceMail.fillTemplate()
+			res.Mails[key] = resourceMail
 		}
 
 		Resources[lng] = res

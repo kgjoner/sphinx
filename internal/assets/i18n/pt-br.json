@@ -1,5 +1,5 @@
 {
-  "mail": {
+  "mails": {
     "welcome": {
       "subject": {
         "content": "Bem-vindo a {{ .AppName }}"
@@ -7,6 +7,10 @@
       "body": [
         {
           "kind": "title",
+          "content": "Boas-vindas"
+        },
+        {
+          "kind": "text",
           "content": "Saudações, {{ .UserName }}"
         },
         {
@@ -39,7 +43,6 @@
           "content": "Redefinir senha"
         }
       ]
-    },
-    "linkAlt": "Ou copie e cole esse link no seu navegador"
+    }
   }
 }

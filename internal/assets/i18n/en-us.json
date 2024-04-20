@@ -1,5 +1,5 @@
 {
-  "mail": {
+  "mails": {
     "welcome": {
       "subject": {
         "content": "Welcome to {{ .AppName }}"
@@ -39,7 +39,6 @@
           "content": "Reset password"
         }
       ]
-    },
-    "linkAlt": "Or copy and paste the following link into your browser"
+    }
   }
 }
