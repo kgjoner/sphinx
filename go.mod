@@ -13,7 +13,7 @@ require (
 require (
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/kgjoner/hermes v0.0.0-20240302195127-4f58a17275f0
+	github.com/kgjoner/hermes v0.0.0-20240420093355-4dedb0c0f315
 	github.com/prometheus/client_golang v1.19.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0

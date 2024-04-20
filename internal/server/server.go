@@ -69,7 +69,26 @@ func (s *Server) Setup() {
 	}
 
 	services := common.Services{
-		MailService: hermes.New(config.Env.HERMES.BASE_URL, config.Env.HERMES.API_KEY),
+		MailService: hermes.New(config.Env.HERMES.BASE_URL, config.Env.HERMES.API_KEY, hermes.Options{
+			PrimaryColor:      style.Root.Colors.PrimaryPure,
+			PrimaryHoverColor: style.Root.Colors.PrimaryDark,
+			Header: struct {
+				Logo            string "json:\"logo\""
+				Title           string "json:\"title\""
+				BackgroundColor string "json:\"backgroundColor\""
+				Height          string "json:\"height\""
+				Align           string "json:\"align\" validate:\"oneof=flex-end flex-start center space-between space-around\""
+			}{
+				Logo:            config.Env.HOST + "/root/logo.svg",
+				Title:           config.Env.APP_NAME,
+				BackgroundColor: style.Root.Colors.BackgroundLight,
+			},
+			Footer: struct {
+				BackgroundColor string "json:\"backgroundColor\""
+			}{
+				BackgroundColor: style.Root.Colors.BackgroundDark,
+			},
+		}),
 	}
 
 	r := chi.NewRouter()
@@ -105,7 +124,7 @@ func (s *Server) Setup() {
 	})
 
 	// Docs
-	docs.SwaggerInfo.Host = config.Env.SWAGGER_HOST
+	docs.SwaggerInfo.Host = config.Env.HOST
 	r.Get("/docs/*", httpSwagger.Handler(
 		httpSwagger.URL("/docs/doc.json"),
 	))

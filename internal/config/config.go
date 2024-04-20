@@ -5,10 +5,10 @@ import (
 )
 
 var Env struct {
+	HOST           string `envconfig:"default=localhost:8080"`
 	APP_NAME       string `envconfig:"default=Sphinx"`
 	DATABASE_URL   string `envconfig:"default=postgres://postgres:postgres@db:5432/sphynx?sslmode=disable&pool_max_conns=20"`
 	ROOT_APP_TOKEN string `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
-	SWAGGER_HOST   string `envconfig:"default=localhost:8080"`
 	//Set 0 for disabling concurrent sessions control
 	MAX_CONCURRENT_SESSIONS int    `envconfig:"default=0"`
 	FALLBACK_LANGUAGE       string `envconfig:"default=pt-br"`
