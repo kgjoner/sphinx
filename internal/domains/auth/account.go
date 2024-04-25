@@ -131,8 +131,23 @@ func (a *Account) VerifyAccount(kind AccountCodeKind, code string) error {
 		return err
 	}
 
+	switch kind {
+	case AccountCodeKindValues.EMAIL_VERIFICATION:
+		if a.HasEmailBeenVerified {
+			return normalizederr.NewRequestError("Email has already been verified.")
+		}
+	case AccountCodeKindValues.PHONE_VERIFICATION:
+		if a.HasPhoneBeenVerified {
+			return normalizederr.NewRequestError("Phone has already been verified.")
+		}
+	}
+
+	if a.Codes[kind] == "" {
+		return normalizederr.NewConflictError("Account does not have a verification code.")
+	}
+
 	if code != a.Codes[kind] {
-		return normalizederr.NewRequestError("Invalid code.", "")
+		return normalizederr.NewRequestError("Invalid code.")
 	}
 
 	switch kind {
