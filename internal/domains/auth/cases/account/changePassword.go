@@ -15,8 +15,8 @@ type ChangePassword struct {
 type ChangePasswordInput struct {
 	OldPassword string
 	NewPassword string
-	Languages   []string `json:"-"`
-	Actor       auth.Account
+	Languages   []string     `json:"-"`
+	Actor       auth.Account `json:"-"`
 }
 
 func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {

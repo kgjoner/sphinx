@@ -30,6 +30,8 @@ github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8Hm
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/kgjoner/cornucopia v0.0.0-20240418124751-4828af434f48 h1:iSGfUir/NZR85XRNF/nj7ucxnBVA31aDcKBZ1NVB66E=
 github.com/kgjoner/cornucopia v0.0.0-20240418124751-4828af434f48/go.mod h1:ZRYV2ake2zqOTf7GWzEEDRydWfpthTak6zqvHNrMl80=
+github.com/kgjoner/cornucopia v0.0.0-20240425133320-2c97a4c31a65 h1:i2MuRHZcUbjhMddnyRrK5eh6koIkAeewyzc1mleoVA4=
+github.com/kgjoner/cornucopia v0.0.0-20240425133320-2c97a4c31a65/go.mod h1:ZRYV2ake2zqOTf7GWzEEDRydWfpthTak6zqvHNrMl80=
 github.com/kgjoner/hermes v0.0.0-20240420093355-4dedb0c0f315 h1:mOCxol9Krwn3u7Px4cG72kKqlXUhzASA6OU0kWXnWro=
 github.com/kgjoner/hermes v0.0.0-20240420093355-4dedb0c0f315/go.mod h1:4MO22LW56O4v2zs2Nnrcj5mZ4xCdHPQ2W7xSBM/gXtE=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=

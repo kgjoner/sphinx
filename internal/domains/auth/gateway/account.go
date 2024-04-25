@@ -38,7 +38,7 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 //	@Failure		401				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
 func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(accountcase.CreateAccountInput{}.AccountCreationFields).Keys()
+	bodyKeys := structop.New(accountcase.CreateAccountInput{}.AccountCreationFields).JsonKeys()
 	c := controller.New(r).
 		ParseBody(bodyKeys...).
 		AddApplication().
@@ -156,7 +156,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.VerifyAccountInput{}).Keys()...).
+		ParseBody(structop.New(accountcase.VerifyAccountInput{}).JsonKeys()...).
 		ParseUrlParam("id", "accountId")
 
 	var input accountcase.VerifyAccountInput
@@ -196,7 +196,7 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 //		@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.ChangePasswordInput{}).Keys()...).
+		ParseBody(structop.New(accountcase.ChangePasswordInput{}).JsonKeys()...).
 		AddActor().
 		AddLanguages()
 
@@ -235,7 +235,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.RequestPasswordResetInput{}).Keys()...).
+		ParseBody(structop.New(accountcase.RequestPasswordResetInput{}).JsonKeys()...).
 		AddLanguages()
 
 	var input accountcase.RequestPasswordResetInput
@@ -246,7 +246,8 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 	}
 
 	i := accountcase.RequestPasswordReset{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo:    g.AuthRepo.New(r.Context()),
+		MailService: g.MailService,
 	}
 
 	output, err := i.Execute(input)
@@ -274,7 +275,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.ResetPasswordInput{}).Keys()...).
+		ParseBody(structop.New(accountcase.ResetPasswordInput{}).JsonKeys()...).
 		ParseUrlParam("id", "accountId").
 		AddLanguages()
 
@@ -315,7 +316,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(accountcase.EditAccountPermissionsInput{}).Keys()
+	bodyKeys := structop.New(accountcase.EditAccountPermissionsInput{}).JsonKeys()
 	c := controller.New(r).
 		ParseBody(bodyKeys...).
 		AddHeader("X-Entry", "targetAccountEntry").
