@@ -2,15 +2,11 @@
   "mails": {
     "welcome": {
       "subject": {
-        "content": "Bem-vindo a {{ .AppName }}"
+        "content": "Bem-vindo à {{ .AppName }}"
       },
       "body": [
         {
           "kind": "title",
-          "content": "Boas-vindas"
-        },
-        {
-          "kind": "text",
           "content": "Saudações, {{ .UserName }}"
         },
         {
@@ -31,16 +27,39 @@
       "body": [
         {
           "kind": "text",
-          "content": "Olá, {{ .UserName }}! Você deseja redefinir sua senha?"
+          "content": "Olá, {{ .UserName }}!"
         },
         {
           "kind": "text",
-          "content": "Recebemos uma solicitação para redefinir a senha da sua conta. Clique no botão abaixo para prosseguir. Se você não fez esta solicitação, basta ignorar esse email."
+          "content": "Recebemos uma solicitação para redefinir a senha da sua conta. Para prosseguir, clique no botão abaixo."
         },
         {
           "kind": "button",
           "key": "password-reset",
           "content": "Redefinir senha"
+        },
+        {
+          "kind": "text",
+          "content": "Se você não fez esta solicitação, basta ignorar esse email."
+        }
+      ]
+    },
+    "passwordChange": {
+      "subject": {
+        "content": "Senha alterada"
+      },
+      "body": [
+        {
+          "kind": "text",
+          "content": "Olá, {{ .UserName }}!"
+        },
+        {
+          "kind": "text",
+          "content": "A senha da sua conta acabou de ser alterada. Agora você pode entrar em nossas aplicações com sua nova senha."
+        },
+        {
+          "kind": "text",
+          "content": "Se não foi você quem fez esta alteração, certifique-se de que ainda consegue entrar em sua conta. Então reporte a situação para o nosso suporte através do email: {{ .SupportMail }}."
         }
       ]
     }
