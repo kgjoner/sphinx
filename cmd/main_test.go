@@ -80,7 +80,7 @@ func TestAccount(t *testing.T) {
 
 		t.Run("it should retrieve user info", func(t *testing.T) {
 			var respData presenter.Success[auth.AccountPrivateView]
-			resp, err := api.Get("/account/self", &httputil.Options{
+			resp, err := api.Get("/account", &httputil.Options{
 				Headers: map[string]string{
 					"authorization": "Bearer " + currentToken,
 				},
