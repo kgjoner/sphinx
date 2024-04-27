@@ -209,6 +209,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 
 	i := accountcase.ChangePassword{
 		AuthRepo: g.AuthRepo.New(r.Context()),
+		MailService: g.MailService,
 	}
 
 	output, err := i.Execute(input)
@@ -288,6 +289,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 
 	i := accountcase.ResetPassword{
 		AuthRepo: g.AuthRepo.New(r.Context()),
+		MailService: g.MailService,
 	}
 
 	output, err := i.Execute(input)
