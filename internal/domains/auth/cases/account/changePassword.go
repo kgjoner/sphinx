@@ -43,5 +43,10 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
 		return false, err
 	}
 
+	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }

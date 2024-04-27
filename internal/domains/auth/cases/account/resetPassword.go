@@ -50,6 +50,11 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	
+	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
+	if err != nil {
+		return false, err
+	}
 
 	return true, nil
 }
