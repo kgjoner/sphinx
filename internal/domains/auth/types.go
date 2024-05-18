@@ -110,12 +110,20 @@ func ParseAuthToken(str string) (*authToken, error) {
 		return []byte(config.Env.JWT.SECRET), nil
 	})
 	if err != nil {
-		msg := err.Error();
-		code := errcode.InvalidAccess
+		msg := err.Error()
 		if strings.Contains(msg, "token is expired") {
-			code = errcode.ExpiredAccess
+			iat, _ := token.Claims.GetIssuedAt()
+			exp, _ := token.Claims.GetExpirationTime()
+			diff := exp.Sub(iat.Time)
+			code := errcode.ExpiredAccess
+			if (diff.Seconds() >= float64(config.Env.JWT.REFRESH_LIFETIME_IN_SEC)) {
+				code = errcode.ExpiredSession
+			}
+			return nil, normalizederr.NewUnauthorizedError(msg, code)
+		} else {
+			code := errcode.InvalidAccess
+			return nil, normalizederr.NewUnauthorizedError(msg, code)
 		}
-		return nil, normalizederr.NewUnauthorizedError(msg, code)
 	}
 
 	if !token.Valid {
