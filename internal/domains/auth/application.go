@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/validator"
+	"github.com/kgjoner/cornucopia/utils/pwdgen"
 	"github.com/kgjoner/cornucopia/utils/structop"
 	"github.com/kgjoner/sphinx/internal/config"
 )
@@ -16,6 +17,9 @@ type Application struct {
 	Name       string    `json:"name" validate:"required"`
 	Grantings  []string  `json:"grantings"`
 
+	Secret              string   `json:"-" validate:"required"`
+	AllowedRedirectUris []string `json:"allowedRedirectUris" validate:"uri"`
+
 	CreatedAt time.Time `json:"createdAt" validate:"required"`
 	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
 }
@@ -25,8 +29,9 @@ type Application struct {
 ============================================================================== */
 
 type ApplicationCreationFields struct {
-	Name      string `validate:"required"`
-	Grantings []string
+	Name                string   `json:"name" validate:"required"`
+	Grantings           []string `json:"grantings"`
+	AllowedRedirectUris []string `json:"allowedRedirectUris"`
 }
 
 func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, error) {
@@ -41,6 +46,9 @@ func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, 
 		Name:      f.Name,
 		Grantings: f.Grantings,
 
+		Secret:              pwdgen.Generate(42, "lower", "upper", "number"),
+		AllowedRedirectUris: f.AllowedRedirectUris,
+
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -53,8 +61,9 @@ func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, 
 ============================================================================== */
 
 type ApplicationEditableFields struct {
-	Name      string
-	Grantings []string
+	Name                string   `json:"name"`
+	Grantings           []string `json:"grantings"`
+	AllowedRedirectUris []string `json:"allowedRedirectUris"`
 }
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {

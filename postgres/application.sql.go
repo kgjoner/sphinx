@@ -17,25 +17,37 @@ INSERT INTO
   application (
     id,
     name,
-    grantings
+    grantings,
+    secret,
+    allowed_redirect_uris
   )
 VALUES
   (
     $1,
     $2,
-    $3
+    $3,
+    $4,
+    $5
   )
 RETURNING internal_id
 `
 
 type CreateApplicationParams struct {
-	ID        uuid.UUID
-	Name      string
-	Grantings []string
+	ID                  uuid.UUID
+	Name                string
+	Grantings           []string
+	Secret              string
+	AllowedRedirectUris []string
 }
 
 func (q *Queries) CreateApplication(ctx context.Context, arg CreateApplicationParams) (int, error) {
-	row := q.db.QueryRowContext(ctx, createApplication, arg.ID, arg.Name, pq.Array(arg.Grantings))
+	row := q.db.QueryRowContext(ctx, createApplication,
+		arg.ID,
+		arg.Name,
+		pq.Array(arg.Grantings),
+		arg.Secret,
+		pq.Array(arg.AllowedRedirectUris),
+	)
 	var internal_id int
 	err := row.Scan(&internal_id)
 	return internal_id, err
@@ -43,7 +55,7 @@ func (q *Queries) CreateApplication(ctx context.Context, arg CreateApplicationPa
 
 const getApplicationById = `-- name: GetApplicationById :one
 SELECT
-  internal_id, id, name, grantings, created_at, updated_at
+  internal_id, id, name, grantings, created_at, updated_at, secret, allowed_redirect_uris
 FROM
   application
 WHERE
@@ -60,6 +72,8 @@ func (q *Queries) GetApplicationById(ctx context.Context, id uuid.UUID) (Applica
 		pq.Array(&i.Grantings),
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Secret,
+		pq.Array(&i.AllowedRedirectUris),
 	)
 	return i, err
 }
@@ -69,18 +83,25 @@ UPDATE
   application
 SET
   name = $2,
-  grantings = $3
+  grantings = $3,
+  allowed_redirect_uris = $4
 WHERE
   id = $1
 `
 
 type UpdateApplicationParams struct {
-	ID        uuid.UUID
-	Name      string
-	Grantings []string
+	ID                  uuid.UUID
+	Name                string
+	Grantings           []string
+	AllowedRedirectUris []string
 }
 
 func (q *Queries) UpdateApplication(ctx context.Context, arg UpdateApplicationParams) error {
-	_, err := q.db.ExecContext(ctx, updateApplication, arg.ID, arg.Name, pq.Array(arg.Grantings))
+	_, err := q.db.ExecContext(ctx, updateApplication,
+		arg.ID,
+		arg.Name,
+		pq.Array(arg.Grantings),
+		pq.Array(arg.AllowedRedirectUris),
+	)
 	return err
 }

@@ -30,12 +30,14 @@ type Account struct {
 }
 
 type Application struct {
-	InternalID int
-	ID         uuid.UUID
-	Name       string
-	Grantings  []string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	InternalID          int
+	ID                  uuid.UUID
+	Name                string
+	Grantings           []string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	Secret              string
+	AllowedRedirectUris []string
 }
 
 type Link struct {

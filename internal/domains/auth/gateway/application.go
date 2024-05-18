@@ -32,7 +32,7 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 //	@Failure		403		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(appcase.CreateApplicationInput{}.ApplicationCreationFields).Keys()
+	bodyKeys := structop.New(appcase.CreateApplicationInput{}.ApplicationCreationFields).JsonKeys()
 	c := controller.New(r).
 		ParseBody(bodyKeys...).
 		AddActor()
@@ -75,7 +75,7 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(appcase.EditAppInput{}.ApplicationEditableFields).Keys()
+	bodyKeys := structop.New(appcase.EditAppInput{}.ApplicationEditableFields).JsonKeys()
 	c := controller.New(r).
 		ParseBody(bodyKeys...).
 		ParseUrlParam("id", "applicationId").

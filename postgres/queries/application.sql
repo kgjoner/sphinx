@@ -3,13 +3,17 @@ INSERT INTO
   application (
     id,
     name,
-    grantings
+    grantings,
+    secret,
+    allowed_redirect_uris
   )
 VALUES
   (
     $1,
     $2,
-    $3
+    $3,
+    $4,
+    $5
   )
 RETURNING internal_id;
 
@@ -18,7 +22,8 @@ UPDATE
   application
 SET
   name = $2,
-  grantings = $3
+  grantings = $3,
+  allowed_redirect_uris = $4
 WHERE
   id = $1;
 

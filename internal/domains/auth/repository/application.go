@@ -9,17 +9,20 @@ import (
 
 func (r AuthRepo) InsertApplication(app auth.Application) (int, error) {
 	return r.q.CreateApplication(r.ctx, psqlrepo.CreateApplicationParams{
-		ID:        app.Id,
-		Name:      app.Name,
-		Grantings: app.Grantings,
+		ID:                  app.Id,
+		Name:                app.Name,
+		Grantings:           app.Grantings,
+		Secret:              app.Secret,
+		AllowedRedirectUris: app.AllowedRedirectUris,
 	})
 }
 
 func (r AuthRepo) UpdateApplication(app auth.Application) error {
 	return r.q.UpdateApplication(r.ctx, psqlrepo.UpdateApplicationParams{
-		ID:        app.Id,
-		Name:      app.Name,
-		Grantings: app.Grantings,
+		ID:                  app.Id,
+		Name:                app.Name,
+		Grantings:           app.Grantings,
+		AllowedRedirectUris: app.AllowedRedirectUris,
 	})
 }
 
