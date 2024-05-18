@@ -11,6 +11,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/validator"
+	"github.com/kgjoner/cornucopia/utils/pwdgen"
 	"github.com/kgjoner/cornucopia/utils/sliceman"
 	"github.com/kgjoner/cornucopia/utils/structop"
 	"github.com/kgjoner/sphinx/internal/config"
@@ -245,10 +246,10 @@ func (a Account) DoesPasswordMatch(password string) bool {
 	return err == nil
 }
 
-// It will generate an uuid and save it in the field Code, under the desired key (kind).
+// It will generate an random string and save it in the field Code, under the desired key (kind).
 // It overwrites old value, if any.
 func (a *Account) generateCodeFor(kind AccountCodeKind) {
-	a.Codes[kind] = uuid.New().String()
+	a.Codes[kind] = pwdgen.Generate(12, "lower", "upper", "number")
 }
 
 func (a *Account) clearCodeFor(kind AccountCodeKind) {
