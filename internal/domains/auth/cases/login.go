@@ -25,7 +25,12 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
-	access, refresh, err := acc.InitSession(input.Password, &input.SessionCreationFields)
+	err = acc.AuthenticateViaPassword(input.Password)
+	if err != nil {
+	 return nil, err
+	}
+	
+	access, refresh, err := acc.InitSession(&input.SessionCreationFields)
 	if err != nil {
 		return nil, err
 	}

@@ -37,6 +37,7 @@ type Account struct {
 	ActiveSessions       []Session                  `json:"-"`
 
 	justTerminatedSessions []Session  `json:"-"`
+	hasValidCredentials    bool       `json:"-"`
 	AuthedSession          *Session   `json:"-"`
 	AuthToken              *authToken `json:"-"`
 
@@ -285,7 +286,7 @@ func (a Account) HasRoleOnAuth(roles ...Role) bool {
 
 // Check whether account has role on a target application
 func (a Account) HasRole(app Application, roles ...Role) bool {
-	link := a.link(app)
+	link := a.link(app.Id)
 	if link == nil {
 		return false
 	}
@@ -336,7 +337,7 @@ func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) e
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
-	link := a.link(app)
+	link := a.link(app.Id)
 	if link == nil {
 		return normalizederr.NewRequestError("Target account is not linked to desired application.")
 	}
@@ -356,9 +357,9 @@ func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) e
 }
 
 // Return desired application link or nil if account is not linked to it.
-func (a *Account) link(app Application) *Link {
+func (a *Account) link(appId uuid.UUID) *Link {
 	for _, l := range a.Links {
-		if l.Application.Id == app.Id {
+		if l.Application.Id == appId {
 			return &l
 		}
 	}
@@ -372,21 +373,55 @@ func (a *Account) authedLink() *Link {
 		return nil
 	}
 
-	return a.link(a.AuthedSession.Application)
+	return a.link(a.AuthedSession.Application.Id)
 }
 
 /* ==============================================================================
 	SESSION RELATED METHODS
 ============================================================================== */
 
+func (a *Account) InitOAuth(app Application) (code string, err error) {
+	if !a.IsAuthenticated() {
+		return "", normalizederr.NewUnauthorizedError("User must be authenticated.")
+	}
+
+	link := a.link(app.Id)
+	if link == nil {
+		return "", normalizederr.NewRequestError("Target account is not linked to desired application.")
+	}
+
+	if a.AuthedSession != nil {
+		if !a.AuthedSession.Application.isRoot() {
+			return "", normalizederr.NewUnauthorizedError("User can only init oauth with an auth token if it is from root app.")
+		} else if link.Application.isRoot() {
+			return "", normalizederr.NewUnauthorizedError("User can only init oauth with an auth token for apps other than root one.")
+		}
+	}
+
+	err = link.initOAuth()
+	if err != nil {
+	 return "", err
+	}
+
+	return link.OAuthCode, validator.Validate(a)
+}
+
 // Create a new session and generate tokens
-func (a *Account) InitSession(password string, f *SessionCreationFields) (access *authToken, refresh *authToken, err error) {
-	if !a.DoesPasswordMatch(password) {
-		return nil, nil, normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
+func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refresh *authToken, err error) {
+	if !a.IsAuthenticated() {
+		return nil, nil, normalizederr.NewUnauthorizedError("User must be authenticated.")
+	}
+
+	if a.AuthedSession != nil {
+		if !a.AuthedSession.Application.isRoot() {
+			return nil, nil, normalizederr.NewUnauthorizedError("User can only init sessions with an auth token if it is from root app.")
+		} else if f.Application.isRoot() {
+			return nil, nil, normalizederr.NewUnauthorizedError("User can only init sessions with an auth token for apps other than root one.")
+		}
 	}
 
 	// Check if link exists
-	if link := a.link(f.Application); link == nil {
+	if link := a.link(f.Application.Id); link == nil {
 		err := a.LinkTo(f.Application)
 		if err != nil {
 			return nil, nil, err
@@ -452,8 +487,31 @@ func (a *Account) Authenticate(token *authToken) error {
 	return nil
 }
 
+func (a *Account) AuthenticateViaPassword(password string) error {
+	if !a.DoesPasswordMatch(password) {
+		return normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
+	}
+
+	a.hasValidCredentials = true
+	return nil
+}
+
+func (a *Account) AuthenticateViaOAuth(code string, appId uuid.UUID, appSecret string) error {
+	link := a.link(appId)
+	if link == nil {
+		return normalizederr.NewRequestError("Account is not linked to desired application.")
+	}
+
+	if err := link.useOAuth(code, appSecret); err != nil {
+		return err
+	}
+
+	a.hasValidCredentials = true
+	return nil
+}
+
 func (a Account) IsAuthenticated() bool {
-	return a.AuthToken != nil
+	return a.AuthToken != nil || a.hasValidCredentials
 }
 
 // Generate new tokens for an existing session
@@ -632,7 +690,7 @@ func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
 
 	link := actor.authedLink()
 	if a.Id != actor.Id {
-		link = a.link(link.Application)
+		link = a.link(link.Application.Id)
 	}
 
 	return &AccountPrivateView{

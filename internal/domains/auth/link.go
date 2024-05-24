@@ -4,9 +4,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/validator"
+	"github.com/kgjoner/cornucopia/utils/pwdgen"
 	"github.com/kgjoner/cornucopia/utils/sliceman"
+	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/config/errcode"
 )
 
@@ -17,6 +20,9 @@ type Link struct {
 	Application Application `json:"application" validate:"required"`
 	Roles       []Role      `json:"roles"`
 	Grantings   []string    `json:"grantings"`
+
+	OAuthCode      string          `json:"-"`
+	OAuthExpiresAt htypes.NullTime `json:"-"`
 
 	CreatedAt time.Time `json:"createdAt" validate:"required"`
 	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
@@ -43,6 +49,42 @@ func newLink(acc *Account, app Application) *Link {
 /* ==============================================================================
 	METHODS
 ============================================================================== */
+
+// Save code and set an expiration time for it
+func (l Link) initOAuth(code ...string) error {
+	var realCode string
+	if len(code) > 0 {
+		realCode = code[0]
+	} else {
+		realCode = pwdgen.Generate(42, "lower", "upper", "number")
+	}
+
+	l.OAuthCode = realCode
+	l.OAuthExpiresAt = htypes.NullTime{Time: time.Now().Add(time.Second * time.Duration(config.Env.OAUTH_LIFETIME_IN_SEC))}
+	l.UpdatedAt = time.Now()
+	return validator.Validate(l)
+}
+
+// Return nil if the pair code/secret matches or error otherwise. In either case, it clears oauth data.
+func (l Link) useOAuth(code string, appSecret string) error {
+	var err error = nil
+	if appSecret != l.Application.Secret {
+		err = normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
+	} else if code != l.OAuthCode {
+		err = normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
+	} else if l.OAuthExpiresAt.Before(time.Now()) {
+		err = normalizederr.NewRequestError("OAuth code has expired.")
+	}
+
+	l.OAuthCode = ""
+	l.OAuthExpiresAt = htypes.NullTime{}
+	l.UpdatedAt = time.Now()
+
+	if err != nil {
+		return err
+	}
+	return validator.Validate(l)
+}
 
 func (l Link) hasRole(roles ...Role) bool {
 	for _, existingRole := range l.Roles {
