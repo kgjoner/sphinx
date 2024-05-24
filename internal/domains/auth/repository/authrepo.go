@@ -50,6 +50,9 @@ func (r AuthRepo) UpsertLinks(links ...auth.Link) error {
 		Roles         []auth.Role `json:"roles"`
 		Grantings     []string    `json:"grantings"`
 
+		OAuthCode      string          `json:"oauth_code"`
+		OAuthExpiresAt htypes.NullTime `json:"oauth_expires_at"`
+
 		CreatedAt time.Time `json:"created_at" validate:"required"`
 		UpdatedAt time.Time `json:"updated_at" validate:"required"`
 	}
@@ -62,6 +65,8 @@ func (r AuthRepo) UpsertLinks(links ...auth.Link) error {
 			l.Application.InternalId,
 			l.Roles,
 			l.Grantings,
+			l.OAuthCode,
+			l.OAuthExpiresAt,
 			l.CreatedAt,
 			l.UpdatedAt,
 		}

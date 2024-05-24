@@ -53,3 +53,9 @@ func (r AuthRepo) GetAccountByEntry(entry string) (*auth.Account, error) {
 		r.q.GetAccountByEntry(r.ctx, strings.ToLower(entry)),
 	)
 }
+
+func (r AuthRepo) GetAccountByOAuthCode(oauthCode string) (*auth.Account, error) {
+	return dbhandler.HandleSingleQuery[auth.Account](
+		r.q.GetAccountByEntry(r.ctx, oauthCode),
+	)
+}
