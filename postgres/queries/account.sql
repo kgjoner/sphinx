@@ -125,3 +125,49 @@ WHERE
   a.document = $1
 GROUP BY
   a.internal_id;
+
+-- name: GetAccountByOAuth :one
+WITH target_link AS (
+  SELECT
+    *
+  FROM
+    link l
+  WHERE
+    l.oauth_code = $1
+), la AS (
+  SELECT
+    l.*,
+    json_agg(app.*)->0 application
+  FROM
+    link l
+    JOIN application app ON app.internal_id = l.application_id
+  GROUP BY
+    l.internal_id
+), sa AS (
+  SELECT
+    s.*,
+    json_agg(app.*)->0 application
+  FROM
+    session s
+    JOIN application app ON app.internal_id = s.application_id
+  WHERE
+    s.is_active IS TRUE
+  GROUP BY
+    s.internal_id
+)
+SELECT
+  a.*,
+  json_agg(la.*) links,
+  CASE 
+    WHEN json_agg(sa.*)::text <> '[null]' 
+      THEN json_agg(sa.*)
+    ELSE NULL
+  END AS active_sessions
+FROM
+  account a
+  LEFT JOIN la ON la.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id
+WHERE
+  a.internal_id = target_link.user_id 
+GROUP BY
+  a.internal_id;

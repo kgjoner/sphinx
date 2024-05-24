@@ -18,6 +18,8 @@ INSERT INTO
     application_id,
     roles,
     grantings,
+    oauth_code,
+    oauth_expires_at,
     created_at,
     updated_at
   )
@@ -27,6 +29,8 @@ INSERT INTO
     l.application_id,
     l.roles,
     l.grantings,
+    l.oauth_code,
+    l.oauth_expires_at,
     l.created_at,
     l.updated_at
   FROM 

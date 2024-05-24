@@ -78,7 +78,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (i
 const getAccountByEntry = `-- name: GetAccountByEntry :one
 WITH la AS (
   SELECT
-    l.internal_id, l.id, l.account_id, l.application_id, l.roles, l.grantings, l.created_at, l.updated_at,
+    l.internal_id, l.id, l.account_id, l.application_id, l.roles, l.grantings, l.created_at, l.updated_at, l.oauth_code, l.oauth_expires_at,
     json_agg(app.*)->0 application
   FROM
     link l
@@ -164,7 +164,7 @@ func (q *Queries) GetAccountByEntry(ctx context.Context, email string) (GetAccou
 const getAccountById = `-- name: GetAccountById :one
 WITH la AS (
   SELECT
-    l.internal_id, l.id, l.account_id, l.application_id, l.roles, l.grantings, l.created_at, l.updated_at,
+    l.internal_id, l.id, l.account_id, l.application_id, l.roles, l.grantings, l.created_at, l.updated_at, l.oauth_code, l.oauth_expires_at,
     json_agg(app.*)->0 application
   FROM
     link l
@@ -223,6 +223,96 @@ type GetAccountByIdRow struct {
 func (q *Queries) GetAccountById(ctx context.Context, id uuid.UUID) (GetAccountByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getAccountById, id)
 	var i GetAccountByIdRow
+	err := row.Scan(
+		&i.InternalID,
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.Phone,
+		&i.Username,
+		&i.Document,
+		&i.IsActive,
+		&i.HasEmailBeenVerified,
+		&i.HasPhoneBeenVerified,
+		&i.Codes,
+		&i.PasswordUpdatedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Links,
+		&i.ActiveSessions,
+	)
+	return i, err
+}
+
+const getAccountByOAuth = `-- name: GetAccountByOAuth :one
+WITH target_link AS (
+  SELECT
+    internal_id, id, account_id, application_id, roles, grantings, created_at, updated_at, oauth_code, oauth_expires_at
+  FROM
+    link l
+  WHERE
+    l.oauth_code = $1
+), la AS (
+  SELECT
+    l.internal_id, l.id, l.account_id, l.application_id, l.roles, l.grantings, l.created_at, l.updated_at, l.oauth_code, l.oauth_expires_at,
+    json_agg(app.*)->0 application
+  FROM
+    link l
+    JOIN application app ON app.internal_id = l.application_id
+  GROUP BY
+    l.internal_id
+), sa AS (
+  SELECT
+    s.internal_id, s.id, s.account_id, s.application_id, s.refresh_token, s.refreshed_at, s.elapsed_minutes_between_refreshes, s.refreshes_count, s.device, s.ip, s.is_active, s.terminated_at, s.created_at, s.updated_at,
+    json_agg(app.*)->0 application
+  FROM
+    session s
+    JOIN application app ON app.internal_id = s.application_id
+  WHERE
+    s.is_active IS TRUE
+  GROUP BY
+    s.internal_id
+)
+SELECT
+  a.internal_id, a.id, a.email, a.password, a.phone, a.username, a.document, a.is_active, a.has_email_been_verified, a.has_phone_been_verified, a.codes, a.password_updated_at, a.created_at, a.updated_at,
+  json_agg(la.*) links,
+  CASE 
+    WHEN json_agg(sa.*)::text <> '[null]' 
+      THEN json_agg(sa.*)
+    ELSE NULL
+  END AS active_sessions
+FROM
+  account a
+  LEFT JOIN la ON la.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id
+WHERE
+  a.internal_id = target_link.user_id 
+GROUP BY
+  a.internal_id
+`
+
+type GetAccountByOAuthRow struct {
+	InternalID           int
+	ID                   uuid.UUID
+	Email                string
+	Password             string
+	Phone                sql.NullString
+	Username             sql.NullString
+	Document             sql.NullString
+	IsActive             bool
+	HasEmailBeenVerified bool
+	HasPhoneBeenVerified bool
+	Codes                json.RawMessage
+	PasswordUpdatedAt    sql.NullTime
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	Links                json.RawMessage
+	ActiveSessions       interface{}
+}
+
+func (q *Queries) GetAccountByOAuth(ctx context.Context, oauthCode sql.NullString) (GetAccountByOAuthRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByOAuth, oauthCode)
+	var i GetAccountByOAuthRow
 	err := row.Scan(
 		&i.InternalID,
 		&i.ID,

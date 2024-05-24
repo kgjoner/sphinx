@@ -41,14 +41,16 @@ type Application struct {
 }
 
 type Link struct {
-	InternalID    int
-	ID            uuid.UUID
-	AccountID     int
-	ApplicationID int
-	Roles         []string
-	Grantings     []string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	InternalID     int
+	ID             uuid.UUID
+	AccountID      int
+	ApplicationID  int
+	Roles          []string
+	Grantings      []string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	OauthCode      sql.NullString
+	OauthExpiresAt sql.NullTime
 }
 
 type Session struct {
