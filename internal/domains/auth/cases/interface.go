@@ -10,6 +10,7 @@ type AuthRepo interface {
 	UpdateAccount(auth.Account) error
 	GetAccountById(uuid.UUID) (*auth.Account, error)
 	GetAccountByEntry(string) (*auth.Account, error)
+	GetAccountByOAuthCode(string) (*auth.Account, error)
 
 	InsertApplication(auth.Application) (int, error)
 	UpdateApplication(auth.Application) error
