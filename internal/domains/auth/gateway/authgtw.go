@@ -30,6 +30,9 @@ func Raise(router chi.Router, repos common.RepoFactories, services common.Servic
 		r.With(authgtw.mid.AppToken).Post("/login", authgtw.login)
 		r.With(authgtw.mid.Authenticate).Post("/logout", authgtw.logout)
 		r.With(authgtw.mid.Authenticate).Post("/refresh", authgtw.refresh)
+
+		r.With(authgtw.mid.AppToken).Post("/open/init", authgtw.initOAuth)
+		r.With(authgtw.mid.AppToken).Post("/open/login", authgtw.loginViaOAuth)
 	})
 }
 
@@ -99,6 +102,86 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := authcase.Logout{
+		AuthRepo: g.AuthRepo.New(r.Context()),
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// Init OAuth godoc
+//
+//	@Summary		Request an oauth code
+//	@Description	Exchange user credentials for oauth code
+//	@Router			/auth/open/init [post]
+//	@Tags			Auth
+//	@Security		AppToken
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		authcase.InitOAuthInput	true	"Credentials. Entry can be: email, phone, username or document"
+//	@Success		200		{object}	presenter.Success[string]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseBody("entry", "password").
+		AddApplication()
+
+	var input authcase.InitOAuthInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := authcase.InitOAuth{
+		AuthRepo: g.AuthRepo.New(r.Context()),
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// Login via OAuth godoc
+//
+//	@Summary		Request an oauth code
+//	@Description	Exchange user credentials for oauth code
+//	@Router			/auth/open/login [post]
+//	@Tags			Auth
+//	@Security		AppToken
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		authcase.LoginViaOAuthInput	true	"Credentials. Entry can be: email, phone, username or document"
+//	@Success		200		{object}	presenter.Success[authcase.LoginViaOAuthOutput]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) loginViaOAuth(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseBody("code", "appSecret").
+		AddApplication().
+		AddIp().
+		AddHeader("user-agent", "device")
+
+	var input authcase.LoginViaOAuthInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := authcase.LoginViaOAuth{
 		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 

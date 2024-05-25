@@ -7,17 +7,17 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
-type LoginViaOAuthCode struct {
+type LoginViaOAuth struct {
 	AuthRepo AuthRepo
 }
 
-type LoginViaOAuthCodeInput struct {
+type LoginViaOAuthInput struct {
 	Code                       string
 	AppSecret                  string
 	auth.SessionCreationFields `json:"-"`
 }
 
-func (i LoginViaOAuthCode) Execute(input LoginViaOAuthCodeInput) (*LoginViaOAuthCodeOutput, error) {
+func (i LoginViaOAuth) Execute(input LoginViaOAuthInput) (*LoginViaOAuthOutput, error) {
 	acc, err := i.AuthRepo.GetAccountByOAuthCode(input.Code)
 	if err != nil {
 		return nil, err
@@ -48,14 +48,14 @@ func (i LoginViaOAuthCode) Execute(input LoginViaOAuthCodeInput) (*LoginViaOAuth
 		}
 	}
 
-	return &LoginViaOAuthCodeOutput{
+	return &LoginViaOAuthOutput{
 		AccountId:    acc.Id,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
 	}, nil
 }
 
-type LoginViaOAuthCodeOutput struct {
+type LoginViaOAuthOutput struct {
 	AccountId    uuid.UUID `json:"accountId"`
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken"`
