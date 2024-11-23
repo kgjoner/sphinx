@@ -1,0 +1,47 @@
+{{- if .Values.db.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: 
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-db
+spec:
+  serviceName: {{ template "db.serviceName" . }}
+  replicas: {{ .Values.db.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-db
+  template:
+    metadata: 
+      labels:
+        app: {{ .Chart.Name }}-db
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-db
+        image: postgres:16.0
+        ports:
+        - containerPort: 5432
+        envFrom:
+        - secretRef:
+            {{- if empty .Values.db.secret.existentName }}
+              name: {{ template "db.secretName" . }}
+            {{- else }}
+              name: {{ .Values.db.secret.existentName }}
+            {{- end }}
+        {{- if not (empty .Values.db.volume.className) }}
+        volumeMounts:
+        - name: {{ .Values.db.volume.name }}
+          mountPath: /var/lib/postgresql/data
+        env:
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.db.volume.name }}
+      spec:
+        accessModes:
+          - {{ .Values.db.volume.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.db.volume.size }}
+        storageClassName: {{ .Values.db.volume.className }}
+  {{- end }}
+{{- end }}

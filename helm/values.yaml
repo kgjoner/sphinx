@@ -1,0 +1,59 @@
+# Default values for sphinx-api.
+api:
+  version: latest
+  replicaCount: 1
+  imagePullPolicy: Always
+  imagePullSecretName:
+
+ingress:
+  className:
+  # Rules are only applied if className is set. 
+  rules:
+  - host: sphinx.com
+    path: /
+  # Let issuer empty to disable TLS. Enable only if cert-manager is already running in the machine 
+  # along desired issuers.
+  tls:
+    issuer:
+
+# Only applied if ingress className is NOT set.
+# serviceType: NodePort
+
+secret:
+  # existentName:
+  # If existentName is set, below configurations will not be used 
+  databaseUrl: postgres://postgres:postgres@sphinx-db:5432/sphinx
+  rootAppToken: 80cadd74-5ccd-41c4-9938-3c8961be04db
+  jwtSecret: mysecret
+  hermesApiKey: mysecret
+
+configMap:
+  appName: Sphinx
+  maxConcurrentSessions: 0
+  fallbackLanguage: pt-br
+  jwtAccessLifetimeInSec: "300"
+  jwtRefreshLifetimeInSec: "15552000"
+  hermesBaseUrl: hermes/v1
+  clientUriDataVerification: sphinx.com.br/verification
+  clientUriPasswordReset: sphinx.com.br/password/reset
+
+prometheus:
+  # Only enable if there is a running instance of prometheus
+  enabled: false
+
+db:
+  enabled: false
+  replicaCount: 1
+  # Below configuration is only used if db is enabled
+  secret:
+    # existentName:
+    # If existentName is set, below configurations will not be used
+    user: postgres
+    password: postgres
+    database: sphinx
+  volume:
+    # Let className empty to disable volume. Get a value accordingly to your cloud provider spec.
+    className: hcloud-volumes
+    name: sphinx-data 
+    accessMode: ReadWriteOnce
+    size: 10Gi

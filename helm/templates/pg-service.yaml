@@ -1,0 +1,11 @@
+{{- if .Values.db.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "db.serviceName" . }}
+spec:
+  selector:
+    app: {{ .Chart.Name }}-db
+  ports:
+  - port: 5432
+{{- end }}

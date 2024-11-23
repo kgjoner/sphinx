@@ -1,0 +1,102 @@
+{{- if eq .Values.ingress.className "traefik" }}
+# ======================================================
+# TRAEFIK
+# ======================================================
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Chart.Name }}-ingress
+spec:
+  entryPoints:
+    - web
+  routes:
+  {{- range .Values.ingress.rules }}
+    {{- if and (not (empty .path)) (not (eq .path "/"))}}
+  - match: Host(`{{ .host }}`) && Path(`{{ .path }}`)
+    {{- else }}
+  - match: Host(`{{ .host }}`)
+    {{- end }}
+    kind: Rule
+    services:
+    - name: {{ template "api.serviceName" $ }}
+      port: 80
+  {{- end }}
+
+  {{- if not (empty .Values.ingress.tls.issuer) }}
+---
+# Traefik TLS
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Chart.Name }}-ingress-tls
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  {{- range .Values.ingress.rules }}
+    {{- if and (not (empty .path)) (not (eq .path "/"))}}
+  - match: Host(`{{ .host }}`) && Path(`{{ .path }}`)
+    {{- else }}
+  - match: Host(`{{ .host }}`)
+    {{- end }}
+    kind: Rule
+    services:
+    - name: {{ template "api.serviceName" $ }}
+      port: 80
+  {{- end }}
+  tls:
+    secretName: {{ .Release.Name }}-{{ .Chart.Name }}-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-cert
+spec:
+  secretName: {{ .Release.Name }}-{{ .Chart.Name }}-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  dnsNames:
+    {{- range .Values.ingress.rules }}
+    - {{ .host }}
+    {{- end }}
+  {{- end }}
+
+
+{{- else if not (empty .Values.ingress.className) }}
+# ======================================================
+# OTHERS
+# ======================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-ingress
+  annotations:
+    {{- if not (empty .Values.ingress.tls.issuer) }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.issuer | quote }}
+    {{- end }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+spec:
+  # ingressClassName: {{ .Values.ingress.className }}
+  {{- if not (empty .Values.ingress.tls.issuer) }}
+  tls:
+    - hosts:
+      {{- range .Values.ingress.rules }}
+      - {{ .host }}
+      {{- end }}
+      secretName: {{ .Release.Name }}-{{ .Chart.Name }}-tls
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.rules }}
+    - host: {{ .host }}
+      http:
+        paths:
+        - path: {{ .path }}
+          pathType: Prefix
+          backend:
+            service:
+              name: {{ template "api.serviceName" $ }}
+              port: 
+                number: 80
+    {{- end }}
+{{- end }}

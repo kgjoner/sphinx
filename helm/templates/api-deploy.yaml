@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-api
+  template:
+    metadata: 
+      labels:
+        app: {{ .Chart.Name }}-api
+      {{- if .Values.prometheus.enabled }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+      {{- end }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-api
+        image: docker.kgjoner.com.br/sphinx:{{ .Values.api.version }}
+        imagePullPolicy: {{ .Values.api.imagePullPolicy }}
+        envFrom:
+        - secretRef:
+          {{- if empty .Values.secret.existentName }}
+            name: {{ template "api.secretName" . }}
+          {{- else }}
+            name: {{ .Values.secret.existentName }}
+          {{- end }}
+        - configMapRef:
+            name: {{ template "api.configMapName" . }} 
+      imagePullSecrets:
+      - name: {{ .Values.api.imagePullSecretName }} 
