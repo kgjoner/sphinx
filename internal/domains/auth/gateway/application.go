@@ -11,9 +11,10 @@ import (
 )
 
 func (g AuthGateway) applicationHandler(r chi.Router) {
+	r.Get("/{id}", g.getApplication)
+
 	r.With(g.mid.Authenticate).Post("/", g.createApplication)
 	r.With(g.mid.Authenticate).Patch("/{id}", g.editApplication)
-
 }
 
 // CreateApplication godoc
@@ -57,7 +58,6 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 	presenter.HttpSuccess(output, w, r)
 }
 
-
 // EditApplication godoc
 //
 //	@Summary		Edit an application
@@ -89,6 +89,41 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := appcase.EditApp{
+		AuthRepo: g.AuthRepo.New(r.Context()),
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// GetApplication godoc
+//
+//	@Summary		Get application data
+//	@Description	Retrieve data from application referred by id
+//	@Router			/application/{id} [get]
+//	@Tags			Application
+//	@Produce		json
+//	@Param			id		path		string							true	"Id of target application"
+//	@Success		200		{object}	presenter.Success[auth.Application]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseUrlParam("id", "applicationId")
+
+	var input appcase.GetAppInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	i := appcase.GetApp{
 		AuthRepo: g.AuthRepo.New(r.Context()),
 	}
 
