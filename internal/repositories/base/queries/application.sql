@@ -29,7 +29,14 @@ WHERE
 
 -- name: GetApplicationById :one
 SELECT
-  *
+  internal_id,
+  id,
+  name,
+  grantings,
+  secret,
+  allowed_redirect_uris,
+  created_at,
+  updated_at
 FROM
   application
 WHERE

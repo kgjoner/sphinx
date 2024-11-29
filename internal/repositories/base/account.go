@@ -1,0 +1,161 @@
+package baserepo
+
+import (
+	"database/sql"
+
+	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/utils/datatransform"
+	"github.com/kgjoner/cornucopia/utils/dbhandler"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
+)
+
+func (q Queries) InsertAccount(acc auth.Account) (int, error) {
+	raw, exists := rawQueries["CreateAccount"]
+	if !exists {
+		return 0, ErrNoQuery
+	}
+
+	row := q.db.QueryRowContext(q.ctx, raw,
+		acc.Id,
+		acc.Email.String(),
+		acc.Password,
+		datatransform.ToNullString(acc.Phone.String()),
+		datatransform.ToNullString(acc.Username),
+		datatransform.ToNullString(acc.Document.String()),
+		acc.IsActive,
+		acc.HasEmailBeenVerified,
+		acc.HasPhoneBeenVerified,
+		datatransform.ToRawMessage(acc.Codes),
+	)
+	var id int
+	err := row.Scan(&id)
+	return id, err
+}
+
+func (q Queries) UpdateAccount(acc auth.Account) error {
+	raw, exists := rawQueries["UpdateAccount"]
+	if !exists {
+		return ErrNoQuery
+	}
+
+	_, err := q.db.ExecContext(q.ctx, raw,
+		acc.Id,
+		acc.Email.String(),
+		acc.Password,
+		datatransform.ToNullString(acc.Phone.String()),
+		datatransform.ToNullString(acc.Username),
+		datatransform.ToNullString(acc.Document.String()),
+		acc.IsActive,
+		acc.HasEmailBeenVerified,
+		acc.HasPhoneBeenVerified,
+		datatransform.ToRawMessage(acc.Codes),
+		datatransform.ToNullTime(acc.PasswordUpdatedAt),
+		acc.UpdatedAt,
+	)
+	return err
+}
+
+func (q Queries) GetAccountById(id uuid.UUID) (*auth.Account, error) {
+	raw, exists := rawQueries["GetAccountById"]
+	if !exists {
+		return nil, ErrNoQuery
+	}
+
+	row := q.db.QueryRowContext(q.ctx, raw, id)
+	var item auth.Account
+	err := row.Scan(
+		&item.InternalId,
+		&item.Id,
+		&item.Email,
+		&item.Phone,
+		&item.Password,
+		&item.Username,
+		&item.Document,
+		&item.IsActive,
+		&item.HasEmailBeenVerified,
+		&item.HasPhoneBeenVerified,
+		dbhandler.Map(&item.Codes),
+		dbhandler.StructArray(&item.Links),
+		dbhandler.StructArray(&item.ActiveSessions),
+		&item.PasswordUpdatedAt,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+func (q Queries) GetAccountByEntry(entry string) (*auth.Account, error) {
+	raw, exists := rawQueries["GetAccountByEntry"]
+	if !exists {
+		return nil, ErrNoQuery
+	}
+
+	row := q.db.QueryRowContext(q.ctx, raw, entry)
+	var item auth.Account
+	err := row.Scan(
+		&item.InternalId,
+		&item.Id,
+		&item.Email,
+		&item.Phone,
+		&item.Password,
+		&item.Username,
+		&item.Document,
+		&item.IsActive,
+		&item.HasEmailBeenVerified,
+		&item.HasPhoneBeenVerified,
+		dbhandler.Map(&item.Codes),
+		dbhandler.StructArray(&item.Links),
+		dbhandler.StructArray(&item.ActiveSessions),
+		&item.PasswordUpdatedAt,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+func (q Queries) GetAccountByOAuthCode(oauthCode string) (*auth.Account, error) {
+	raw, exists := rawQueries["GetAccountByOAuthCode"]
+	if !exists {
+		return nil, ErrNoQuery
+	}
+
+	row := q.db.QueryRowContext(q.ctx, raw, oauthCode)
+	var item auth.Account
+	err := row.Scan(
+		&item.InternalId,
+		&item.Id,
+		&item.Email,
+		&item.Phone,
+		&item.Password,
+		&item.Username,
+		&item.Document,
+		&item.IsActive,
+		&item.HasEmailBeenVerified,
+		&item.HasPhoneBeenVerified,
+		dbhandler.Map(&item.Codes),
+		dbhandler.StructArray(&item.Links),
+		dbhandler.StructArray(&item.ActiveSessions),
+		&item.PasswordUpdatedAt,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}

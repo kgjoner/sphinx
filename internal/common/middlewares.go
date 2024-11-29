@@ -10,11 +10,10 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type Middlewares struct {
-	AuthRepo RepoFactory[authcase.AuthRepo]
+	Pools
 }
 
 func (m Middlewares) AppToken(next http.Handler) http.Handler {
@@ -33,7 +32,7 @@ func (m Middlewares) AppToken(next http.Handler) http.Handler {
 			return
 		}
 
-		authRepo := m.AuthRepo.New(r.Context())
+		authRepo := m.BasePool.NewQueries(r.Context())
 		application, err := authRepo.GetApplicationById(appId)
 		if err != nil {
 			presenter.HttpError(err, w, r)
@@ -75,7 +74,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		authRepo := m.AuthRepo.New(r.Context())
+		authRepo := m.BasePool.NewQueries(r.Context())
 		account, err := authRepo.GetAccountById(token.Claims.Sub)
 		if err != nil {
 			presenter.HttpError(err, w, r)

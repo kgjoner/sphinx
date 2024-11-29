@@ -6,7 +6,6 @@ import (
 
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/utils/httputil"
-	main "github.com/kgjoner/sphinx/cmd"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
@@ -16,9 +15,7 @@ import (
 
 func startTestServer() *httptest.Server {
 	config.Must()
-	db := main.SetupPostgres()
-
-	return httptest.NewServer(server.New(db).Handler)
+	return httptest.NewServer(server.New().Handler)
 }
 
 var (

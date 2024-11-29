@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/kgjoner/hermes/pkg/hermes"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
+	baserepo "github.com/kgjoner/sphinx/internal/repositories/base"
 )
 
 type RepoFactory[T any] interface {
-	New(context.Context) T
+	NewQueries(context.Context) T
 }
 
-type RepoFactories struct {
-	AuthRepo RepoFactory[authcase.AuthRepo]
+type Pools struct {
+	BasePool  RepoFactory[*baserepo.Queries]
 }
 
 type Services struct {

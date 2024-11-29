@@ -51,8 +51,9 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.CreateAccount{
-		AuthRepo:    g.AuthRepo.New(r.Context()),
+		AuthRepo:    queries,
 		MailService: g.MailService,
 	}
 
@@ -88,8 +89,9 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.CheckEntryExistence{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -128,8 +130,9 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.GetPrivateAccount{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -166,8 +169,9 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.VerifyAccount{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -207,8 +211,9 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.ChangePassword{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo:    queries,
 		MailService: g.MailService,
 	}
 
@@ -246,8 +251,9 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.RequestPasswordReset{
-		AuthRepo:    g.AuthRepo.New(r.Context()),
+		AuthRepo:    queries,
 		MailService: g.MailService,
 	}
 
@@ -287,8 +293,9 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.ResetPassword{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo:    queries,
 		MailService: g.MailService,
 	}
 
@@ -331,8 +338,9 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.EditAccountPermissions{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)

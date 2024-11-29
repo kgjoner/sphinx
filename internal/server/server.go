@@ -1,8 +1,8 @@
 package server
 
 import (
-	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -17,8 +17,7 @@ import (
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/config"
 	authgtw "github.com/kgjoner/sphinx/internal/domains/auth/gateway"
-	authrepo "github.com/kgjoner/sphinx/internal/domains/auth/repository"
-	psqlrepo "github.com/kgjoner/sphinx/postgres"
+	baserepo "github.com/kgjoner/sphinx/internal/repositories/base"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -26,16 +25,19 @@ import (
 )
 
 type Server struct {
-	queries *psqlrepo.Queries
-	Handler http.Handler
+	basePool *baserepo.Pool
+	Handler  http.Handler
 }
 
-func New(pool *sql.DB) *Server {
-	s := &Server{
-		queries: psqlrepo.New(pool),
+func New() *Server {
+	db, err := baserepo.NewPool(config.Env.DATABASE_URL)
+	if err != nil {
+		log.Fatalln(err)
 	}
-	s.Setup()
-	return s
+
+	return &Server{
+		basePool: db,
+	}
 }
 
 //	@title			Sphinx API
@@ -64,8 +66,8 @@ func New(pool *sql.DB) *Server {
 // @host		{{ .Host }}
 // @basePath	/v1
 func (s *Server) Setup() {
-	repos := common.RepoFactories{
-		AuthRepo: authrepo.NewFactory(s.queries),
+	pools := common.Pools{
+		BasePool: s.basePool,
 	}
 
 	services := common.Services{
@@ -106,7 +108,7 @@ func (s *Server) Setup() {
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(countRequestMetric())
 
-		authgtw.Raise(r, repos, services)
+		authgtw.Raise(r, pools, services)
 	})
 
 	r.Mount("/metrics", promhttp.Handler())

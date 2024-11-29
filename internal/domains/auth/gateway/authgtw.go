@@ -11,16 +11,16 @@ import (
 )
 
 type AuthGateway struct {
-	common.RepoFactories
+	common.Pools
 	common.Services
 	mid common.Middlewares
 }
 
-func Raise(router chi.Router, repos common.RepoFactories, services common.Services) {
+func Raise(router chi.Router, pools common.Pools, services common.Services) {
 	authgtw := &AuthGateway{
-		repos,
+		pools,
 		services,
-		common.Middlewares(repos),
+		common.Middlewares{Pools: pools},
 	}
 
 	router.Route("/account", authgtw.accountHandler)
@@ -64,8 +64,9 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := authcase.Login{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -101,8 +102,9 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := authcase.Logout{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -140,8 +142,9 @@ func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := authcase.InitOAuth{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -181,8 +184,9 @@ func (g AuthGateway) loginViaOAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := authcase.LoginViaOAuth{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -218,8 +222,9 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := g.BasePool.NewQueries(r.Context())
 	i := authcase.Refresh{
-		AuthRepo: g.AuthRepo.New(r.Context()),
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)

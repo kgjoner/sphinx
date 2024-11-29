@@ -1,6 +1,9 @@
 ALTER TABLE application
-  ADD COLUMN IF NOT EXISTS secret text NOT NULL,
+  ADD COLUMN IF NOT EXISTS secret text NOT NULL DEFAULT 'topsecret',
   ADD COLUMN IF NOT EXISTS allowed_redirect_uris text[];
+
+ALTER TABLE application
+  ALTER COLUMN secret DROP DEFAULT;
 
 ALTER TABLE link
   ADD COLUMN IF NOT EXISTS oauth_code text,

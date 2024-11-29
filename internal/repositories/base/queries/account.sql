@@ -68,13 +68,26 @@ WITH la AS (
     s.internal_id
 )
 SELECT
-  a.*,
+  a.internal_id,
+  a.id,
+  a.email,
+  a.phone,
+  a.password,
+  a.username,
+  a.document,
+  a.is_active,
+  a.has_email_been_verified,
+  a.has_phone_been_verified,
+  a.codes,
   json_agg(la.*) links,
   CASE 
     WHEN json_agg(sa.*)::text <> '[null]' 
       THEN json_agg(sa.*)
     ELSE NULL
-  END AS active_sessions
+  END AS active_sessions,
+  a.password_updated_at,
+  a.created_at,
+  a.updated_at
 FROM
   account a
   LEFT JOIN la ON la.account_id = a.internal_id
@@ -107,13 +120,26 @@ WITH la AS (
     s.internal_id
 )
 SELECT
-  a.*,
+  a.internal_id,
+  a.id,
+  a.email,
+  a.phone,
+  a.password,
+  a.username,
+  a.document,
+  a.is_active,
+  a.has_email_been_verified,
+  a.has_phone_been_verified,
+  a.codes,
   json_agg(la.*) links,
   CASE 
     WHEN json_agg(sa.*)::text <> '[null]' 
       THEN json_agg(sa.*)
     ELSE NULL
-  END AS active_sessions
+  END AS active_sessions,
+  a.password_updated_at,
+  a.created_at,
+  a.updated_at
 FROM
   account a
   LEFT JOIN la ON la.account_id = a.internal_id
@@ -126,7 +152,7 @@ WHERE
 GROUP BY
   a.internal_id;
 
--- name: GetAccountByOAuth :one
+-- name: GetAccountByOAuthCode :one
 WITH target_link AS (
   SELECT
     *
@@ -156,13 +182,26 @@ WITH target_link AS (
     s.internal_id
 )
 SELECT
-  a.*,
+  a.internal_id,
+  a.id,
+  a.email,
+  a.phone,
+  a.password,
+  a.username,
+  a.document,
+  a.is_active,
+  a.has_email_been_verified,
+  a.has_phone_been_verified,
+  a.codes,
   json_agg(la.*) links,
   CASE 
     WHEN json_agg(sa.*)::text <> '[null]' 
       THEN json_agg(sa.*)
     ELSE NULL
-  END AS active_sessions
+  END AS active_sessions,
+  a.password_updated_at,
+  a.created_at,
+  a.updated_at
 FROM
   account a
   LEFT JOIN la ON la.account_id = a.internal_id
