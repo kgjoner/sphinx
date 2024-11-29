@@ -5,7 +5,7 @@ go 1.22.0
 require github.com/google/uuid v1.5.0
 
 require (
-	github.com/kgjoner/cornucopia v0.0.0-20240518121313-6b3ce83711f6
+	github.com/kgjoner/cornucopia v0.2.0
 	github.com/lib/pq v1.10.9
 	golang.org/x/crypto v0.21.0
 )
@@ -45,6 +45,5 @@ require (
 
 require (
 	github.com/go-chi/chi/v5 v5.0.12
-	github.com/sqlc-dev/pqtype v0.3.0 // indirect
 	github.com/swaggo/http-swagger/v2 v2.0.2
 )
