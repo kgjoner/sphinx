@@ -8,23 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
-
-type RepoFactory[T any] interface {
-	New(context.Context) T
-}
-
-type RepoFactories struct {
-	AuthRepo RepoFactory[authcase.AuthRepo]
-}
-
-type Services struct {
-	MailService hermes.MailService
-}
 
 type Middlewares struct {
 	AuthRepo RepoFactory[authcase.AuthRepo]
