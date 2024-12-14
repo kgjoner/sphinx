@@ -132,7 +132,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody("entry", "password").
+		ParseBody("entry", "password", "state").
 		AddApplication()
 
 	var input authcase.InitOAuthInput

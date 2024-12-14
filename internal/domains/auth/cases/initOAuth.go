@@ -2,6 +2,7 @@ package authcase
 
 import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/helpers/validator"
 	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
@@ -11,12 +12,18 @@ type InitOAuth struct {
 }
 
 type InitOAuthInput struct {
-	Entry       string
-	Password    string
-	Application auth.Application `json:"-"`
+	Entry       string           `validate:"required"`
+	Password    string           `validate:"required"`
+	State       string           `validate:"required"`
+	Application auth.Application `json:"-" validate:"required"`
 }
 
-func (i InitOAuth) Execute(input InitOAuthInput) (*string, error) {
+func (i InitOAuth) Execute(input InitOAuthInput) (*InitOAuthOutput, error) {
+	err := validator.Validate(input)
+	if err != nil {
+		return nil, err
+	}
+
 	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry)
 	if err != nil {
 		return nil, err
@@ -39,5 +46,13 @@ func (i InitOAuth) Execute(input InitOAuthInput) (*string, error) {
 		return nil, err
 	}
 
-	return &code, nil
+	return &InitOAuthOutput{
+		code,
+		input.State,
+	}, nil
+}
+
+type InitOAuthOutput struct {
+	Code  string
+	State string
 }
