@@ -42,9 +42,9 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 //	@Description	Exchange user credentials for auth tokens
 //	@Router			/auth/login [post]
 //	@Tags			Auth
-//	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
+//	@Param			x-app	header		string				true	"Application ID"
 //	@Param			payload	body		authcase.LoginInput	true	"Credentials. Entry can be: email, phone, username or document"
 //	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError
@@ -122,9 +122,9 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Description	Exchange user credentials for oauth code
 //	@Router			/auth/open/init [post]
 //	@Tags			Auth
-//	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
+//	@Param			x-app	header		string					true	"Application ID"
 //	@Param			payload	body		authcase.InitOAuthInput	true	"Credentials. Entry can be: email, phone, username or document"
 //	@Success		200		{object}	presenter.Success[string]
 //	@Failure		400		{object}	normalizederr.NormalizedError
@@ -162,9 +162,9 @@ func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
 //	@Description	Exchange user credentials for oauth code
 //	@Router			/auth/open/login [post]
 //	@Tags			Auth
-//	@Security		AppToken
 //	@Accept			json
 //	@Produce		json
+//	@Param			x-app	header		string						true	"Application ID"
 //	@Param			payload	body		authcase.LoginViaOAuthInput	true	"Credentials. Entry can be: email, phone, username or document"
 //	@Success		200		{object}	presenter.Success[authcase.LoginViaOAuthOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError

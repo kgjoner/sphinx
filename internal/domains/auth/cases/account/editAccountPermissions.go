@@ -3,9 +3,7 @@ package accountcase
 import (
 	"database/sql"
 
-	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
@@ -15,11 +13,11 @@ type EditAccountPermissions struct {
 }
 
 type EditAccountPermissionsInput struct {
-	Roles              []auth.Role
-	Grantings          []string
-	ShouldRemove       sql.NullBool `validate:"required"`
-	TargetAccountEntry string       `json:"-"`
-	Actor              auth.Account `json:"-"`
+	Roles        []auth.Role
+	Grantings    []string
+	ShouldRemove sql.NullBool `validate:"required"`
+	Target       auth.Account `json:"-"`
+	Actor        auth.Account `json:"-"`
 }
 
 func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*auth.AccountPrivateView, error) {
@@ -27,19 +25,8 @@ func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (*aut
 		return nil, normalizederr.NewRequestError("Must inform whether permissions should be added or removed.")
 	}
 
-	var targetAcc *auth.Account
 	var err error
-	if id, errif := uuid.Parse(input.TargetAccountEntry); errif != nil {
-		targetAcc, err = i.AuthRepo.GetAccountById(id)
-	} else {
-		targetAcc, err = i.AuthRepo.GetAccountByEntry(input.TargetAccountEntry)
-	}
-
-	if err != nil {
-		return nil, err
-	} else if targetAcc == nil {
-		return nil, normalizederr.NewRequestError("Account does not exist", errcode.AccountNotFound)
-	}
+	targetAcc := &input.Target
 
 	if input.Roles != nil {
 		for _, r := range input.Roles {

@@ -2,10 +2,12 @@ package common
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/config/errcode"
@@ -16,47 +18,12 @@ type Middlewares struct {
 	Pools
 }
 
-func (m Middlewares) AppToken(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		appToken := r.Header.Get("authorization")
-		if appToken == "" {
-			err := normalizederr.NewUnauthorizedError("Missing app token.", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
-			return
-		}
-
-		appId, err := uuid.Parse(appToken)
-		if err != nil {
-			err := normalizederr.NewUnauthorizedError("Bad formatted app token.", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
-			return
-		}
-
-		authRepo := m.BasePool.NewQueries(r.Context())
-		application, err := authRepo.GetApplicationById(appId)
-		if err != nil {
-			presenter.HttpError(err, w, r)
-			return
-		} else if application == nil {
-			err := normalizederr.NewUnauthorizedError("Invalid app token.", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
-			return
-		}
-
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "application", *application)
-		r = r.WithContext(ctx)
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" {
-			err := normalizederr.NewUnauthorizedError("Missing bearer token.", errcode.InvalidAccess)
+			err := normalizederr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
 			presenter.HttpError(err, w, r)
 			return
 		}
@@ -69,7 +36,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		if token.IsRefresh() && !strings.Contains(r.URL.Path, "refresh") {
-			err := normalizederr.NewUnauthorizedError("Must provide an access token.", errcode.InvalidAccess)
+			err := normalizederr.NewUnauthorizedError("must provide an access token", errcode.InvalidAccess)
 			presenter.HttpError(err, w, r)
 			return
 		}
@@ -80,7 +47,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 			presenter.HttpError(err, w, r)
 			return
 		} else if account == nil {
-			err := normalizederr.NewFatalUnauthorizedError("Not existing user.", errcode.InvalidAccess)
+			err := normalizederr.NewFatalUnauthorizedError("not existing user", errcode.InvalidAccess)
 			presenter.HttpError(err, w, r)
 			return
 		}
@@ -89,15 +56,155 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		authRepo.UpsertSessions(account.SessionsToPersist()...)
 		if err != nil {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, "actor", *account)
+			ctx = context.WithValue(ctx, controller.ActorKey, *account)
 			r = r.WithContext(ctx)
 			presenter.HttpError(err, w, r)
 			return
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, "actor", *account)
-		ctx = context.WithValue(ctx, "token", tokenStr)
+		ctx = context.WithValue(ctx, controller.ActorKey, *account)
+		ctx = context.WithValue(ctx, controller.TokenKey, tokenStr)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("authorization")
+		authHeaderParts := strings.Split(authHeader, " ")
+		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Basic" {
+			err := normalizederr.NewUnauthorizedError("missing app basic token", errcode.InvalidAccess)
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		tokenStr := authHeaderParts[1]
+		decodedBytes, err := base64.StdEncoding.DecodeString(tokenStr)
+		if err != nil {
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		credentials := strings.Split(string(decodedBytes), ":")
+		if len(credentials) != 2 {
+			err := normalizederr.NewUnauthorizedError("invalid credentials", errcode.InvalidAccess)
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		appId, _ := uuid.Parse(credentials[0])
+		appSecret := credentials[1]
+
+		authRepo := m.BasePool.NewQueries(r.Context())
+		application, err := authRepo.GetApplicationById(appId)
+		if err != nil {
+			presenter.HttpError(err, w, r)
+			return
+		} else if application == nil {
+			err := normalizederr.NewUnauthorizedError("not existing app", errcode.InvalidAccess)
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, controller.ApplicationKey, *application)
+		r = r.WithContext(ctx)
+
+		err = application.Authenticate(appSecret)
+		if err != nil {
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m Middlewares) AppToken(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		appToken := r.Header.Get("x-app")
+		if appToken == "" {
+			err := normalizederr.NewUnauthorizedError("missing app token", errcode.InvalidAccess)
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		appId, err := uuid.Parse(appToken)
+		if err != nil {
+			err := normalizederr.NewUnauthorizedError("bad formatted app token", errcode.InvalidAccess)
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		authRepo := m.BasePool.NewQueries(r.Context())
+		application, err := authRepo.GetApplicationById(appId)
+		if err != nil {
+			presenter.HttpError(err, w, r)
+			return
+		} else if application == nil {
+			err := normalizederr.NewUnauthorizedError("invalid app token", errcode.InvalidAccess)
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, controller.ApplicationKey, *application)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (m Middlewares) Target(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		actor := ctx.Value(controller.ActorKey)
+
+		targetEntry := r.Header.Get("x-target")
+		if targetEntry == "" {
+			if actor == nil {
+				err := normalizederr.NewRequestError("must provide a target header", errcode.InvalidAccess)
+				presenter.HttpError(err, w, r)
+				return
+			}
+
+			ctx = context.WithValue(ctx, controller.TargetKey, actor)
+			r = r.WithContext(ctx)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		app := ctx.Value(controller.ApplicationKey)
+		isAdmin := actor != nil && actor.(auth.Account).HasRoleOnAuth(auth.RoleValues.ADMIN)
+		isAuthedApp := app != nil && app.(auth.Application).IsAuthenticated()
+		if !isAdmin && !isAuthedApp {
+			err := normalizederr.NewForbiddenError("does not have permission to execute this action")
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		authRepo := m.BasePool.NewQueries(r.Context())
+		var err error
+		var target *auth.Account
+		if id, errif := uuid.Parse(targetEntry); errif == nil {
+			target, err = authRepo.GetAccountById(id)
+		} else {
+			target, err = authRepo.GetAccountByEntry(targetEntry)
+		}
+
+		if err != nil {
+			presenter.HttpError(err, w, r)
+			return
+		} else if target == nil {
+			err := normalizederr.NewRequestError("target account does not exist", errcode.AccountNotFound)
+			presenter.HttpError(err, w, r)
+			return
+		}
+
+		ctx = context.WithValue(ctx, controller.TargetKey, *target)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

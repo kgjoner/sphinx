@@ -9,6 +9,7 @@ import (
 	"github.com/kgjoner/cornucopia/utils/pwdgen"
 	"github.com/kgjoner/cornucopia/utils/structop"
 	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/config/errcode"
 )
 
 type Application struct {
@@ -19,6 +20,8 @@ type Application struct {
 
 	Secret              string   `json:"-" validate:"required"`
 	AllowedRedirectUris []string `json:"allowedRedirectUris" validate:"uri"`
+
+	HasValidCredentials bool `json:"-"`
 
 	CreatedAt time.Time `json:"createdAt" validate:"required"`
 	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
@@ -59,6 +62,19 @@ func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, 
 /* ==============================================================================
 	METHODS
 ============================================================================== */
+
+func (a *Application) Authenticate(secret string) error {
+	if a.Secret != secret {
+		return normalizederr.NewFatalUnauthorizedError("invalid credentials", errcode.InvalidAccess)
+	}
+
+	a.HasValidCredentials = true
+	return nil
+}
+
+func (a Application) IsAuthenticated() bool {
+	return a.HasValidCredentials
+}
 
 type ApplicationEditableFields struct {
 	Name                string   `json:"name"`
