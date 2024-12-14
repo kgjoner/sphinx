@@ -41,9 +41,9 @@ type Account struct {
 	AuthedSession          *Session   `json:"-"`
 	AuthToken              *authToken `json:"-"`
 
-	PasswordUpdatedAt time.Time `json:"-"`
-	CreatedAt         time.Time `json:"createdAt" validate:"required"`
-	UpdatedAt         time.Time `json:"updatedAt" validate:"required"`
+	PasswordUpdatedAt htypes.NullTime `json:"-"`
+	CreatedAt         time.Time       `json:"createdAt" validate:"required"`
+	UpdatedAt         time.Time       `json:"updatedAt" validate:"required"`
 }
 
 /* ==============================================================================
@@ -178,7 +178,7 @@ func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
 	a.TerminateAllSessions()
 
 	now := time.Now()
-	a.PasswordUpdatedAt = now
+	a.PasswordUpdatedAt = htypes.NullTime{Time: now}
 	a.UpdatedAt = now
 	return validator.Validate(a)
 }
@@ -207,7 +207,7 @@ func (a *Account) ResetPassword(newPassword string, code string) error {
 	a.TerminateAllSessions()
 
 	now := time.Now()
-	a.PasswordUpdatedAt = now
+	a.PasswordUpdatedAt = htypes.NullTime{Time: now}
 	a.UpdatedAt = now
 	return validator.Validate(a)
 }
@@ -400,7 +400,7 @@ func (a *Account) InitOAuth(app Application) (code string, err error) {
 
 	err = link.initOAuth()
 	if err != nil {
-	 return "", err
+		return "", err
 	}
 
 	return link.OAuthCode, validator.Validate(a)

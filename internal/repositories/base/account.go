@@ -49,7 +49,7 @@ func (q Queries) UpdateAccount(acc auth.Account) error {
 		acc.HasEmailBeenVerified,
 		acc.HasPhoneBeenVerified,
 		datatransform.ToRawMessage(acc.Codes),
-		datatransform.ToNullTime(acc.PasswordUpdatedAt),
+		acc.PasswordUpdatedAt,
 		acc.UpdatedAt,
 	)
 	return err
