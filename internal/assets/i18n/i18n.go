@@ -17,8 +17,11 @@ type resource struct {
 }
 
 type ResourceParams struct {
-	AppName  string
-	UserName string
+	UserName    string
+	// Has fallback
+	AppName     string
+	// Has fallback
+	SupportEmail string
 }
 
 type resourceMail struct {
@@ -45,6 +48,10 @@ func (a *resourceMail) fillTemplate() {
 func (a *resourceMail) ParseContent(params ResourceParams) {
 	if params.AppName == "" {
 		params.AppName = config.Env.APP_NAME
+	}
+
+	if params.SupportEmail == "" {
+		params.SupportEmail = config.Env.SUPPORT_EMAIL
 	}
 
 	a.Subject.Content = executeTemplate(a.Subject.Template, params)

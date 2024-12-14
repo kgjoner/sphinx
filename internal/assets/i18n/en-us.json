@@ -31,12 +31,31 @@
         },
         {
           "kind": "text",
-          "content": "We receive a request for a password reset. Click on the button below to procced. If you didn't make this request, just ignore this email."
+          "content": "We receive a request for a password reset. Click on the button below to proceed. If you didn't make this request, just ignore this email."
         },
         {
           "kind": "button",
           "key": "password-reset",
           "content": "Reset password"
+        }
+      ]
+    },
+    "passwordChange": {
+      "subject": {
+        "content": "Your password has been changed"
+      },
+      "body": [
+        {
+          "kind": "text",
+          "content": "Hi, {{ .UserName }}!"
+        },
+        {
+          "kind": "text",
+          "content": "Your account password has just been changed. You can log in our applications with your new password now."
+        },
+        {
+          "kind": "text",
+          "content": "If it was not you who made this change, make sure that you can still log in your account. Then report the case to our support via the following email: {{ .SupportEmail }}."
         }
       ]
     }

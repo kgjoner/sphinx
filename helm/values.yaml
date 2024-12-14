@@ -29,6 +29,7 @@ secret:
 
 configMap:
   appName: Sphinx
+  supportEmail: support@example.com
   maxConcurrentSessions: 0
   fallbackLanguage: pt-br
   jwtAccessLifetimeInSec: "300"
