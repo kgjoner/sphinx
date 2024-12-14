@@ -7,5 +7,5 @@ import (
 
 func main() {
 	config.Must()
-	server.New().Start()
+	server.New().Setup().Start()
 }

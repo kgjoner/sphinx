@@ -48,7 +48,7 @@ func New() *Server {
 //	@contact.url	http://dev.kgjoner.com.br
 //	@contact.email	dev@kgjoner.com.br
 
-//	@securityDefinitions.apiKey	AppToken
+//	@securityDefinitions.basic	BasicApp
 //	@in							header
 //	@name						Authorization
 //	@description				Provide an identification of a valid registered Sphinx app
@@ -65,7 +65,7 @@ func New() *Server {
 
 // @host		{{ .Host }}
 // @basePath	/v1
-func (s *Server) Setup() {
+func (s *Server) Setup() *Server {
 	pools := common.Pools{
 		BasePool: s.basePool,
 	}
@@ -135,11 +135,12 @@ func (s *Server) Setup() {
 	})
 
 	s.Handler = r
+	return s
 }
 
 func (s *Server) Start() {
 	fmt.Println("Server running at port 8080")
-	http.ListenAndServe(":8080", s.Handler)
+	log.Fatal(http.ListenAndServe(":8080", s.Handler))
 }
 
 var (

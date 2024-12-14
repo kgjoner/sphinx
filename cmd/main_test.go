@@ -15,7 +15,7 @@ import (
 
 func startTestServer() *httptest.Server {
 	config.Must()
-	return httptest.NewServer(server.New().Handler)
+	return httptest.NewServer(server.New().Setup().Handler)
 }
 
 var (
@@ -46,7 +46,7 @@ func TestAccount(t *testing.T) {
 			"document": mockedAccount.Document,
 		}, &httputil.Options{
 			Headers: map[string]string{
-				"authorization": config.Env.ROOT_APP_TOKEN,
+				"x-app": config.Env.ROOT_APP_TOKEN,
 			},
 		})(&respData)
 
@@ -63,7 +63,7 @@ func TestAccount(t *testing.T) {
 			"password": unhashedPassword,
 		}, &httputil.Options{
 			Headers: map[string]string{
-				"authorization": config.Env.ROOT_APP_TOKEN,
+				"x-app": config.Env.ROOT_APP_TOKEN,
 			},
 		})(&respData)
 
