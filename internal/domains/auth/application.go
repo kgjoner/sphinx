@@ -10,6 +10,7 @@ import (
 	"github.com/kgjoner/cornucopia/utils/structop"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/config/errcode"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Application struct {
@@ -37,44 +38,36 @@ type ApplicationCreationFields struct {
 	AllowedRedirectUris []string `json:"allowedRedirectUris"`
 }
 
-func NewApplication(f *ApplicationCreationFields, actor Account) (*Application, error) {
+func NewApplication(f *ApplicationCreationFields, actor Account) (app *Application, secret string, err error) {
 	actorApp := actor.AuthedSession.Application
-	if !actorApp.isRoot() || !actor.HasRole(actorApp, RoleValues.ADMIN) {
-		return nil, normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+	if !actorApp.isRoot() || !(actor.HasRole(actorApp, RoleValues.ADMIN) || actor.HasGranting(actorApp, "DEV")) {
+		return nil, "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
+	secret = generateAppSecret()
 	now := time.Now()
 	created := &Application{
 		Id:        uuid.New(),
 		Name:      f.Name,
 		Grantings: f.Grantings,
 
-		Secret:              pwdgen.Generate(42, "lower", "upper", "number"),
+		Secret:              hashPassword(secret),
 		AllowedRedirectUris: f.AllowedRedirectUris,
 
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	return created, validator.Validate(created)
+	return created, secret, validator.Validate(created)
+}
+
+func generateAppSecret() string {
+	return pwdgen.Generate(42, "lower", "upper", "number")
 }
 
 /* ==============================================================================
 	METHODS
 ============================================================================== */
-
-func (a *Application) Authenticate(secret string) error {
-	if a.Secret != secret {
-		return normalizederr.NewFatalUnauthorizedError("invalid credentials", errcode.InvalidAccess)
-	}
-
-	a.HasValidCredentials = true
-	return nil
-}
-
-func (a Application) IsAuthenticated() bool {
-	return a.HasValidCredentials
-}
 
 type ApplicationEditableFields struct {
 	Name                string   `json:"name"`
@@ -84,7 +77,7 @@ type ApplicationEditableFields struct {
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 	actorApp := actor.AuthedSession.Application
-	if !actorApp.isRoot() || !actor.HasRole(actorApp, RoleValues.ADMIN) {
+	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(RoleValues.ADMIN) {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
@@ -93,6 +86,36 @@ func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 	return validator.Validate(a)
 }
 
+func (a *Application) GenerateNewSecret(actor Account) (secret string, err error) {
+	actorApp := actor.AuthedSession.Application
+	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(RoleValues.ADMIN) {
+		return "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+	}
+
+	secret = generateAppSecret()
+	a.Secret = hashPassword(secret)
+	a.UpdatedAt = time.Now()
+	return secret, validator.Validate(a)
+}
+
 func (a Application) isRoot() bool {
 	return a.Id.String() == config.Env.ROOT_APP_TOKEN
+}
+
+func (a *Application) DoesSecretMatch(secret string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(a.Secret), []byte(secret))
+	return err == nil
+}
+
+func (a *Application) Authenticate(secret string) error {
+	if !a.DoesSecretMatch(secret) {
+		return normalizederr.NewFatalUnauthorizedError("invalid credentials", errcode.InvalidAccess)
+	}
+
+	a.HasValidCredentials = true
+	return nil
+}
+
+func (a Application) IsAuthenticated() bool {
+	return a.HasValidCredentials
 }

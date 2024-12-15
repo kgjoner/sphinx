@@ -295,6 +295,16 @@ func (a Account) HasRole(app Application, roles ...Role) bool {
 	return link.hasRole(roles...)
 }
 
+// Check whether account has granting on a target application.
+func (a Account) HasGranting(app Application, grantings ...string) bool {
+	link := a.link(app.Id)
+	if link == nil {
+		return false
+	}
+
+	return link.hasGranting(grantings...)
+}
+
 func (a *Account) AddRole(r Role, app Application) error {
 	return a.updatePermission(app, func(l *Link) error {
 		return l.addRole(r)

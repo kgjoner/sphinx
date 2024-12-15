@@ -68,7 +68,7 @@ func (l Link) initOAuth(code ...string) error {
 // Return nil if the pair code/secret matches or error otherwise. In either case, it clears oauth data.
 func (l Link) useOAuth(code string, appSecret string) error {
 	var err error = nil
-	if appSecret != l.Application.Secret {
+	if !l.Application.DoesSecretMatch(appSecret) {
 		err = normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
 	} else if code != l.OAuthCode {
 		err = normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
@@ -116,6 +116,17 @@ func (l *Link) removeRole(r Role) error {
 	l.Roles = sliceman.Remove(l.Roles, index)
 	l.UpdatedAt = time.Now()
 	return validator.Validate(l)
+}
+
+func (l Link) hasGranting(grantings ...string) bool {
+	for _, existingGranting := range l.Grantings {
+		for _, allowedGranting := range grantings {
+			if existingGranting == allowedGranting {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (l *Link) addGranting(g string) error {

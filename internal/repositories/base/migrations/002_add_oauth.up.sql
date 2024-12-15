@@ -1,5 +1,5 @@
 ALTER TABLE application
-  ADD COLUMN IF NOT EXISTS secret text NOT NULL DEFAULT 'topsecret',
+  ADD COLUMN IF NOT EXISTS secret text NOT NULL DEFAULT '$2y$10$9VqcAdmx94/SeDh5ykqsmO0WFKdKXI1nEn95nLiaWRzQNEYZTVm4q',
   ADD COLUMN IF NOT EXISTS allowed_redirect_uris text[];
 
 ALTER TABLE application

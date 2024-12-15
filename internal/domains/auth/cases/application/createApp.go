@@ -14,8 +14,8 @@ type CreateApplicationInput struct {
 	Actor auth.Account
 }
 
-func (i CreateApplication) Execute(input CreateApplicationInput) (*auth.Application, error) {
-	app, err := auth.NewApplication(&input.ApplicationCreationFields, input.Actor)
+func (i CreateApplication) Execute(input CreateApplicationInput) (*CreateApplicationOutput, error) {
+	app, secret, err := auth.NewApplication(&input.ApplicationCreationFields, input.Actor)
 	if err != nil {
 		return nil, err
 	}
@@ -25,5 +25,13 @@ func (i CreateApplication) Execute(input CreateApplicationInput) (*auth.Applicat
 		return nil, err
 	}
 
-	return app, nil
+	return &CreateApplicationOutput{
+		Application: *app,
+		Secret:      secret,
+	}, nil
+}
+
+type CreateApplicationOutput struct {
+	Application auth.Application
+	Secret      string
 }
