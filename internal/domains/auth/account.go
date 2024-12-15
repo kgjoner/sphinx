@@ -274,7 +274,8 @@ func (a *Account) LinkTo(app Application) error {
 	return validator.Validate(a)
 }
 
-// Check whether account has role on application related to their authed session
+// Check whether account has role on application related to their authed session.
+// False is also returned when account is not authed.
 func (a Account) HasRoleOnAuth(roles ...Role) bool {
 	link := a.authedLink()
 	if link == nil {
@@ -284,7 +285,7 @@ func (a Account) HasRoleOnAuth(roles ...Role) bool {
 	return link.hasRole(roles...)
 }
 
-// Check whether account has role on a target application
+// Check whether account has role on a target application.
 func (a Account) HasRole(app Application, roles ...Role) bool {
 	link := a.link(app.Id)
 	if link == nil {
@@ -358,9 +359,9 @@ func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) e
 
 // Return desired application link or nil if account is not linked to it.
 func (a *Account) link(appId uuid.UUID) *Link {
-	for _, l := range a.Links {
+	for i, l := range a.Links {
 		if l.Application.Id == appId {
-			return &l
+			return &a.Links[i]
 		}
 	}
 
@@ -380,6 +381,64 @@ func (a *Account) authedLink() *Link {
 	SESSION RELATED METHODS
 ============================================================================== */
 
+func (a *Account) Authenticate(token *authToken) error {
+	s, err := a.verifyToken(token)
+	if err != nil {
+		return err
+	}
+
+	if token.IsRefresh() {
+		doesMatch := s.doesRefreshTokenMatch(token.String())
+		if !doesMatch {
+			a.TerminateAllSessions()
+			return normalizederr.NewFatalUnauthorizedError("Revoked token.", errcode.ExpiredSession)
+		}
+	}
+
+	if !a.IsActive {
+		return normalizederr.NewForbiddenError("account is no longer active", errcode.DeactivatedAccount)
+	}
+
+	a.AuthToken = token
+	a.AuthedSession = s
+	return nil
+}
+
+func (a *Account) AuthenticateViaPassword(password string) error {
+	if !a.DoesPasswordMatch(password) {
+		return normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
+	}
+
+	if !a.IsActive {
+		return normalizederr.NewForbiddenError("account is no longer active", errcode.DeactivatedAccount)
+	}
+
+	a.hasValidCredentials = true
+	return nil
+}
+
+func (a *Account) AuthenticateViaOAuth(code string, appId uuid.UUID, appSecret string) error {
+	link := a.link(appId)
+	if link == nil {
+		return normalizederr.NewRequestError("Account is not linked to desired application.")
+	}
+
+	if err := link.useOAuth(code, appSecret); err != nil {
+		return err
+	}
+
+	if !a.IsActive {
+		return normalizederr.NewForbiddenError("account is no longer active", errcode.DeactivatedAccount)
+	}
+
+	a.hasValidCredentials = true
+	return nil
+}
+
+func (a Account) IsAuthenticated() bool {
+	return a.AuthToken != nil || a.hasValidCredentials
+}
+
 func (a *Account) InitOAuth(app Application) (code string, err error) {
 	if !a.IsAuthenticated() {
 		return "", normalizederr.NewUnauthorizedError("User must be authenticated.")
@@ -392,9 +451,9 @@ func (a *Account) InitOAuth(app Application) (code string, err error) {
 
 	if a.AuthedSession != nil {
 		if !a.AuthedSession.Application.isRoot() {
-			return "", normalizederr.NewUnauthorizedError("User can only init oauth with an auth token if it is from root app.")
+			return "", normalizederr.NewForbiddenError("User can only init oauth with an auth token if it is from root app.")
 		} else if link.Application.isRoot() {
-			return "", normalizederr.NewUnauthorizedError("User can only init oauth with an auth token for apps other than root one.")
+			return "", normalizederr.NewForbiddenError("User can only init oauth with an auth token for apps other than root one.")
 		}
 	}
 
@@ -414,9 +473,9 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 
 	if a.AuthedSession != nil {
 		if !a.AuthedSession.Application.isRoot() {
-			return nil, nil, normalizederr.NewUnauthorizedError("User can only init sessions with an auth token if it is from root app.")
+			return nil, nil, normalizederr.NewForbiddenError("User can only init sessions with an auth token if it is from root app.")
 		} else if f.Application.isRoot() {
-			return nil, nil, normalizederr.NewUnauthorizedError("User can only init sessions with an auth token for apps other than root one.")
+			return nil, nil, normalizederr.NewForbiddenError("User can only init sessions with an auth token for apps other than root one.")
 		}
 	}
 
@@ -466,52 +525,6 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 	a.AuthedSession = session
 	a.AuthToken = accessToken
 	return accessToken, refreshToken, validator.Validate(a)
-}
-
-func (a *Account) Authenticate(token *authToken) error {
-	s, err := a.verifyToken(token)
-	if err != nil {
-		return err
-	}
-
-	if token.IsRefresh() {
-		doesMatch := s.doesRefreshTokenMatch(token.String())
-		if !doesMatch {
-			a.TerminateAllSessions()
-			return normalizederr.NewFatalUnauthorizedError("Revoked token.", errcode.ExpiredSession)
-		}
-	}
-
-	a.AuthToken = token
-	a.AuthedSession = s
-	return nil
-}
-
-func (a *Account) AuthenticateViaPassword(password string) error {
-	if !a.DoesPasswordMatch(password) {
-		return normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
-	}
-
-	a.hasValidCredentials = true
-	return nil
-}
-
-func (a *Account) AuthenticateViaOAuth(code string, appId uuid.UUID, appSecret string) error {
-	link := a.link(appId)
-	if link == nil {
-		return normalizederr.NewRequestError("Account is not linked to desired application.")
-	}
-
-	if err := link.useOAuth(code, appSecret); err != nil {
-		return err
-	}
-
-	a.hasValidCredentials = true
-	return nil
-}
-
-func (a Account) IsAuthenticated() bool {
-	return a.AuthToken != nil || a.hasValidCredentials
 }
 
 // Generate new tokens for an existing session
@@ -615,10 +628,6 @@ func (a *Account) SessionsToPersist() []Session {
 		sessions = append(sessions, a.justTerminatedSessions...)
 	}
 
-	if a.AuthedSession != nil && a.AuthedSession.UpdatedAt.After(time.Now().Add(time.Duration(-5)*time.Second)) {
-		sessions = append(sessions, *a.AuthedSession)
-	}
-
 	return sessions
 }
 
@@ -645,9 +654,9 @@ func (a *Account) verifyToken(token *authToken) (*Session, error) {
 
 // Return desired active session or nil if it does not exist
 func (a *Account) session(sessionId uuid.UUID) *Session {
-	for _, s := range a.ActiveSessions {
+	for i, s := range a.ActiveSessions {
 		if s.Id == sessionId && s.IsActive {
-			return &s
+			return &a.ActiveSessions[i]
 		}
 	}
 

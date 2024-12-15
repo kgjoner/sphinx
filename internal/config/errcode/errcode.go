@@ -5,6 +5,7 @@ const (
 	InvalidAccess = "INVALID_ACCESS"
 	ExpiredAccess = "EXPIRED_ACCESS"
 	ExpiredSession = "EXPIRED_SESSION"
+	DeactivatedAccount = "DEACTIVATED_ACCOUNT"
 
 	AccountNotFound = "ACCOUNT_NOT_FOUND"
 	ApplicationNotFound = "APPLICATION_NOT_FOUND"
