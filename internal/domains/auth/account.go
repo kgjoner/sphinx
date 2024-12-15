@@ -295,26 +295,26 @@ func (a Account) HasRole(app Application, roles ...Role) bool {
 	return link.hasRole(roles...)
 }
 
-func (a *Account) AddRole(r Role, actor Account) error {
-	return a.updatePermission(actor, func(l *Link) error {
+func (a *Account) AddRole(r Role, app Application) error {
+	return a.updatePermission(app, func(l *Link) error {
 		return l.addRole(r)
 	})
 }
 
-func (a *Account) RemoveRole(r Role, actor Account) error {
-	return a.updatePermission(actor, func(l *Link) error {
+func (a *Account) RemoveRole(r Role, app Application) error {
+	return a.updatePermission(app, func(l *Link) error {
 		return l.removeRole(r)
 	})
 }
 
-func (a *Account) AddGranting(g string, actor Account) error {
-	return a.updatePermission(actor, func(l *Link) error {
+func (a *Account) AddGranting(g string, app Application) error {
+	return a.updatePermission(app, func(l *Link) error {
 		return l.addGranting(g)
 	})
 }
 
-func (a *Account) RemoveGranting(g string, actor Account) error {
-	return a.updatePermission(actor, func(l *Link) error {
+func (a *Account) RemoveGranting(g string, app Application) error {
+	return a.updatePermission(app, func(l *Link) error {
 		return l.removeGranting(g)
 	})
 }
@@ -332,9 +332,8 @@ func (a *Account) LinksToPersist() []Link {
 }
 
 // Prepare and execute desired role and/or granting updates
-func (a *Account) updatePermission(actor Account, updaterFn func(*Link) error) error {
-	app := actor.AuthedSession.Application
-	if !actor.HasRole(app, RoleValues.ADMIN) {
+func (a *Account) updatePermission(app Application, updaterFn func(*Link) error) error {
+	if !app.IsAuthenticated() {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
