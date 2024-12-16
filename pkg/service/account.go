@@ -9,7 +9,7 @@ import (
 )
 
 // Get token owner's data.
-func (s SphinxService) Account(token string) (*auth.AccountPrivateView, error) {
+func (s Service) Account(token string) (*auth.AccountPrivateView, error) {
 	var respData presenter.Success[auth.AccountPrivateView]
 	_, err := s.httpApi.Get("/account", &httputil.Options{
 		Headers: map[string]string{
@@ -25,7 +25,7 @@ func (s SphinxService) Account(token string) (*auth.AccountPrivateView, error) {
 }
 
 // Get target account's data. Target value can be any account entry, including ID. Token owner must be an admin.
-func (s SphinxService) AccountOf(target string, token string) (*auth.AccountPrivateView, error) {
+func (s Service) AccountOf(target string, token string) (*auth.AccountPrivateView, error) {
 	var respData presenter.Success[auth.AccountPrivateView]
 	_, err := s.httpApi.Get("/account", &httputil.Options{
 		Headers: map[string]string{
@@ -42,7 +42,7 @@ func (s SphinxService) AccountOf(target string, token string) (*auth.AccountPriv
 }
 
 // Add roles and/or grantings to target account.
-func (s SphinxService) GrantPermissions(target string, roles []string, grantings []string) (bool, error) {
+func (s Service) GrantPermissions(target string, roles []string, grantings []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
 			Valid: true,
@@ -74,7 +74,7 @@ func (s SphinxService) GrantPermissions(target string, roles []string, grantings
 }
 
 // Remove roles and/or grantings from target account.
-func (s SphinxService) RevokePermissions(target string, roles []string, grantings []string) (bool, error) {
+func (s Service) RevokePermissions(target string, roles []string, grantings []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
 			Valid: true,
