@@ -19,9 +19,9 @@ type StartOAuth struct {
 }
 
 type StartOAuthInput struct {
-	SphinxClientHost string
-	AppHost          string
-	AppId            string
+	SphinxClientBaseUrl string
+	AppBaseUrl          string
+	AppId               string
 }
 
 func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Cookie, error) {
@@ -32,10 +32,10 @@ func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Coo
 	}
 
 	redirectUri := fmt.Sprintf("%v/oauth/callback",
-		input.AppHost,
+		input.AppBaseUrl,
 	)
 	authorizationUrl := fmt.Sprintf("%v?client_id=%v&redirect_uri=%v&state=%v",
-		input.SphinxClientHost,
+		input.SphinxClientBaseUrl,
 		input.AppId,
 		url.QueryEscape(redirectUri),
 		data["state"],

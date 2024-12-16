@@ -15,11 +15,11 @@ type OAuthCallback struct {
 }
 
 type OAuthCallbackInput struct {
-	SphinxApiHost string
-	State         string
-	Code          string
-	AppId         string
-	AppSecret     string
+	SphinxApiBaseUrl string
+	State            string
+	Code             string
+	AppId            string
+	AppSecret        string
 }
 
 func (i OAuthCallback) Execute(input OAuthCallbackInput) (bool, error) {
@@ -33,7 +33,7 @@ func (i OAuthCallback) Execute(input OAuthCallbackInput) (bool, error) {
 	}
 
 	var output presenter.Success[authcase.LoginViaOAuthOutput]
-	_, err = httputil.New(input.SphinxApiHost).Post("/auth/open/login", map[string]any{
+	_, err = httputil.New(input.SphinxApiBaseUrl).Post("/auth/open/login", map[string]any{
 		"code":      input.Code,
 		"appSecret": input.AppSecret,
 	}, &httputil.Options{
@@ -42,14 +42,14 @@ func (i OAuthCallback) Execute(input OAuthCallbackInput) (bool, error) {
 		},
 	})(&output)
 	if err != nil {
-	 return false, err
+		return false, err
 	}
 
 	data["accountId"] = output.Data.AccountId.String()
 	data["accessToken"] = output.Data.AccessToken
 	data["refreshToken"] = output.Data.RefreshToken
 
-	err = i.CacheRepo.CacheJson(key, data, 5 * time.Minute)
+	err = i.CacheRepo.CacheJson(key, data, 5*time.Minute)
 	if err != nil {
 		return false, err
 	}

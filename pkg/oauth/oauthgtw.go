@@ -16,11 +16,11 @@ type OAuthGateway struct {
 }
 
 type OAuthGatewayEnvs struct {
-	SphinxApiHost    string
-	SphinxClientHost string
-	AppHost          string
-	AppId            string
-	AppSecret        string
+	SphinxApiBaseUrl    string
+	SphinxClientBaseUrl string
+	AppBaseUrl          string
+	AppId               string
+	AppSecret           string
 }
 
 func Raise(router chi.Router, pool cacherepo.Pool, envs OAuthGatewayEnvs) {
@@ -35,9 +35,9 @@ func Raise(router chi.Router, pool cacherepo.Pool, envs OAuthGatewayEnvs) {
 		r.Post("/retrieve", oauthgtw.retrieve)
 	})
 
-  router.Get("/token-ready", func(w http.ResponseWriter, r *http.Request) {
-    w.WriteHeader(http.StatusNoContent)
-  })
+	router.Get("/token-ready", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
 }
 
 func (g OAuthGateway) start(w http.ResponseWriter, r *http.Request) {
@@ -47,9 +47,9 @@ func (g OAuthGateway) start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	output, cookie, err := i.Execute(oauthcase.StartOAuthInput{
-		SphinxClientHost: g.envs.SphinxClientHost,
-		AppHost:          g.envs.AppHost,
-		AppId:            g.envs.AppId,
+		SphinxClientBaseUrl: g.envs.SphinxClientBaseUrl,
+		AppBaseUrl:          g.envs.AppBaseUrl,
+		AppId:               g.envs.AppId,
 	})
 
 	if err != nil {
@@ -75,7 +75,7 @@ func (g OAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 
 	input.AppId = g.envs.AppId
 	input.AppSecret = g.envs.AppSecret
-	input.SphinxApiHost = g.envs.SphinxApiHost
+	input.SphinxApiBaseUrl = g.envs.SphinxApiBaseUrl
 
 	queries := g.pool.NewQueries(r.Context())
 	i := oauthcase.OAuthCallback{
@@ -88,12 +88,12 @@ func (g OAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/token-ready", http.StatusFound)
+	http.Redirect(w, r, g.envs.AppBaseUrl + "/token-ready", http.StatusFound)
 }
 
 func (g OAuthGateway) retrieve(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-    AddHeader("x-csrf-token", "csrfToken").
+		AddHeader("x-csrf-token", "csrfToken").
 		ParseBody("state")
 
 	var input oauthcase.RetrieveTokenInput
