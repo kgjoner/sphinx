@@ -23,7 +23,7 @@ secret:
   # existentName:
   # If existentName is set, below configurations will not be used 
   databaseUrl: postgres://postgres:postgres@sphinx-db:5432/sphinx
-  rootAppToken: 80cadd74-5ccd-41c4-9938-3c8961be04db
+  rootAppId: 80cadd74-5ccd-41c4-9938-3c8961be04db
   jwtSecret: mysecret
   hermesApiKey: mysecret
 

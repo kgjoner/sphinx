@@ -123,7 +123,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 	})
 }
 
-func (m Middlewares) AppToken(next http.Handler) http.Handler {
+func (m Middlewares) AppId(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		appToken := r.Header.Get("x-app")
 		if appToken == "" {

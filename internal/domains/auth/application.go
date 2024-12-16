@@ -99,7 +99,7 @@ func (a *Application) GenerateNewSecret(actor Account) (secret string, err error
 }
 
 func (a Application) isRoot() bool {
-	return a.Id.String() == config.Env.ROOT_APP_TOKEN
+	return a.Id.String() == config.Env.ROOT_APP_ID
 }
 
 func (a *Application) DoesSecretMatch(secret string) bool {

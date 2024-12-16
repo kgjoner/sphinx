@@ -11,7 +11,7 @@ import (
 )
 
 func (g AuthGateway) accountHandler(r chi.Router) {
-	r.With(g.mid.AppToken).Post("/", g.createAccount)
+	r.With(g.mid.AppId).Post("/", g.createAccount)
 	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateAccount)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
 	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editAccountPermissions)

@@ -27,12 +27,12 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 	router.Route("/application", authgtw.applicationHandler)
 
 	router.Route("/auth", func(r chi.Router) {
-		r.With(authgtw.mid.AppToken).Post("/login", authgtw.login)
+		r.With(authgtw.mid.AppId).Post("/login", authgtw.login)
 		r.With(authgtw.mid.Authenticate).Post("/logout", authgtw.logout)
 		r.With(authgtw.mid.Authenticate).Post("/refresh", authgtw.refresh)
 
-		r.With(authgtw.mid.AppToken).Post("/open/init", authgtw.initOAuth)
-		r.With(authgtw.mid.AppToken).Post("/open/login", authgtw.loginViaOAuth)
+		r.With(authgtw.mid.AppId).Post("/open/init", authgtw.initOAuth)
+		r.With(authgtw.mid.AppId).Post("/open/login", authgtw.loginViaOAuth)
 	})
 }
 

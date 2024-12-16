@@ -23,7 +23,7 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 //	@Description	Register a new application that share auth details with this server.
 //	@Router			/application [post]
 //	@Tags			Application
-//	@Security		AppToken
+//	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		auth.ApplicationCreationFields	true	"Name and possible grantings."
@@ -65,7 +65,7 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Description	Update name or grantings of target application.
 //	@Router			/application/{id} [patch]
 //	@Tags			Application
-//	@Security		AppToken
+//	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		string							true	"Id of target application"
@@ -110,10 +110,10 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 //	@Router			/application/{id} [get]
 //	@Tags			Application
 //	@Produce		json
-//	@Param			id		path		string							true	"Id of target application"
-//	@Success		200		{object}	presenter.Success[auth.Application]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Param			id	path		string	true	"Id of target application"
+//	@Success		200	{object}	presenter.Success[auth.Application]
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseUrlParam("id", "applicationId")

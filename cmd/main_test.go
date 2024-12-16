@@ -46,7 +46,7 @@ func TestAccount(t *testing.T) {
 			"document": mockedAccount.Document,
 		}, &httputil.Options{
 			Headers: map[string]string{
-				"x-app": config.Env.ROOT_APP_TOKEN,
+				"x-app": config.Env.ROOT_APP_ID,
 			},
 		})(&respData)
 
@@ -63,7 +63,7 @@ func TestAccount(t *testing.T) {
 			"password": unhashedPassword,
 		}, &httputil.Options{
 			Headers: map[string]string{
-				"x-app": config.Env.ROOT_APP_TOKEN,
+				"x-app": config.Env.ROOT_APP_ID,
 			},
 		})(&respData)
 
