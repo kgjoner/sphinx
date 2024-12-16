@@ -99,7 +99,7 @@ func (s *Server) Setup() *Server {
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-Entry"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-App", "X-Entry", "X-Target"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
