@@ -12,18 +12,18 @@ import (
 	sphinx "github.com/kgjoner/sphinx/pkg/service"
 )
 
-type middlewares struct {
-	Sphinx sphinx.Service
+type Middlewares struct {
+	sphinx sphinx.Service
 }
 
-func NewMiddlewares(svc sphinx.Service) *middlewares {
-	return &middlewares{
+func NewMiddlewares(svc sphinx.Service) *Middlewares {
+	return &Middlewares{
 		svc,
 	}
 }
 
 // Ensure authentication via bearer token
-func (m middlewares) Authenticate(next http.Handler) http.Handler {
+func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
@@ -34,7 +34,7 @@ func (m middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		tokenStr := authHeaderParts[1]
-		acc, err := m.Sphinx.Account(tokenStr)
+		acc, err := m.sphinx.Account(tokenStr)
 		if err != nil {
 			presenter.HttpError(err, w, r)
 			return
@@ -50,7 +50,7 @@ func (m middlewares) Authenticate(next http.Handler) http.Handler {
 }
 
 // If authorization header is present, ensure authentication via bearer token. Otherwise, allow request forward.
-func (m middlewares) TryAuthenticate(next http.Handler) http.Handler {
+func (m Middlewares) TryAuthenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("authorization")
 		if authHeader == "" {
@@ -63,7 +63,7 @@ func (m middlewares) TryAuthenticate(next http.Handler) http.Handler {
 }
 
 // Ensure authenticated account has at least one of listed permissions. Admin accounts are always allowed.
-func (m middlewares) Guard(permissions ...string) func(http.Handler) http.Handler {
+func (m Middlewares) Guard(permissions ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			actorValue := r.Context().Value("actor")
