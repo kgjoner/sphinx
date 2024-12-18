@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -68,6 +70,27 @@ func generateAppSecret() string {
 /* ==============================================================================
 	METHODS
 ============================================================================== */
+
+func (a Application) IsValid() error {
+	errs := make(map[string]error)
+
+	roles := structop.New(RoleValues).Map()
+	for _, g := range a.Grantings {
+		for _, r := range roles {
+			if strings.ToUpper(g) == r {
+				key := fmt.Sprintf("Grantings[%v]", g)
+				errs[key] = fmt.Errorf("%v is a reserved role, it cannot be a granting", g)
+				break
+			}
+		}
+	}
+
+	if len(errs) != 0 {
+		return normalizederr.NewValidationErrorFromMap(errs)
+	}
+
+	return nil
+}
 
 type ApplicationEditableFields struct {
 	Name                string   `json:"name"`
