@@ -28,7 +28,7 @@ func New(baseUrl, appId, appSecret string) *Service {
 	}
 }
 
-type AccountPrivateView struct {
+type Account struct {
 	Id       uuid.UUID          `json:"id" validate:"required"`
 	Email    htypes.Email       `json:"email" validate:"required"`
 	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
@@ -41,7 +41,7 @@ type AccountPrivateView struct {
 	Link                 *auth.Link `json:"link"`
 }
 
-func (a AccountPrivateView) IsAdmin() bool {
+func (a Account) IsAdmin() bool {
 	for _, r := range a.Link.Roles {
 		if r == auth.RoleValues.ADMIN {
 			return true
@@ -51,7 +51,7 @@ func (a AccountPrivateView) IsAdmin() bool {
 	return false
 }
 
-func (a AccountPrivateView) IsStaff() bool {
+func (a Account) IsStaff() bool {
 	for _, r := range a.Link.Roles {
 		if r == auth.RoleValues.STAFF {
 			return true
@@ -61,7 +61,7 @@ func (a AccountPrivateView) IsStaff() bool {
 	return false
 }
 
-func (a AccountPrivateView) HasGranting(granting string) bool {
+func (a Account) HasGranting(granting string) bool {
 	for _, g := range a.Link.Grantings {
 		if g == granting {
 			return true

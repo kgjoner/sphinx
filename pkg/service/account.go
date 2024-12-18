@@ -8,8 +8,8 @@ import (
 )
 
 // Get token owner's data.
-func (s Service) Account(token string) (*AccountPrivateView, error) {
-	var respData presenter.Success[AccountPrivateView]
+func (s Service) Account(token string) (*Account, error) {
+	var respData presenter.Success[Account]
 	_, err := s.httpApi.Get("/account", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
@@ -24,8 +24,8 @@ func (s Service) Account(token string) (*AccountPrivateView, error) {
 }
 
 // Get target account's data. Target value can be any account entry, including ID. Token owner must be an admin.
-func (s Service) AccountOf(target string, token string) (*AccountPrivateView, error) {
-	var respData presenter.Success[AccountPrivateView]
+func (s Service) AccountOf(target string, token string) (*Account, error) {
+	var respData presenter.Success[Account]
 	_, err := s.httpApi.Get("/account", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
