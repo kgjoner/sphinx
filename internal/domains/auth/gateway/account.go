@@ -15,6 +15,7 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateAccount)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
 	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editAccountPermissions)
+	r.With(g.mid.AuthenticateApp, g.mid.Target).Get("/email", g.getAccountEmail)
 	r.With(g.mid.AuthenticateApp).Get("/id", g.getAccountId)
 
 	r.Get("/existence", g.checkEntryExistence)
@@ -133,46 +134,6 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 
 	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.GetPrivateAccount{
-		AuthRepo: queries,
-	}
-
-	output, err := i.Execute(input)
-	if err != nil {
-		presenter.HttpError(err, w, r)
-		return
-	}
-
-	presenter.HttpSuccess(output, w, r)
-}
-
-// GetAccounntId godoc
-//
-//	@Summary		Get account id
-//	@Description	Retrieve account id by its entry. Return nil if entry does not exist.
-//	@Router			/account [get]
-//	@Tags			Account
-//	@Security		BasicApp
-//	@Accept			json
-//	@Produce		json
-//	@Param			x-entry	header		string	true	"Email, username, phone or document."
-//	@Success		200			{object}	presenter.Success[*uuid.UUID]
-//	@Failure		400			{object}	normalizederr.NormalizedError
-//	@Failure		401			{object}	normalizederr.NormalizedError
-//	@Failure		403			{object}	normalizederr.NormalizedError
-//	@Failure		500			{object}	normalizederr.NormalizedError
-func (g AuthGateway) getAccountId(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
-		AddHeader("X-Entry", "entry")
-
-	var input accountcase.GetAccountIdInput
-	err := c.Write(&input)
-	if err != nil {
-		presenter.HttpError(err, w, r)
-		return
-	}
-
-	queries := g.BasePool.NewQueries(r.Context())
-	i := accountcase.GetAccountId{
 		AuthRepo: queries,
 	}
 
@@ -352,7 +313,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 // EditAccountPermissions godoc
 //
 //	@Summary		Add or remove roles and grantings
-//	@Description	Add or remove roles and/or grantings of the target account. Must be a high user.
+//	@Description	Add or remove roles and/or grantings of the target account.
 //	@Router			/account/permission [patch]
 //	@Tags			Account
 //	@Security		BasicApp
@@ -381,6 +342,86 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 
 	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.EditAccountPermissions{
+		AuthRepo: queries,
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// GetAccounntId godoc
+//
+//	@Summary		Get account id
+//	@Description	Retrieve account id by its entry. Return nil if entry does not exist.
+//	@Router			/account/id [get]
+//	@Tags			Account
+//	@Security		BasicApp
+//	@Accept			json
+//	@Produce		json
+//	@Param			x-entry	header		string	true	"Email, username, phone or document."
+//	@Success		200			{object}	presenter.Success[*uuid.UUID]
+//	@Failure		400			{object}	normalizederr.NormalizedError
+//	@Failure		401			{object}	normalizederr.NormalizedError
+//	@Failure		403			{object}	normalizederr.NormalizedError
+//	@Failure		500			{object}	normalizederr.NormalizedError
+func (g AuthGateway) getAccountId(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		AddHeader("X-Entry", "entry")
+
+	var input accountcase.GetAccountIdInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	queries := g.BasePool.NewQueries(r.Context())
+	i := accountcase.GetAccountId{
+		AuthRepo: queries,
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// GetAccountEmail godoc
+//
+//	@Summary		Get target account email
+//	@Description	Retrieve email of the target account.
+//	@Router			/account/email [get]
+//	@Tags			Account
+//	@Security		BasicApp
+//	@Accept			json
+//	@Produce		json
+//	@Param			x-target	header		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
+//	@Success		200			{object}	presenter.Success[htypes.Email]
+//	@Failure		400			{object}	normalizederr.NormalizedError
+//	@Failure		401			{object}	normalizederr.NormalizedError
+//	@Failure		403			{object}	normalizederr.NormalizedError
+//	@Failure		500			{object}	normalizederr.NormalizedError
+func (g AuthGateway) getAccountEmail(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		AddTarget()
+
+	var input accountcase.GetAccountEmailInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	queries := g.BasePool.NewQueries(r.Context())
+	i := accountcase.GetAccountEmail{
 		AuthRepo: queries,
 	}
 
