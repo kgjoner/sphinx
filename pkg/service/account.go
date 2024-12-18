@@ -25,7 +25,9 @@ func (s Service) Account(token string) (*Account, error) {
 	return &respData.Data, nil
 }
 
-// Get target account's data. Target value can be any account entry, including ID. Token owner must be an admin.
+// Get target account's data. Target value can be any account entry, including ID. Return error if target account does not exist.
+//
+// Token owner must be an admin.
 func (s Service) AccountOf(target string, token string) (*Account, error) {
 	var respData presenter.Success[Account]
 	_, err := s.httpApi.Get("/account", &httputil.Options{
@@ -40,6 +42,23 @@ func (s Service) AccountOf(target string, token string) (*Account, error) {
 	}
 
 	return &respData.Data, nil
+}
+
+// Get target account's email. Target value can be their ID or other entry. Return error if target account does not exist.
+func (s Service) EmailOf(target string) (htypes.Email, error) {
+	var respData presenter.Success[htypes.Email]
+	_, err := s.httpApi.Get("/account/email", &httputil.Options{
+		Headers: map[string]string{
+			"Authorization": "Basic " + s.appToken,
+			"X-Target": target,
+		},
+	})(&respData)
+
+	if err != nil {
+		return "", err
+	}
+
+	return respData.Data, nil
 }
 
 // Create a simple account for the informed email.
