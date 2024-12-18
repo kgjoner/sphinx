@@ -5,12 +5,11 @@ import (
 
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/utils/httputil"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
 // Get token owner's data.
-func (s Service) Account(token string) (*auth.AccountPrivateView, error) {
-	var respData presenter.Success[auth.AccountPrivateView]
+func (s Service) Account(token string) (*AccountPrivateView, error) {
+	var respData presenter.Success[AccountPrivateView]
 	_, err := s.httpApi.Get("/account", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
@@ -25,8 +24,8 @@ func (s Service) Account(token string) (*auth.AccountPrivateView, error) {
 }
 
 // Get target account's data. Target value can be any account entry, including ID. Token owner must be an admin.
-func (s Service) AccountOf(target string, token string) (*auth.AccountPrivateView, error) {
-	var respData presenter.Success[auth.AccountPrivateView]
+func (s Service) AccountOf(target string, token string) (*AccountPrivateView, error) {
+	var respData presenter.Success[AccountPrivateView]
 	_, err := s.httpApi.Get("/account", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,

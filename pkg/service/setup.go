@@ -3,7 +3,10 @@ package sphinx
 import (
 	"encoding/base64"
 
+	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/utils/httputil"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
 type Service struct {
@@ -23,4 +26,47 @@ func New(baseUrl, appId, appSecret string) *Service {
 		appSecret: appSecret,
 		appToken:  appToken,
 	}
+}
+
+type AccountPrivateView struct {
+	Id       uuid.UUID          `json:"id" validate:"required"`
+	Email    htypes.Email       `json:"email" validate:"required"`
+	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
+	Username string             `json:"username,omitempty" validate:"wordId"`
+	Document htypes.Document    `json:"document,omitempty"`
+
+	IsActive             bool       `json:"isActive"`
+	HasEmailBeenVerified bool       `json:"hasEmailBeenVerified"`
+	HasPhoneBeenVerified bool       `json:"hasPhoneBeenVerified"`
+	Link                 *auth.Link `json:"link"`
+}
+
+func (a AccountPrivateView) IsAdmin() bool {
+	for _, r := range a.Link.Roles {
+		if r == auth.RoleValues.ADMIN {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (a AccountPrivateView) IsStaff() bool {
+	for _, r := range a.Link.Roles {
+		if r == auth.RoleValues.STAFF {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (a AccountPrivateView) HasGranting(granting string) bool {
+	for _, g := range a.Link.Grantings {
+		if g == granting {
+			return true
+		}
+	}
+
+	return false
 }
