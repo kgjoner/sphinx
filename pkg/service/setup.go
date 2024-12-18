@@ -61,6 +61,16 @@ func (a Account) IsStaff() bool {
 	return false
 }
 
+func (a Account) HasRole(role string) bool {
+	for _, r := range a.Link.Roles {
+		if string(r) == role {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (a Account) HasGranting(granting string) bool {
 	for _, g := range a.Link.Grantings {
 		if g == granting {

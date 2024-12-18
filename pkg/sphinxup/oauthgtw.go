@@ -1,4 +1,4 @@
-package oauthgtw
+package sphinxup
 
 import (
 	"net/http"
@@ -7,10 +7,10 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	cacherepo "github.com/kgjoner/cornucopia/repositories/cache"
-	oauthcase "github.com/kgjoner/sphinx/pkg/oauth/cases"
+	oauthcase "github.com/kgjoner/sphinx/pkg/sphinxup/cases/oauth"
 )
 
-type OAuthGateway struct {
+type oAuthGateway struct {
 	pool cacherepo.Pool
 	envs OAuthGatewayEnvs
 }
@@ -23,8 +23,8 @@ type OAuthGatewayEnvs struct {
 	AppSecret           string
 }
 
-func Raise(router chi.Router, pool cacherepo.Pool, envs OAuthGatewayEnvs) {
-	oauthgtw := &OAuthGateway{
+func RaiseOAuthGateway(router chi.Router, pool cacherepo.Pool, envs OAuthGatewayEnvs) {
+	oauthgtw := &oAuthGateway{
 		pool,
 		envs,
 	}
@@ -40,7 +40,7 @@ func Raise(router chi.Router, pool cacherepo.Pool, envs OAuthGatewayEnvs) {
 	})
 }
 
-func (g OAuthGateway) start(w http.ResponseWriter, r *http.Request) {
+func (g oAuthGateway) start(w http.ResponseWriter, r *http.Request) {
 	queries := g.pool.NewQueries(r.Context())
 	i := oauthcase.StartOAuth{
 		CacheRepo: *queries,
@@ -61,7 +61,7 @@ func (g OAuthGateway) start(w http.ResponseWriter, r *http.Request) {
 	presenter.HttpSuccess(output, w, r)
 }
 
-func (g OAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
+func (g oAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseQueryParam("code").
 		ParseQueryParam("state")
@@ -88,10 +88,10 @@ func (g OAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, g.envs.AppBaseUrl + "/token-ready", http.StatusFound)
+	http.Redirect(w, r, g.envs.AppBaseUrl+"/token-ready", http.StatusFound)
 }
 
-func (g OAuthGateway) retrieve(w http.ResponseWriter, r *http.Request) {
+func (g oAuthGateway) retrieve(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddHeader("x-csrf-token", "csrfToken").
 		ParseBody("state")
