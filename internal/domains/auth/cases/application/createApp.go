@@ -32,6 +32,6 @@ func (i CreateApplication) Execute(input CreateApplicationInput) (*CreateApplica
 }
 
 type CreateApplicationOutput struct {
-	Application auth.Application
-	Secret      string
+	Application auth.Application `json:"application"`
+	Secret      string           `json:"secret"`
 }

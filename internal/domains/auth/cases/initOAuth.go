@@ -53,6 +53,6 @@ func (i InitOAuth) Execute(input InitOAuthInput) (*InitOAuthOutput, error) {
 }
 
 type InitOAuthOutput struct {
-	Code  string
-	State string
+	Code  string `json:"code"`
+	State string `json:"state"`
 }

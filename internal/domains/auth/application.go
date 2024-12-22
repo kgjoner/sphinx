@@ -17,7 +17,7 @@ import (
 
 type Application struct {
 	InternalId int       `json:"-"`
-	Id         uuid.UUID `json:"-" validate:"required"`
+	Id         uuid.UUID `json:"id" validate:"required"`
 	Name       string    `json:"name" validate:"required"`
 	Grantings  []string  `json:"grantings"`
 

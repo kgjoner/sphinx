@@ -64,8 +64,8 @@ func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Coo
 }
 
 type StartOAuthOutput struct {
-	AuthorizationUrl string
-	State            string
-	CsrfToken        string
-	ExpiresAt        time.Time
+	AuthorizationUrl string    `json:"authorizationUrl"`
+	State            string    `json:"state"`
+	CsrfToken        string    `json:"csrfToken"`
+	ExpiresAt        time.Time `json:"expiresAt"`
 }
