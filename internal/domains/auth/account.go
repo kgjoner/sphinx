@@ -624,10 +624,6 @@ func (a *Account) TerminateAllSessions() error {
 func (a *Account) SessionsToPersist() []Session {
 	sessions := []Session{}
 	for _, s := range a.ActiveSessions {
-		if a.AuthedSession != nil && a.AuthedSession.Id == s.Id {
-			continue
-		}
-
 		if s.UpdatedAt.After(time.Now().Add(time.Duration(-5) * time.Second)) {
 			sessions = append(sessions, s)
 		}
