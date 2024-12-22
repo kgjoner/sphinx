@@ -321,7 +321,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			x-target	header		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
 //	@Param			payload		body		accountcase.EditAccountPermissionsInput	true	"At least one of roles and grantings must be defined"
-//	@Success		200			{object}	presenter.Success[auth.AccountPrivateView]
+//	@Success		200			{object}	presenter.Success[bool]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
@@ -364,7 +364,7 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-entry	header		string	true	"Email, username, phone or document."
-//	@Success		200			{object}	presenter.Success[*uuid.UUID]
+//	@Success		200			{object}	presenter.Success[string]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
@@ -404,7 +404,7 @@ func (g AuthGateway) getAccountId(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-target	header		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
-//	@Success		200			{object}	presenter.Success[htypes.Email]
+//	@Success		200			{object}	presenter.Success[string]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
