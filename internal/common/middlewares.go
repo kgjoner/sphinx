@@ -109,11 +109,10 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 			return
 		}
 
+		err = application.Authenticate(appSecret)
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, controller.ApplicationKey, *application)
 		r = r.WithContext(ctx)
-
-		err = application.Authenticate(appSecret)
 		if err != nil {
 			presenter.HttpError(err, w, r)
 			return
