@@ -5,13 +5,13 @@ import (
 
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	cacherepo "github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/cornucopia/utils/httputil"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type OAuthCallback struct {
-	CacheRepo cacherepo.Queries
+	CacheRepo cache.DAO
 }
 
 type OAuthCallbackInput struct {

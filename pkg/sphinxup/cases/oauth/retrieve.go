@@ -3,12 +3,12 @@ package oauthcase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	cacherepo "github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/repositories/cache"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type RetrieveToken struct {
-	CacheRepo cacherepo.Queries
+	CacheRepo cache.DAO
 }
 
 type RetrieveTokenInput struct {
@@ -33,12 +33,12 @@ func (i RetrieveToken) Execute(input RetrieveTokenInput) (*authcase.LoginViaOAut
 
 	accountId, err := uuid.Parse(data["accountId"])
 	if err != nil {
-	 return nil, err
+		return nil, err
 	}
 
 	return &authcase.LoginViaOAuthOutput{
-		AccountId: accountId,
-		AccessToken: data["accessToken"],
+		AccountId:    accountId,
+		AccessToken:  data["accessToken"],
 		RefreshToken: data["refreshToken"],
 	}, nil
 }

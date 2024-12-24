@@ -6,12 +6,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	cacherepo "github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/repositories/cache"
 	oauthcase "github.com/kgjoner/sphinx/pkg/sphinxup/cases/oauth"
 )
 
 type oAuthGateway struct {
-	pool cacherepo.Pool
+	pool cache.Pool
 	envs OAuthGatewayEnvs
 }
 
@@ -23,7 +23,7 @@ type OAuthGatewayEnvs struct {
 	AppSecret           string
 }
 
-func RaiseOAuthGateway(router chi.Router, pool cacherepo.Pool, envs OAuthGatewayEnvs) {
+func RaiseOAuthGateway(router chi.Router, pool cache.Pool, envs OAuthGatewayEnvs) {
 	oauthgtw := &oAuthGateway{
 		pool,
 		envs,
@@ -41,9 +41,9 @@ func RaiseOAuthGateway(router chi.Router, pool cacherepo.Pool, envs OAuthGateway
 }
 
 func (g oAuthGateway) start(w http.ResponseWriter, r *http.Request) {
-	queries := g.pool.NewQueries(r.Context())
+	repo := g.pool.NewDAO(r.Context())
 	i := oauthcase.StartOAuth{
-		CacheRepo: *queries,
+		CacheRepo: repo,
 	}
 
 	output, cookie, err := i.Execute(oauthcase.StartOAuthInput{
@@ -77,9 +77,9 @@ func (g oAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 	input.AppSecret = g.envs.AppSecret
 	input.SphinxApiBaseUrl = g.envs.SphinxApiBaseUrl
 
-	queries := g.pool.NewQueries(r.Context())
+	repo := g.pool.NewDAO(r.Context())
 	i := oauthcase.OAuthCallback{
-		CacheRepo: *queries,
+		CacheRepo: repo,
 	}
 
 	_, err = i.Execute(input)
@@ -103,9 +103,9 @@ func (g oAuthGateway) retrieve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.pool.NewQueries(r.Context())
+	repo := g.pool.NewDAO(r.Context())
 	i := oauthcase.RetrieveToken{
-		CacheRepo: *queries,
+		CacheRepo: repo,
 	}
 
 	output, err := i.Execute(input)

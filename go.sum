@@ -34,6 +34,8 @@ github.com/kgjoner/cornucopia v0.3.0 h1:V99eG7weZlEPcfto64my7msI8ZfOGVu8NFc9QRUm
 github.com/kgjoner/cornucopia v0.3.0/go.mod h1:mMc0tLiIOwDQuOElhHeLA1SsnmjqnFyx5CyKDIscBcA=
 github.com/kgjoner/cornucopia v0.3.1 h1:5ssweyh2YNfYtj+ryc1I9EcSPrVpycnetrbjOnYSNts=
 github.com/kgjoner/cornucopia v0.3.1/go.mod h1:mMc0tLiIOwDQuOElhHeLA1SsnmjqnFyx5CyKDIscBcA=
+github.com/kgjoner/cornucopia v1.0.0 h1:C/un3Ey/ko2bBXqpAtMrAFsLW/trFXPBsjMyuz2hgf4=
+github.com/kgjoner/cornucopia v1.0.0/go.mod h1:mMc0tLiIOwDQuOElhHeLA1SsnmjqnFyx5CyKDIscBcA=
 github.com/kgjoner/hermes v0.0.0-20240420093355-4dedb0c0f315 h1:mOCxol9Krwn3u7Px4cG72kKqlXUhzASA6OU0kWXnWro=
 github.com/kgjoner/hermes v0.0.0-20240420093355-4dedb0c0f315/go.mod h1:4MO22LW56O4v2zs2Nnrcj5mZ4xCdHPQ2W7xSBM/gXtE=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=

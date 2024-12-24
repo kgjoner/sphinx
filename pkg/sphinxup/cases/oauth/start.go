@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	cacherepo "github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/cornucopia/utils/pwdgen"
 )
 
@@ -15,7 +15,7 @@ func OAuthStateKey(state string) string {
 }
 
 type StartOAuth struct {
-	CacheRepo cacherepo.Queries
+	CacheRepo cache.DAO
 }
 
 type StartOAuthInput struct {
