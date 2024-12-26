@@ -14,8 +14,8 @@ import (
 	"github.com/kgjoner/cornucopia/utils/pwdgen"
 	"github.com/kgjoner/cornucopia/utils/sliceman"
 	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/sha3"
 )

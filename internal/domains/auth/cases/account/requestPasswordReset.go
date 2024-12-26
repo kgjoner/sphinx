@@ -6,8 +6,8 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 

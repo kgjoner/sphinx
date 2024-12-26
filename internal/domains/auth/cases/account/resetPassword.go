@@ -5,7 +5,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
@@ -50,7 +50,7 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	
+
 	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
 	if err != nil {
 		return false, err

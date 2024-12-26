@@ -10,7 +10,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 

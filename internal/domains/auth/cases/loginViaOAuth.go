@@ -3,7 +3,7 @@ package authcase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 

@@ -8,8 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
 )
 
 /* ==============================================================================
@@ -116,7 +116,7 @@ func ParseAuthToken(str string) (*authToken, error) {
 			exp, _ := token.Claims.GetExpirationTime()
 			diff := exp.Sub(iat.Time)
 			code := errcode.ExpiredAccess
-			if (diff.Seconds() >= float64(config.Env.JWT.REFRESH_LIFETIME_IN_SEC)) {
+			if diff.Seconds() >= float64(config.Env.JWT.REFRESH_LIFETIME_IN_SEC) {
 				code = errcode.ExpiredSession
 			}
 			return nil, normalizederr.NewUnauthorizedError(msg, code)

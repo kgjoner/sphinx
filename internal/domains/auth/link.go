@@ -9,8 +9,8 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/validator"
 	"github.com/kgjoner/cornucopia/utils/pwdgen"
 	"github.com/kgjoner/cornucopia/utils/sliceman"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
 )
 
 type Link struct {
