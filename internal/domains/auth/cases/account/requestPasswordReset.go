@@ -4,21 +4,26 @@ import (
 	"fmt"
 
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
+	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type RequestPasswordReset struct {
 	AuthRepo    authcase.AuthRepo
+	CacheRepo   cache.DAO
 	MailService hermes.MailService
 }
 
 type RequestPasswordResetInput struct {
-	Entry     string
-	Languages []string `json:"-"`
+	Entry       string
+	Application auth.Application
+	Languages   []string `json:"-"`
 }
 
 func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, error) {
@@ -40,20 +45,27 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 	}
 
 	// Send email
-	t := i18n.Resource(input.Languages).Mails["passwordReset"]
-	t.ParseContent(i18n.ResourceParams{
-		UserName: acc.Name(),
+	mail := common.Mail{
+		MailService: i.MailService,
+		CacheRepo:   i.CacheRepo,
+	}
+	_, err = mail.Execute(common.MailInput{
+		TemplateKey: "passwordReset",
+		Target:      *acc,
+		Application: input.Application,
+		Links: []i18n.CustomLink{
+			{
+				Key: "password-reset",
+				Link: fmt.Sprintf(
+					"%v?id=%v&code=%v",
+					config.Env.CLIENT_URI.PASSWORD_RESET,
+					acc.Id,
+					code,
+				),
+			},
+		},
+		Languages: input.Languages,
 	})
-
-	err = i.MailService.SendCustomEmail(acc.Email, t.Subject.Content, t.FormatBody(i18n.CustomLink{
-		Key: "password-reset",
-		Link: fmt.Sprintf(
-			"%v?id=%v&code=%v",
-			config.Env.CLIENT_URI.PASSWORD_RESET,
-			acc.Id,
-			code,
-		),
-	}))
 	if err != nil {
 		return false, err
 	}

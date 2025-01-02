@@ -4,6 +4,8 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/utils/datatransform"
+	"github.com/kgjoner/cornucopia/utils/dbhandler"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/lib/pq"
 )
@@ -20,6 +22,7 @@ func (q Queries) InsertApplication(app auth.Application) (int, error) {
 		pq.Array(app.Grantings),
 		app.Secret,
 		pq.Array(app.AllowedRedirectUris),
+		datatransform.ToRawMessage(app.Brand),
 	)
 	var id int
 	err := row.Scan(&id)
@@ -37,6 +40,7 @@ func (q Queries) UpdateApplication(app auth.Application) error {
 		app.Name,
 		pq.Array(app.Grantings),
 		pq.Array(app.AllowedRedirectUris),
+		datatransform.ToRawMessage(app.Brand),
 	)
 	return err
 }
@@ -56,6 +60,7 @@ func (q Queries) GetApplicationById(id uuid.UUID) (*auth.Application, error) {
 		pq.Array(&item.Grantings),
 		&item.Secret,
 		pq.Array(&item.AllowedRedirectUris),
+		dbhandler.Struct(&item.Brand),
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)

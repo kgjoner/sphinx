@@ -10,8 +10,8 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/validator"
 	"github.com/kgjoner/cornucopia/utils/pwdgen"
 	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/config/errcode"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,11 +23,19 @@ type Application struct {
 
 	Secret              string   `json:"-" validate:"required"`
 	AllowedRedirectUris []string `json:"allowedRedirectUris" validate:"uri"`
+	Brand               brand    `json:"brand"`
 
 	HasValidCredentials bool `json:"-"`
 
 	CreatedAt time.Time `json:"createdAt" validate:"required"`
 	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
+}
+
+type brand struct {
+	LogoUrl         string `json:"logoUrl" validate:"uri"`
+	StyleUrl        string `json:"styleUrl" validate:"uri"`
+	IsValidOnEmail  bool   `json:"isValidOnEmail"`
+	IsValidOnClient bool   `json:"isValidOnClient"`
 }
 
 /* ==============================================================================
@@ -38,6 +46,7 @@ type ApplicationCreationFields struct {
 	Name                string   `json:"name" validate:"required"`
 	Grantings           []string `json:"grantings"`
 	AllowedRedirectUris []string `json:"allowedRedirectUris"`
+	Brand               brand    `json:"brand"`
 }
 
 func NewApplication(f *ApplicationCreationFields, actor Account) (app *Application, secret string, err error) {
@@ -96,6 +105,7 @@ type ApplicationEditableFields struct {
 	Name                string   `json:"name"`
 	Grantings           []string `json:"grantings"`
 	AllowedRedirectUris []string `json:"allowedRedirectUris"`
+	Brand               brand    `json:"brand"`
 }
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {

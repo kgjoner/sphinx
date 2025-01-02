@@ -3,14 +3,17 @@ package accountcase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
-	"github.com/kgjoner/sphinx/internal/assets/i18n"
+	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type ResetPassword struct {
 	AuthRepo    authcase.AuthRepo
+	CacheRepo   cache.DAO
 	MailService hermes.MailService
 }
 
@@ -18,6 +21,7 @@ type ResetPasswordInput struct {
 	AccountId   uuid.UUID `json:"-"`
 	Code        string
 	NewPassword string
+	Application auth.Application
 	Languages   []string `json:"-"`
 }
 
@@ -35,14 +39,18 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	}
 
 	// Send email
-	t := i18n.Resource(input.Languages).Mails["passwordChange"]
-	t.ParseContent(i18n.ResourceParams{
-		UserName: acc.Name(),
+	mail := common.Mail{
+		MailService: i.MailService,
+		CacheRepo: i.CacheRepo,
+	}
+	_, err = mail.Execute(common.MailInput{
+		TemplateKey: "passwordChange",
+		Target: *acc,
+		Application: input.Application,
+		Languages: input.Languages,
 	})
-
-	err = i.MailService.SendCustomEmail(acc.Email, t.Subject.Content, t.FormatBody())
 	if err != nil {
-		return false, err
+	 return false, err
 	}
 
 	// Save only after assuring notification email was sent

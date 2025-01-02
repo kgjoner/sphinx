@@ -12,15 +12,17 @@ import (
 
 func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.AppId).Post("/", g.createAccount)
+	r.With(g.mid.AppId).Post("/password/request", g.requestPasswordReset)
+	r.With(g.mid.AppId).Patch("/{id}/password", g.resetPassword)
+	
 	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateAccount)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
+
 	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editAccountPermissions)
 	r.With(g.mid.AuthenticateApp, g.mid.Target).Get("/email", g.getAccountEmail)
 	r.With(g.mid.AuthenticateApp).Get("/id", g.getAccountId)
 
 	r.Get("/existence", g.checkEntryExistence)
-	r.Post("/password/request", g.requestPasswordReset)
-	r.Patch("/{id}/password", g.resetPassword)
 	r.Patch("/{id}/verification", g.verifyAccount)
 }
 
@@ -56,6 +58,7 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.CreateAccount{
 		AuthRepo:    queries,
+		CacheRepo:   g.CachePool.NewDAO(r.Context()),
 		MailService: g.MailService,
 	}
 
@@ -216,6 +219,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.ChangePassword{
 		AuthRepo:    queries,
+		CacheRepo:   g.CachePool.NewDAO(r.Context()),
 		MailService: g.MailService,
 	}
 
@@ -236,6 +240,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
+//	@Param			x-app			header		string						true	"Application ID"
 //	@Param			accept-language	header		string									false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		accountcase.RequestPasswordResetInput	true	"Old password and new one."
 //	@Success		200				{object}	presenter.Success[bool]
@@ -244,6 +249,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseBody(structop.New(accountcase.RequestPasswordResetInput{}).JsonKeys()...).
+		AddApplication().
 		AddLanguages()
 
 	var input accountcase.RequestPasswordResetInput
@@ -256,6 +262,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.RequestPasswordReset{
 		AuthRepo:    queries,
+		CacheRepo:   g.CachePool.NewDAO(r.Context()),
 		MailService: g.MailService,
 	}
 
@@ -276,6 +283,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
+//	@Param			x-app			header		string						true	"Application ID"
 //	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			id				path		string							true	"Account ID"
 //	@Param			payload			body		accountcase.ResetPasswordInput	true	"Old password and new one."
@@ -286,6 +294,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseBody(structop.New(accountcase.ResetPasswordInput{}).JsonKeys()...).
 		ParseUrlParam("id", "accountId").
+		AddApplication().
 		AddLanguages()
 
 	var input accountcase.ResetPasswordInput
@@ -298,6 +307,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.ResetPassword{
 		AuthRepo:    queries,
+		CacheRepo:   g.CachePool.NewDAO(r.Context()),
 		MailService: g.MailService,
 	}
 
