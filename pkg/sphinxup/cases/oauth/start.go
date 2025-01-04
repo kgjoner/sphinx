@@ -34,7 +34,7 @@ func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Coo
 	redirectUri := fmt.Sprintf("%v/oauth/callback",
 		input.AppBaseUrl,
 	)
-	authorizationUrl := fmt.Sprintf("%v?client_id=%v&redirect_uri=%v&state=%v",
+	authorizationUrl := fmt.Sprintf("%v/%v?path=oauth&redirect_uri=%v&state=%v",
 		input.SphinxClientBaseUrl,
 		input.AppId,
 		url.QueryEscape(redirectUri),
