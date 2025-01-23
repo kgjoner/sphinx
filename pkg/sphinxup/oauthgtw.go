@@ -46,7 +46,9 @@ func (g oAuthGateway) start(w http.ResponseWriter, r *http.Request) {
 		CacheRepo: repo,
 	}
 
+	origin := r.Header.Get("origin")
 	output, cookie, err := i.Execute(oauthcase.StartOAuthInput{
+		Origin:              origin,
 		SphinxClientBaseUrl: g.envs.SphinxClientBaseUrl,
 		AppBaseUrl:          g.envs.AppBaseUrl,
 		AppId:               g.envs.AppId,
@@ -82,13 +84,16 @@ func (g oAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 		CacheRepo: repo,
 	}
 
-	_, err = i.Execute(input)
+	to, err := i.Execute(input)
 	if err != nil {
 		presenter.HttpError(err, w, r)
 		return
 	}
 
-	http.Redirect(w, r, g.envs.AppBaseUrl+"/token-ready", http.StatusFound)
+	if to == "" {
+		to = g.envs.AppBaseUrl + "/token-ready"
+	}
+	http.Redirect(w, r, to, http.StatusFound)
 }
 
 func (g oAuthGateway) retrieve(w http.ResponseWriter, r *http.Request) {

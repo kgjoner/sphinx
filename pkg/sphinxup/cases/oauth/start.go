@@ -19,6 +19,7 @@ type StartOAuth struct {
 }
 
 type StartOAuthInput struct {
+	Origin              string
 	SphinxClientBaseUrl string
 	AppBaseUrl          string
 	AppId               string
@@ -29,6 +30,7 @@ func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Coo
 		"state":     pwdgen.Generate(24, "lower", "upper", "number"),
 		"sessionId": pwdgen.Generate(24, "lower", "upper", "number"),
 		"csrfToken": pwdgen.Generate(24, "lower", "upper", "number"),
+		"origin":    input.Origin,
 	}
 
 	redirectUri := fmt.Sprintf("%v/oauth/callback",

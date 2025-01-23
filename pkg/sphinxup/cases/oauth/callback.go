@@ -22,14 +22,14 @@ type OAuthCallbackInput struct {
 	AppSecret        string
 }
 
-func (i OAuthCallback) Execute(input OAuthCallbackInput) (bool, error) {
+func (i OAuthCallback) Execute(input OAuthCallbackInput) (string, error) {
 	key := OAuthStateKey(input.State)
 	data := map[string]string{}
 	err := i.CacheRepo.GetJson(key, &data)
 	if err != nil {
-		return false, err
+		return "", err
 	} else if len(data) == 0 {
-		return false, normalizederr.NewRequestError("invalid state")
+		return "", normalizederr.NewRequestError("invalid state")
 	}
 
 	var output presenter.Success[authcase.LoginViaOAuthOutput]
@@ -42,7 +42,7 @@ func (i OAuthCallback) Execute(input OAuthCallbackInput) (bool, error) {
 		},
 	})(&output)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	data["accountId"] = output.Data.AccountId.String()
@@ -51,8 +51,8 @@ func (i OAuthCallback) Execute(input OAuthCallbackInput) (bool, error) {
 
 	err = i.CacheRepo.CacheJson(key, data, 5*time.Minute)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	return true, nil
+	return data["origin"]+"/login/ready", nil
 }
