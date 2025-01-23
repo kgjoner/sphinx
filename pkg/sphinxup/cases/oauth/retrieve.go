@@ -20,7 +20,7 @@ type RetrieveTokenInput struct {
 func (i RetrieveToken) Execute(input RetrieveTokenInput) (*authcase.LoginViaOAuthOutput, error) {
 	key := OAuthStateKey(input.State)
 	data := map[string]string{}
-	err := i.CacheRepo.GetJson(key, data)
+	err := i.CacheRepo.GetJson(key, &data)
 	if err != nil {
 		return nil, err
 	} else if len(data) == 0 {

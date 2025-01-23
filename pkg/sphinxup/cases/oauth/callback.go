@@ -25,7 +25,7 @@ type OAuthCallbackInput struct {
 func (i OAuthCallback) Execute(input OAuthCallbackInput) (bool, error) {
 	key := OAuthStateKey(input.State)
 	data := map[string]string{}
-	err := i.CacheRepo.GetJson(key, data)
+	err := i.CacheRepo.GetJson(key, &data)
 	if err != nil {
 		return false, err
 	} else if len(data) == 0 {
