@@ -28,4 +28,6 @@ DO UPDATE
   SET
     roles = EXCLUDED.roles,
     grantings = EXCLUDED.grantings,
+    oauth_code = EXCLUDED.oauth_code,
+    oauth_expires_at = EXCLUDED.oauth_expires_at,
     updated_at = EXCLUDED.updated_at;
