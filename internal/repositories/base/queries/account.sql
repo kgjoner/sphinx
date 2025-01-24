@@ -159,7 +159,7 @@ WITH target_link AS (
   FROM
     link l
   WHERE
-    l.oauth_code = $1
+    l.oauth_code = ''
 ), la AS (
   SELECT
     l.*,
@@ -205,8 +205,9 @@ SELECT
 FROM
   account a
   LEFT JOIN la ON la.account_id = a.internal_id
-  LEFT JOIN sa ON sa.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id,
+  target_link
 WHERE
-  a.internal_id = target_link.user_id 
+  a.internal_id = target_link.account_id 
 GROUP BY
   a.internal_id;
