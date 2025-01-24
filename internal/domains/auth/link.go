@@ -51,7 +51,7 @@ func newLink(acc *Account, app Application) *Link {
 ============================================================================== */
 
 // Save code and set an expiration time for it
-func (l Link) initOAuth(code ...string) error {
+func (l *Link) initOAuth(code ...string) error {
 	var realCode string
 	if len(code) > 0 {
 		realCode = code[0]
@@ -66,7 +66,7 @@ func (l Link) initOAuth(code ...string) error {
 }
 
 // Return nil if the pair code/secret matches or error otherwise. In either case, it clears oauth data.
-func (l Link) useOAuth(code string, appSecret string) error {
+func (l *Link) useOAuth(code string, appSecret string) error {
 	var err error = nil
 	if !l.Application.DoesSecretMatch(appSecret) {
 		err = normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)

@@ -14,11 +14,10 @@ type InitOAuth struct {
 type InitOAuthInput struct {
 	Entry       string           `validate:"required"`
 	Password    string           `validate:"required"`
-	State       string           `validate:"required"`
 	Application auth.Application `json:"-" validate:"required"`
 }
 
-func (i InitOAuth) Execute(input InitOAuthInput) (*InitOAuthOutput, error) {
+func (i InitOAuth) Execute(input InitOAuthInput) (*string, error) {
 	err := validator.Validate(input)
 	if err != nil {
 		return nil, err
@@ -46,13 +45,5 @@ func (i InitOAuth) Execute(input InitOAuthInput) (*InitOAuthOutput, error) {
 		return nil, err
 	}
 
-	return &InitOAuthOutput{
-		code,
-		input.State,
-	}, nil
-}
-
-type InitOAuthOutput struct {
-	Code  string `json:"code"`
-	State string `json:"state"`
+	return &code, nil
 }
