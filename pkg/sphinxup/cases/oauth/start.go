@@ -23,6 +23,7 @@ type StartOAuthInput struct {
 	SphinxClientBaseUrl string
 	AppBaseUrl          string
 	AppId               string
+	Development         bool
 }
 
 func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Cookie, error) {
@@ -58,10 +59,10 @@ func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Coo
 		}, &http.Cookie{
 			Name:     "session_id",
 			Value:    data["sessionId"],
-			Path:     "/oauth",
 			Expires:  expiresAt,
-			Secure:   true,
-			HttpOnly: true,
+			Secure:   !input.Development,
+			HttpOnly: !input.Development,
+			SameSite: http.SameSiteNoneMode,
 		}, nil
 }
 

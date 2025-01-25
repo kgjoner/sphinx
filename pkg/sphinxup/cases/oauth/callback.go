@@ -54,5 +54,5 @@ func (i OAuthCallback) Execute(input OAuthCallbackInput) (string, error) {
 		return "", err
 	}
 
-	return data["origin"]+"/login/ready", nil
+	return data["origin"], nil
 }

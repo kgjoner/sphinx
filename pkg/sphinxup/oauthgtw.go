@@ -21,6 +21,10 @@ type OAuthGatewayEnvs struct {
 	AppBaseUrl          string
 	AppId               string
 	AppSecret           string
+
+	// Used to minimize security settings, allowing localhost to receive cookies, for example.
+	// Ignore it in productions environments.
+	Development bool
 }
 
 func RaiseOAuthGateway(router chi.Router, pool cache.Pool, envs OAuthGatewayEnvs) {
@@ -52,6 +56,7 @@ func (g oAuthGateway) start(w http.ResponseWriter, r *http.Request) {
 		SphinxClientBaseUrl: g.envs.SphinxClientBaseUrl,
 		AppBaseUrl:          g.envs.AppBaseUrl,
 		AppId:               g.envs.AppId,
+		Development:         g.envs.Development,
 	})
 
 	if err != nil {
@@ -84,15 +89,17 @@ func (g oAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 		CacheRepo: repo,
 	}
 
-	to, err := i.Execute(input)
+	origin, err := i.Execute(input)
 	if err != nil {
 		presenter.HttpError(err, w, r)
 		return
 	}
 
-	if to == "" {
-		to = g.envs.AppBaseUrl + "/token-ready"
+	if origin == "" {
+		origin = g.envs.AppBaseUrl
 	}
+
+	to := origin + "/token-ready"
 	http.Redirect(w, r, to, http.StatusFound)
 }
 
