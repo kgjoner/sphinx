@@ -1,6 +1,7 @@
 package oauthcase
 
 import (
+	"log"
 	"time"
 
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
@@ -32,6 +33,7 @@ func (i OAuthCallback) Execute(input OAuthCallbackInput) (string, error) {
 		return "", normalizederr.NewRequestError("invalid state")
 	}
 
+	log.Printf("Origin Callback: %v", data["origin"])
 	var output presenter.Success[authcase.LoginViaOAuthOutput]
 	_, err = httputil.New(input.SphinxApiBaseUrl).Post("/auth/open/login", map[string]any{
 		"code":      input.Code,

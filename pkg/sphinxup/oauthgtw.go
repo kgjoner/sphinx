@@ -1,6 +1,7 @@
 package sphinxup
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -18,13 +19,10 @@ type oAuthGateway struct {
 type OAuthGatewayEnvs struct {
 	SphinxApiBaseUrl    string
 	SphinxClientBaseUrl string
-	AppBaseUrl          string
+	AppDomain           string
+	AppBasePath         string
 	AppId               string
 	AppSecret           string
-
-	// Used to minimize security settings, allowing localhost to receive cookies, for example.
-	// Ignore it in productions environments.
-	Development bool
 }
 
 func RaiseOAuthGateway(router chi.Router, pool cache.Pool, envs OAuthGatewayEnvs) {
@@ -51,12 +49,13 @@ func (g oAuthGateway) start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	origin := r.Header.Get("origin")
+	log.Printf("Origin: %v", origin)
 	output, cookie, err := i.Execute(oauthcase.StartOAuthInput{
 		Origin:              origin,
 		SphinxClientBaseUrl: g.envs.SphinxClientBaseUrl,
-		AppBaseUrl:          g.envs.AppBaseUrl,
+		AppDomain:           g.envs.AppDomain,
+		AppBasePath:         g.envs.AppBasePath,
 		AppId:               g.envs.AppId,
-		Development:         g.envs.Development,
 	})
 
 	if err != nil {
@@ -96,7 +95,7 @@ func (g oAuthGateway) callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if origin == "" {
-		origin = g.envs.AppBaseUrl
+		origin = g.envs.AppDomain + g.envs.AppBasePath
 	}
 
 	to := origin + "/token-ready"

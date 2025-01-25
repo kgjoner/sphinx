@@ -21,9 +21,9 @@ type StartOAuth struct {
 type StartOAuthInput struct {
 	Origin              string
 	SphinxClientBaseUrl string
-	AppBaseUrl          string
+	AppDomain           string
+	AppBasePath         string
 	AppId               string
-	Development         bool
 }
 
 func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Cookie, error) {
@@ -34,8 +34,8 @@ func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Coo
 		"origin":    input.Origin,
 	}
 
-	redirectUri := fmt.Sprintf("%v/oauth/callback",
-		input.AppBaseUrl,
+	redirectUri := fmt.Sprintf("%v%v/oauth/callback",
+		input.AppDomain, input.AppBasePath,
 	)
 	authorizationUrl := fmt.Sprintf("%v/%v?path=oauth&redirect_uri=%v&state=%v",
 		input.SphinxClientBaseUrl,
@@ -51,19 +51,22 @@ func (i StartOAuth) Execute(input StartOAuthInput) (*StartOAuthOutput, *http.Coo
 		return nil, nil, err
 	}
 
+	cookie := http.Cookie{
+		Name:     "session_id",
+		Value:    data["sessionId"],
+		Path:     input.AppBasePath + "/oauth",
+		Expires:  expiresAt,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	}
+
 	return &StartOAuthOutput{
-			AuthorizationUrl: authorizationUrl,
-			State:            data["state"],
-			CsrfToken:        data["csrfToken"],
-			ExpiresAt:        expiresAt,
-		}, &http.Cookie{
-			Name:     "session_id",
-			Value:    data["sessionId"],
-			Expires:  expiresAt,
-			Secure:   !input.Development,
-			HttpOnly: !input.Development,
-			SameSite: http.SameSiteNoneMode,
-		}, nil
+		AuthorizationUrl: authorizationUrl,
+		State:            data["state"],
+		CsrfToken:        data["csrfToken"],
+		ExpiresAt:        expiresAt,
+	}, &cookie, nil
 }
 
 type StartOAuthOutput struct {
