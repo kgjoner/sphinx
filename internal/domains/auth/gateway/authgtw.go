@@ -166,7 +166,7 @@ func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			x-app	header		string						true	"Application ID"
 //	@Param			payload	body		authcase.LoginViaOAuthInput	true	"Credentials. Entry can be: email, phone, username or document"
-//	@Success		200		{object}	presenter.Success[authcase.LoginViaOAuthOutput]
+//	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
