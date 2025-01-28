@@ -1,9 +1,9 @@
 package authcase
 
 import (
-	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
+	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
@@ -17,7 +17,7 @@ type LoginViaOAuthInput struct {
 	auth.SessionCreationFields `json:"-"`
 }
 
-func (i LoginViaOAuth) Execute(input LoginViaOAuthInput) (*LoginViaOAuthOutput, error) {
+func (i LoginViaOAuth) Execute(input LoginViaOAuthInput) (*LoginOutput, error) {
 	acc, err := i.AuthRepo.GetAccountByOAuthCode(input.Code)
 	if err != nil {
 		return nil, err
@@ -48,15 +48,10 @@ func (i LoginViaOAuth) Execute(input LoginViaOAuthInput) (*LoginViaOAuthOutput, 
 		}
 	}
 
-	return &LoginViaOAuthOutput{
+	return &LoginOutput{
 		AccountId:    acc.Id,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
+		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
 	}, nil
-}
-
-type LoginViaOAuthOutput struct {
-	AccountId    uuid.UUID `json:"accountId"`
-	AccessToken  string    `json:"accessToken"`
-	RefreshToken string    `json:"refreshToken"`
 }

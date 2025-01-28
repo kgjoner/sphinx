@@ -17,7 +17,7 @@ type RetrieveTokenInput struct {
 	CsrfToken string
 }
 
-func (i RetrieveToken) Execute(input RetrieveTokenInput) (*authcase.LoginViaOAuthOutput, error) {
+func (i RetrieveToken) Execute(input RetrieveTokenInput) (*authcase.LoginOutput, error) {
 	key := OAuthStateKey(input.State)
 	data := map[string]string{}
 	err := i.CacheRepo.GetJson(key, &data)
@@ -36,7 +36,7 @@ func (i RetrieveToken) Execute(input RetrieveTokenInput) (*authcase.LoginViaOAut
 		return nil, err
 	}
 
-	return &authcase.LoginViaOAuthOutput{
+	return &authcase.LoginOutput{
 		AccountId:    accountId,
 		AccessToken:  data["accessToken"],
 		RefreshToken: data["refreshToken"],

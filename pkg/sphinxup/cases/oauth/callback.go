@@ -34,7 +34,7 @@ func (i OAuthCallback) Execute(input OAuthCallbackInput) (string, error) {
 	}
 
 	log.Printf("Origin Callback: %v", data["origin"])
-	var output presenter.Success[authcase.LoginViaOAuthOutput]
+	var output presenter.Success[authcase.LoginOutput]
 	_, err = httputil.New(input.SphinxApiBaseUrl).Post("/auth/open/login", map[string]any{
 		"code":      input.Code,
 		"appSecret": input.AppSecret,

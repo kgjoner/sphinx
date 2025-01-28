@@ -1,6 +1,9 @@
 package authcase
 
-import "github.com/kgjoner/sphinx/internal/domains/auth"
+import (
+	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
+)
 
 type Refresh struct {
 	AuthRepo AuthRepo
@@ -13,7 +16,7 @@ type RefreshInput struct {
 func (i Refresh) Execute(input RefreshInput) (*LoginOutput, error) {
 	accessToken, refreshToken, err := input.Actor.IssueNewTokens()
 	if err != nil {
-	 return nil, err
+		return nil, err
 	}
 
 	err = i.AuthRepo.UpsertSessions(input.Actor.SessionsToPersist()...)
@@ -22,8 +25,9 @@ func (i Refresh) Execute(input RefreshInput) (*LoginOutput, error) {
 	}
 
 	return &LoginOutput{
-		input.Actor.Id,
-		accessToken.String(),
-		refreshToken.String(),
+		AccountId: input.Actor.Id,
+		AccessToken: accessToken.String(),
+		RefreshToken: refreshToken.String(),
+		ExpiresIn: config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
 	}, nil
 }
