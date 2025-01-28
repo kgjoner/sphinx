@@ -1,7 +1,6 @@
 package sphinxup
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -25,6 +24,11 @@ type OAuthGatewayEnvs struct {
 	AppSecret           string
 }
 
+// Set oauth routes to interact with Sphinx API. It servers as a middle man for frontend.
+//
+// Deprecated: it will be removed in next major release. You should rely on BFF to handle 
+// sphinx oauth, not on main app api. Add this into main api may rise issues if they are
+// not in same domain. Further, it couples excessive auth logic there.
 func RaiseOAuthGateway(router chi.Router, pool cache.Pool, envs OAuthGatewayEnvs) {
 	oauthgtw := &oAuthGateway{
 		pool,
@@ -49,7 +53,6 @@ func (g oAuthGateway) start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	origin := r.Header.Get("origin")
-	log.Printf("Origin: %v", origin)
 	output, cookie, err := i.Execute(oauthcase.StartOAuthInput{
 		Origin:              origin,
 		SphinxClientBaseUrl: g.envs.SphinxClientBaseUrl,
