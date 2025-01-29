@@ -153,20 +153,15 @@ GROUP BY
   a.internal_id;
 
 -- name: GetAccountByOAuthCode :one
-WITH target_link AS (
-  SELECT
-    *
-  FROM
-    link l
-  WHERE
-    l.oauth_code = ''
-), la AS (
+WITH la AS (
   SELECT
     l.*,
     json_agg(app.*)->0 application
   FROM
     link l
     JOIN application app ON app.internal_id = l.application_id
+  WHERE
+    l.oauth_code = $1
   GROUP BY
     l.internal_id
 ), sa AS (
@@ -204,10 +199,7 @@ SELECT
   a.updated_at
 FROM
   account a
-  LEFT JOIN la ON la.account_id = a.internal_id
-  LEFT JOIN sa ON sa.account_id = a.internal_id,
-  target_link
-WHERE
-  a.internal_id = target_link.account_id 
+  RIGHT JOIN la ON la.account_id = a.internal_id
+  LEFT JOIN sa ON sa.account_id = a.internal_id
 GROUP BY
   a.internal_id;
