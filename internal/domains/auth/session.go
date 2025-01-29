@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/validator"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Session struct {
@@ -90,8 +89,7 @@ func (s *Session) updateRefreshToken(token authToken) {
 }
 
 func (s Session) doesRefreshTokenMatch(signedString string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(s.RefreshToken), []byte(signedString))
-	return err == nil
+	return s.RefreshToken == hashData(signedString)
 }
 
 /* ==============================================================================
