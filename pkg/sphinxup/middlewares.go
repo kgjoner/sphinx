@@ -66,10 +66,11 @@ func (m Middlewares) TryAuthenticate(next http.Handler) http.Handler {
 func (m Middlewares) Guard(permissions ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			actorValue := r.Context().Value("actor")
+			actorValue := r.Context().Value(controller.ActorKey)
 			if actorValue == nil {
 				err := normalizederr.NewUnauthorizedError("no actor found, user must be authenticated prior guard middleware", errcode.InvalidAccess)
 				presenter.HttpError(err, w, r)
+				return
 			}
 
 			actor := actorValue.(sphinx.Account)
