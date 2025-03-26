@@ -1,8 +1,11 @@
 package common
 
 import (
+	"fmt"
 	"html/template"
+	"strings"
 	"time"
+
 	// "time"
 
 	"github.com/kgjoner/cornucopia/helpers/presenter"
@@ -65,6 +68,24 @@ func (i Mail) Execute(input MailInput) (bool, error) {
 				Style: appStyle.Mail.Footer,
 			},
 		})
+	}
+
+	
+	for i, link := range input.Links {
+		if strings.HasPrefix(link.Link, "/") {
+			if input.Application.Brand.IsValidOnEmail {
+				path := ""
+				parts := strings.Split(link.Link, "?")
+				if len(parts) > 1 {
+					path = fmt.Sprintf("/%s?path=%s&%s", input.Application.Id, parts[0], parts[1])
+				} else {
+					path = fmt.Sprintf("/%s?path=%s", input.Application.Id, parts[0])
+				}
+				input.Links[i].Link = config.Env.CLIENT.BASE_URL + path
+			} else {
+				input.Links[i].Link = config.Env.CLIENT.BASE_URL + link.Link
+			}
+		}
 	}
 
 	t := i18n.Resource(input.Languages).Mails[input.TemplateKey]
