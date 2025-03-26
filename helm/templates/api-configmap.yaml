@@ -12,5 +12,6 @@ data:
   JWT_ACCESS_LIFETIME_IN_SEC: {{ .Values.configMap.jwtAccessLifetimeInSec | quote }}
   JWT_REFRESH_LIFETIME_IN_SEC: {{ .Values.configMap.jwtRefreshLifetimeInSec | quote }}
   HERMES_BASE_URL: {{ .Values.configMap.hermesBaseUrl }}
-  CLIENT_URI_DATA_VERIFICATION: {{ .Values.configMap.clientUriDataVerification }}
-  CLIENT_URI_PASSWORD_RESET: {{ .Values.configMap.clientUriPasswordReset }}
+  CLIENT_BASE_URL: {{ .Values.configMap.clientBaseUrl }}
+  CLIENT_DATA_VERIFICATION: {{ .Values.configMap.clientDataVerification }}
+  CLIENT_PASSWORD_RESET: {{ .Values.configMap.clientPasswordReset }}

@@ -58,7 +58,7 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 				Key: "password-reset",
 				Link: fmt.Sprintf(
 					"%v?id=%v&code=%v",
-					config.Env.CLIENT_URI.PASSWORD_RESET,
+					config.Env.CLIENT.PASSWORD_RESET,
 					acc.Id,
 					code,
 				),

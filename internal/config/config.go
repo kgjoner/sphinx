@@ -7,6 +7,7 @@ import (
 var Env struct {
 	HOST         string `envconfig:"default=localhost:8080"`
 	DATABASE_URL string `envconfig:"default=postgres://postgres:postgres@db:5432/sphynx?sslmode=disable&pool_max_conns=20"`
+	REDIS_URL    string `envconfig:"default=redis://redis:redis@rdb:6379/0"`
 	ROOT_APP_ID  string `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
 
 	//Set 0 for disabling concurrent sessions control
@@ -14,13 +15,14 @@ var Env struct {
 	OAUTH_LIFETIME_IN_SEC   int `envconfig:"default=300"`
 	JWT                     struct {
 		SECRET                  string `envconfig:"default=topsecret"`
-		ACCESS_LIFETIME_IN_SEC  int    `envconfig:"default=300"`
+		ACCESS_LIFETIME_IN_SEC  int    `envconfig:"default=900"`
 		REFRESH_LIFETIME_IN_SEC int    `envconfig:"default=172800"`
 	}
 
-	CLIENT_URI struct {
-		DATA_VERIFICATION string `envconfig:"default=localhost:8080/verification"`
-		PASSWORD_RESET    string `envconfig:"default=localhost:8080/password/reset"`
+	CLIENT struct {
+		BASE_URL string `envconfig:"default=localhost:8080"`
+		DATA_VERIFICATION string `envconfig:"default=/verification"`
+		PASSWORD_RESET    string `envconfig:"default=/password/reset"`
 	}
 
 	APP_NAME          string `envconfig:"default=Sphinx"`

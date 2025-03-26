@@ -71,7 +71,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 				Key: "email-verification",
 				Link: fmt.Sprintf(
 					"%v?kind=email&id=%v&code=%v",
-					config.Env.CLIENT_URI.DATA_VERIFICATION,
+					config.Env.CLIENT.DATA_VERIFICATION,
 					acc.Id,
 					acc.Codes[auth.AccountCodeKindValues.EMAIL_VERIFICATION],
 				),
