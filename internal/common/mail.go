@@ -1,8 +1,11 @@
 package common
 
 import (
+	"html/template"
 	"time"
+	// "time"
 
+	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/cornucopia/utils/httputil"
 	"github.com/kgjoner/hermes/pkg/hermes"
@@ -31,33 +34,35 @@ func (i Mail) Execute(input MailInput) (bool, error) {
 	if input.Application.Brand.IsValidOnEmail {
 		appName = input.Application.Name
 
-		style, err := cache.RunWithCache[style.AppStyle](
+		resp, err := cache.RunWithCache[presenter.Success[style.AppStyle]](
 			i.CacheRepo,
 			7*24*time.Hour,
-			httputil.Get[style.AppStyle],
+			httputil.Get[presenter.Success[style.AppStyle]],
 		)(input.Application.Brand.StyleUrl)
 		if err != nil {
 			return false, err
 		}
+		appStyle := resp.Data
 
 		opt = append(opt, hermes.Options{
-			PrimaryColor:      style.Colors.PrimaryPure,
-			PrimaryHoverColor: style.Colors.PrimaryLight,
+			PrimaryColor:      appStyle.Colors.PrimaryPure,
+			PrimaryHoverColor: appStyle.Colors.PrimaryLight,
 			Header: struct {
-				Logo            string "json:\"logo\""
-				Title           string "json:\"title\""
-				BackgroundColor string "json:\"backgroundColor\""
-				Height          string "json:\"height\""
-				Align           string "json:\"align\" validate:\"oneof=flex-end flex-start center space-between space-around\""
+				Logo      string       "json:\"logo\""
+				Title     string       "json:\"title\""
+				Style     template.CSS "json:\"style\""
+				LogoStyle template.CSS "json:\"logoStyle\""
 			}{
-				Logo:            input.Application.Brand.LogoUrl,
-				Title:           input.Application.Name,
-				BackgroundColor: style.Colors.BackgroundLight,
+				Logo:      input.Application.Brand.LogoUrl,
+				Title:     input.Application.Name,
+				Style:     appStyle.Mail.Header,
+				LogoStyle: appStyle.Mail.Logo,
 			},
 			Footer: struct {
-				BackgroundColor string "json:\"backgroundColor\""
+				Text  string       "json:\"text\""
+				Style template.CSS "json:\"style\""
 			}{
-				BackgroundColor: style.Colors.BackgroundDark,
+				Style: appStyle.Mail.Footer,
 			},
 		})
 	}

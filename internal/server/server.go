@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/repositories/cache/redisdb"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/docs"
 	"github.com/kgjoner/sphinx/internal/assets/img"
@@ -25,8 +28,9 @@ import (
 )
 
 type Server struct {
-	basePool *baserepo.Pool
-	Handler  http.Handler
+	basePool  *baserepo.Pool
+	cachePool cache.Pool
+	Handler   http.Handler
 }
 
 func New() *Server {
@@ -35,8 +39,14 @@ func New() *Server {
 		log.Fatalln(err)
 	}
 
+	rdb, err := redisdb.NewPool(config.Env.REDIS_URL)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	return &Server{
-		basePool: db,
+		basePool:  db,
+		cachePool: rdb,
 	}
 }
 
@@ -67,7 +77,8 @@ func New() *Server {
 // @basePath	/v1
 func (s *Server) Setup() *Server {
 	pools := common.Pools{
-		BasePool: s.basePool,
+		BasePool:  s.basePool,
+		CachePool: s.cachePool,
 	}
 
 	services := common.Services{
@@ -75,23 +86,25 @@ func (s *Server) Setup() *Server {
 			PrimaryColor:      style.Root.Colors.PrimaryPure,
 			PrimaryHoverColor: style.Root.Colors.PrimaryDark,
 			Header: struct {
-				Logo            string "json:\"logo\""
-				Title           string "json:\"title\""
-				BackgroundColor string "json:\"backgroundColor\""
-				Height          string "json:\"height\""
-				Align           string "json:\"align\" validate:\"oneof=flex-end flex-start center space-between space-around\""
+				Logo      string       "json:\"logo\""
+				Title     string       "json:\"title\""
+				Style     template.CSS "json:\"style\""
+				LogoStyle template.CSS "json:\"logoStyle\""
 			}{
-				Logo:            config.Env.HOST + "/root/logo.svg",
-				Title:           config.Env.APP_NAME,
-				BackgroundColor: style.Root.Colors.BackgroundLight,
+				Logo:  config.Env.HOST + "/root/logo.svg",
+				Title: config.Env.APP_NAME,
+				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundLight)),
 			},
 			Footer: struct {
-				BackgroundColor string "json:\"backgroundColor\""
+				Text  string       "json:\"text\""
+				Style template.CSS "json:\"style\""
 			}{
-				BackgroundColor: style.Root.Colors.BackgroundDark,
+				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundDark)),
 			},
 		}),
 	}
+
+	
 
 	r := chi.NewRouter()
 	r.Use(middleware.RealIP)

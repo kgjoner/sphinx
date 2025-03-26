@@ -3,6 +3,7 @@ package style
 import (
 	"embed"
 	"encoding/json"
+	"html/template"
 )
 
 type AppStyle struct {
@@ -70,6 +71,12 @@ type AppStyle struct {
 	} `json:"fonts"`
 
 	Outline string `json:"outline"`
+
+	Mail struct {
+		Header template.CSS `json:"header"`
+		Logo   template.CSS `json:"logo"`
+		Footer template.CSS `json:"footer"`
+	}
 }
 
 //go:embed *.json
