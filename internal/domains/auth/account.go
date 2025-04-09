@@ -28,6 +28,7 @@ type Account struct {
 	Password   string             `json:"-" validate:"required"`
 	Username   string             `json:"username" validate:"wordId,atLeastOne=letter"`
 	Document   htypes.Document    `json:"-"`
+	ExtraData  `json:"-"`
 
 	IsActive             bool                       `json:"isActive"`
 	HasEmailBeenVerified bool                       `json:"hasEmailBeenVerified"`
@@ -46,16 +47,22 @@ type Account struct {
 	UpdatedAt         time.Time       `json:"updatedAt" validate:"required"`
 }
 
+type ExtraData struct {
+	Name    string `json:"name,omitempty"`
+	Surname string `json:"surname,omitempty"`
+}
+
 /* ==============================================================================
 	CONSTRUCTORS
 ============================================================================== */
 
 type AccountCreationFields struct {
-	Email    htypes.Email       `json:"email" validate:"required"`
-	Phone    htypes.PhoneNumber `json:"phone"`
-	Password string             `json:"password" validate:"required"`
-	Username string             `json:"username"`
-	Document htypes.Document    `json:"document"`
+	Email     htypes.Email       `json:"email" validate:"required"`
+	Phone     htypes.PhoneNumber `json:"phone"`
+	Password  string             `json:"password" validate:"required"`
+	Username  string             `json:"username"`
+	Document  htypes.Document    `json:"document"`
+	ExtraData `json:"extraData"`
 }
 
 func NewAccount(a *AccountCreationFields) (*Account, error) {
@@ -66,12 +73,13 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 
 	now := time.Now()
 	acc := &Account{
-		Id:       uuid.New(),
-		Email:    a.Email.Normalize(),
-		Phone:    a.Phone,
-		Password: hashPassword(a.Password),
-		Username: strings.ToLower(a.Username),
-		Document: a.Document,
+		Id:        uuid.New(),
+		Email:     a.Email.Normalize(),
+		Phone:     a.Phone,
+		Password:  hashPassword(a.Password),
+		Username:  strings.ToLower(a.Username),
+		Document:  a.Document,
+		ExtraData: a.ExtraData,
 
 		IsActive:  true,
 		Codes:     map[AccountCodeKind]string{},
@@ -113,6 +121,10 @@ func validatePasswordInput(password string) error {
 ============================================================================== */
 
 func (a Account) Name() string {
+	if a.ExtraData.Name != "" {
+		return a.ExtraData.Name
+	}
+
 	if a.Username != "" {
 		return a.Username
 	}
@@ -239,6 +251,12 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 	if !f.Phone.IsZero() {
 		a.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
 	}
+	return validator.Validate(a)
+}
+
+func (a *Account) UpdateExtraData(f ExtraData) error {
+	structop.New(&a.ExtraData).Update(f)
+	a.UpdatedAt = time.Now()
 	return validator.Validate(a)
 }
 
@@ -573,7 +591,7 @@ func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
 				a.justTerminatedSessions = []Session{}
 			}
 			a.justTerminatedSessions = append(a.justTerminatedSessions, s)
-			sliceman.Remove(a.ActiveSessions, i)
+			a.ActiveSessions = sliceman.Remove(a.ActiveSessions, i)
 
 			if a.AuthedSession != nil && sessionId == a.AuthedSession.Id {
 				a.AuthedSession = nil

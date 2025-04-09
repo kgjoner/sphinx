@@ -7,6 +7,7 @@ INSERT INTO
     phone,
     username,
     document,
+    extra_data,
     is_active,
     has_email_been_verified,
     has_phone_been_verified,
@@ -23,7 +24,8 @@ VALUES
     $7,
     $8,
     $9,
-    $10
+    $10,
+    $11
   )
 RETURNING internal_id;
 
@@ -36,12 +38,13 @@ SET
   phone = $4,
   username = $5,
   document = $6,
-  is_active = $7,
-  has_email_been_verified = $8,
-  has_phone_been_verified = $9,
-  codes = $10,
-  password_updated_at = $11,
-  updated_at = $12
+  extra_data = $7,
+  is_active = $8,
+  has_email_been_verified = $9,
+  has_phone_been_verified = $10,
+  codes = $11,
+  password_updated_at = $12,
+  updated_at = $13
 WHERE
   id = $1;
 
@@ -75,6 +78,7 @@ SELECT
   a.password,
   COALESCE(a.username, ''),
   COALESCE(a.document, ''),
+  a.extra_data,
   a.is_active,
   a.has_email_been_verified,
   a.has_phone_been_verified,
@@ -127,6 +131,7 @@ SELECT
   a.password,
   COALESCE(a.username, ''),
   COALESCE(a.document, ''),
+  a.extra_data,
   a.is_active,
   a.has_email_been_verified,
   a.has_phone_been_verified,
@@ -184,6 +189,7 @@ SELECT
   a.password,
   COALESCE(a.username, ''),
   COALESCE(a.document, ''),
+  a.extra_data,
   a.is_active,
   a.has_email_been_verified,
   a.has_phone_been_verified,

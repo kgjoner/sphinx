@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS account (
   phone text UNIQUE,
   username text UNIQUE,
   document text UNIQUE,
+  extra_data jsonb,
 
   is_active bool NOT NULL,
   has_email_been_verified bool NOT NULL,
