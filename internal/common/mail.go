@@ -76,20 +76,32 @@ func (i Mail) Execute(input MailInput) (bool, error) {
 	}
 
 	for i, link := range input.Links {
-		if strings.HasPrefix(link.Link, "/") {
-			if input.Application.Brand.IsValidOnEmail {
-				path := ""
-				parts := strings.Split(link.Link, "?")
-				if len(parts) > 1 {
-					path = fmt.Sprintf("/%s?path=%s&%s", input.Application.Id, parts[0], parts[1])
-				} else {
-					path = fmt.Sprintf("/%s?path=%s", input.Application.Id, parts[0])
-				}
-				input.Links[i].Link = config.Env.CLIENT.BASE_URL + path
-			} else {
-				input.Links[i].Link = config.Env.CLIENT.BASE_URL + link.Link
-			}
+		if !strings.HasPrefix(link.Link, "/") {
+			continue
 		}
+
+		if !input.Application.Brand.IsValidOnEmail {
+			input.Links[i].Link = config.Env.CLIENT.BASE_URL + link.Link
+			continue
+		}
+
+		if input.Application.Brand.ClientEntrypointUrl != "" {
+			if strings.Contains(input.Application.Brand.ClientEntrypointUrl, "?") {
+				input.Links[i].Link = fmt.Sprintf("%s&path=%s", input.Application.Brand.ClientEntrypointUrl, link.Link)
+			} else {
+				input.Links[i].Link = fmt.Sprintf("%s?path=%s", input.Application.Brand.ClientEntrypointUrl, link.Link)
+			}
+			continue
+		}
+
+		path := ""
+		parts := strings.Split(link.Link, "?")
+		if len(parts) > 1 {
+			path = fmt.Sprintf("/%s?path=%s&%s", input.Application.Id, parts[0], parts[1])
+		} else {
+			path = fmt.Sprintf("/%s?path=%s", input.Application.Id, parts[0])
+		}
+		input.Links[i].Link = config.Env.CLIENT.BASE_URL + path
 	}
 
 	t := i18n.Resource(input.Languages).Mails[input.TemplateKey]

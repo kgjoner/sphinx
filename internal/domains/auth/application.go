@@ -32,10 +32,16 @@ type Application struct {
 }
 
 type brand struct {
-	LogoUrl         string `json:"logoUrl" validate:"uri"`
-	StyleUrl        string `json:"styleUrl" validate:"uri"`
-	IsValidOnEmail  bool   `json:"isValidOnEmail"`
-	IsValidOnClient bool   `json:"isValidOnClient"`
+	LogoUrl             string `json:"logoUrl" validate:"uri"`
+	StyleUrl            string `json:"styleUrl" validate:"uri"`
+	// For applications that renders sphinx client inside an iframe, this is the URL to it.
+	//
+	// It must accept a "path" as query parameter to route user inside client.
+	ClientEntrypointUrl string `json:"clientEntrypointUrl" validate:"uri"`
+	// Whether brand config should be used when this api is mailing
+	IsValidOnEmail      bool   `json:"isValidOnEmail"`
+	// Whether brand config should be used for sphinx client
+	IsValidOnClient     bool   `json:"isValidOnClient"`
 }
 
 /* ==============================================================================
