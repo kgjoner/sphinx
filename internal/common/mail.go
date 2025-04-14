@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"time"
 
-	// "time"
-
+	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/cornucopia/utils/httputil"
@@ -37,11 +35,12 @@ func (i Mail) Execute(input MailInput) (bool, error) {
 	if input.Application.Brand.IsValidOnEmail {
 		appName = input.Application.Name
 
-		resp, err := cache.RunWithCache[presenter.Success[style.AppStyle]](
-			i.CacheRepo,
-			7*24*time.Hour,
-			httputil.Get[presenter.Success[style.AppStyle]],
-		)(input.Application.Brand.StyleUrl)
+		// resp, err := cache.RunWithCache[presenter.Success[style.AppStyle]](
+		// 	i.CacheRepo,
+		// 	7*24*time.Hour,
+		// 	httputil.Get[presenter.Success[style.AppStyle]],
+		// )(input.Application.Brand.StyleUrl)
+		resp, err := httputil.Get[presenter.Success[style.AppStyle]](input.Application.Brand.StyleUrl)
 		if err != nil {
 			return false, err
 		}
@@ -67,10 +66,15 @@ func (i Mail) Execute(input MailInput) (bool, error) {
 			}{
 				Style: appStyle.Mail.Footer,
 			},
+			Alias: struct {
+				Address htypes.Email "json:\"address\""
+				Name    string       "json:\"name\""
+			}{
+				Name: appName,
+			},
 		})
 	}
 
-	
 	for i, link := range input.Links {
 		if strings.HasPrefix(link.Link, "/") {
 			if input.Application.Brand.IsValidOnEmail {

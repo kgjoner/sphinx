@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/cornucopia/repositories/cache/redisdb"
@@ -101,10 +102,14 @@ func (s *Server) Setup() *Server {
 			}{
 				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundDark)),
 			},
+			Alias: struct {
+				Address htypes.Email "json:\"address\""
+				Name    string       "json:\"name\""
+			}{
+				Name: config.Env.APP_NAME,
+			},
 		}),
 	}
-
-	
 
 	r := chi.NewRouter()
 	r.Use(middleware.RealIP)
