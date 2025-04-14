@@ -28,7 +28,7 @@ type Account struct {
 	Password   string             `json:"-" validate:"required"`
 	Username   string             `json:"username" validate:"wordId,atLeastOne=letter"`
 	Document   htypes.Document    `json:"-"`
-	ExtraData  `json:"-"`
+	ExtraData  `json:"extraData,omitempty"`
 
 	IsActive             bool                       `json:"isActive"`
 	HasEmailBeenVerified bool                       `json:"hasEmailBeenVerified"`
@@ -703,11 +703,12 @@ func (a *Account) sessionsByApp(app Application) []Session {
 ============================================================================== */
 
 type AccountPrivateView struct {
-	Id       uuid.UUID          `json:"id" validate:"required"`
-	Email    htypes.Email       `json:"email" validate:"required"`
-	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
-	Username string             `json:"username,omitempty" validate:"wordId"`
-	Document htypes.Document    `json:"document,omitempty"`
+	Id        uuid.UUID          `json:"id" validate:"required"`
+	Email     htypes.Email       `json:"email" validate:"required"`
+	Phone     htypes.PhoneNumber `json:"phone,omitempty"`
+	Username  string             `json:"username,omitempty" validate:"wordId"`
+	Document  htypes.Document    `json:"document,omitempty"`
+	ExtraData `json:"extraData,omitempty"`
 
 	IsActive             bool  `json:"isActive"`
 	HasEmailBeenVerified bool  `json:"hasEmailBeenVerified"`
@@ -731,6 +732,7 @@ func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
 		a.Phone,
 		a.Username,
 		a.Document,
+		a.ExtraData,
 		a.IsActive,
 		a.HasEmailBeenVerified,
 		a.HasPhoneBeenVerified,

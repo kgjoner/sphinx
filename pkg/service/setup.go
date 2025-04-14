@@ -34,6 +34,7 @@ type Account struct {
 	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
 	Username string             `json:"username,omitempty" validate:"wordId"`
 	Document htypes.Document    `json:"document,omitempty"`
+	auth.ExtraData
 
 	IsActive             bool       `json:"isActive"`
 	HasEmailBeenVerified bool       `json:"hasEmailBeenVerified"`
