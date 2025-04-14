@@ -6,7 +6,7 @@
       },
       "body": [
         {
-          "kind": "title",
+          "kind": "subtitle",
           "content": "Saudações, {{ .UserName }}"
         },
         {
