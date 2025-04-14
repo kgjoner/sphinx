@@ -29,12 +29,13 @@ func New(baseUrl, appId, appSecret string) *Service {
 }
 
 type Account struct {
-	Id        uuid.UUID          `json:"id" validate:"required"`
-	Email     htypes.Email       `json:"email" validate:"required"`
-	Phone     htypes.PhoneNumber `json:"phone,omitempty"`
-	Username  string             `json:"username,omitempty" validate:"wordId"`
-	Document  htypes.Document    `json:"document,omitempty"`
-	ExtraData auth.ExtraData     `json:"extraData,omitempty"`
+	Id       uuid.UUID          `json:"id" validate:"required"`
+	Email    htypes.Email       `json:"email" validate:"required"`
+	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
+	Username string             `json:"username,omitempty" validate:"wordId"`
+	Document htypes.Document    `json:"document,omitempty"`
+	Name     string             `json:"name,omitempty"`
+	Surname  string             `json:"surname,omitempty"`
 
 	IsActive             bool       `json:"isActive"`
 	HasEmailBeenVerified bool       `json:"hasEmailBeenVerified"`
