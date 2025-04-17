@@ -567,6 +567,11 @@ func (a *Account) IssueNewTokens() (access *authToken, refresh *authToken, err e
 		return nil, nil, err
 	}
 
+	a.AuthedSession = a.session(a.AuthedSession.Id)
+	if a.AuthedSession == nil {
+		return nil, nil, normalizederr.NewConflictError("No active session.", errcode.SessionNotFound)
+	}
+
 	a.AuthedSession.updateRefreshToken(*newRefreshToken)
 
 	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.Id, false})
