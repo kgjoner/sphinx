@@ -30,6 +30,17 @@ func (q Queries) UpsertLinks(links ...auth.Link) error {
 
 	formattedLinks := []formattedLink{}
 	for _, l := range links {
+		isDuplicated := false
+		for _, f := range formattedLinks {
+			if f.Id == l.Id {
+				isDuplicated = true
+				break
+			}
+		}
+		if isDuplicated {
+			continue
+		}
+
 		formattedLink := formattedLink{
 			l.Id,
 			l.AccountId,

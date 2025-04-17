@@ -32,6 +32,17 @@ func (q Queries) UpsertSessions(sessions ...auth.Session) error {
 
 	formattedSessions := []formattedSession{}
 	for _, s := range sessions {
+		isDuplicated := false
+		for _, f := range formattedSessions {
+			if f.Id == s.Id {
+				isDuplicated = true
+				break
+			}
+		}
+		if isDuplicated {
+			continue
+		}
+
 		formattedSession := formattedSession{
 			s.Id,
 			s.AccountId,
