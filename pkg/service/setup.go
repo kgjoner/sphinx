@@ -36,6 +36,7 @@ type Account struct {
 	Document htypes.Document    `json:"document,omitempty"`
 	Name     string             `json:"name,omitempty"`
 	Surname  string             `json:"surname,omitempty"`
+	Address  htypes.Address     `json:"address,omitempty"`
 
 	IsActive             bool       `json:"isActive"`
 	HasEmailBeenVerified bool       `json:"hasEmailBeenVerified"`

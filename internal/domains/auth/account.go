@@ -48,8 +48,9 @@ type Account struct {
 }
 
 type ExtraData struct {
-	Name    string `json:"name,omitempty"`
-	Surname string `json:"surname,omitempty"`
+	Name    string         `json:"name,omitempty"`
+	Surname string         `json:"surname,omitempty"`
+	Address htypes.Address `json:"address,omitempty"`
 }
 
 /* ==============================================================================
@@ -107,7 +108,8 @@ func hashData(str string) string {
 }
 
 func validatePasswordInput(password string) error {
-	err := validator.Validate(password, "required", "min=8", "max=32", "atLeastOne=letter number specialChar")
+	// err := validator.Validate(password, "required", "min=8", "max=32", "atLeastOne=letter number specialChar")
+	err := validator.Validate(password, "required", "min=8", "max=32", "atLeastOne=letter number")
 	if err == nil {
 		return nil
 	}
@@ -715,6 +717,7 @@ type AccountPrivateView struct {
 	Document htypes.Document    `json:"document,omitempty"`
 	Name     string             `json:"name,omitempty"`
 	Surname  string             `json:"surname,omitempty"`
+	Address  htypes.Address     `json:"address,omitempty"`
 
 	IsActive             bool  `json:"isActive"`
 	HasEmailBeenVerified bool  `json:"hasEmailBeenVerified"`
@@ -740,6 +743,7 @@ func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
 		a.Document,
 		a.ExtraData.Name,
 		a.ExtraData.Surname,
+		a.ExtraData.Address,
 		a.IsActive,
 		a.HasEmailBeenVerified,
 		a.HasPhoneBeenVerified,
