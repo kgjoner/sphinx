@@ -1,0 +1,11 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "redis.serviceName" . }}
+spec:
+  selector:
+    app: {{ .Chart.Name }}-redis
+  ports:
+  - port: 6379
+{{- end }}

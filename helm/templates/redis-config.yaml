@@ -1,0 +1,11 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "redis.configName" . }}
+data:
+  redis-config: |
+    requirepass  {{ .Values.redis.config.password }}
+    user  {{ .Values.redis.config.user }} on >{{ .Values.redis.config.password }} ~* allcommands
+    user default off nopass nocommands
+{{- end}}

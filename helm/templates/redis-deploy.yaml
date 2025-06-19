@@ -1,0 +1,54 @@
+{{- if .Values.redis.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: 
+  name: {{ template "prefix" . }}-redis
+spec:
+  serviceName: {{ template "redis.serviceName" . }}
+  replicas: {{ .Values.redis.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-redis
+  template:
+    metadata: 
+      labels:
+        app: {{ .Chart.Name }}-redis
+        version: {{ .Chart.AppVersion }}
+        component: db
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-redis
+        image: redis:7.2.5
+        command:
+          - redis-server
+          - "/redis-master/redis.conf"
+        env:
+          - name: MASTER
+            value: "true"
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - mountPath: /redis-master-data
+          name: data
+        - mountPath: /redis-master
+          name: config
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ template "redis.configName" . }}
+            items:
+            - key: redis-config
+              path: redis.conf
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.db.volume.name }}
+      spec:
+        accessModes:
+          - {{ .Values.db.volume.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.db.volume.size }}
+        storageClassName: {{ .Values.db.volume.className }}
+{{- end }}
