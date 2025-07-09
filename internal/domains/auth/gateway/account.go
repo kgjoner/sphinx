@@ -7,6 +7,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 	accountcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/account"
 )
 
@@ -14,8 +15,9 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 	r.With(g.mid.AppId).Post("/", g.createAccount)
 	r.With(g.mid.AppId).Post("/password/request", g.requestPasswordReset)
 	r.With(g.mid.AppId).Patch("/{id}/password", g.resetPassword)
-	
+
 	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateAccount)
+	r.With(g.mid.Authenticate, g.mid.Target).Patch("/", g.updateExtraData)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
 
 	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editAccountPermissions)
@@ -117,7 +119,7 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
+//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
 //	@Success		200			{object}	presenter.Success[auth.AccountPrivateView]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
@@ -240,7 +242,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app			header		string						true	"Application ID"
+//	@Param			x-app			header		string									true	"Application ID"
 //	@Param			accept-language	header		string									false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		accountcase.RequestPasswordResetInput	true	"Old password and new one."
 //	@Success		200				{object}	presenter.Success[bool]
@@ -283,7 +285,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app			header		string						true	"Application ID"
+//	@Param			x-app			header		string							true	"Application ID"
 //	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			id				path		string							true	"Account ID"
 //	@Param			payload			body		accountcase.ResetPasswordInput	true	"Old password and new one."
@@ -329,7 +331,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
+//	@Param			x-target	header		string									false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
 //	@Param			payload		body		accountcase.EditAccountPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		200			{object}	presenter.Success[bool]
 //	@Failure		400			{object}	normalizederr.NormalizedError
@@ -364,6 +366,50 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 	presenter.HttpSuccess(output, w, r)
 }
 
+// UpdateExtraData godoc
+//
+//	@Summary		Update extra data of target account
+//	@Description	Update non unique data like name, surname and address of target account
+//	@Router			/account [patch]
+//	@Tags			Account
+//	@Security		Bearer
+//	@Accept			json
+//	@Produce		json
+//	@Param			x-target	header		string			false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
+//	@Param			payload		body		auth.ExtraData	true	"At least one data must be defined.""
+//	@Success		200			{object}	presenter.Success[bool]
+//	@Failure		400			{object}	normalizederr.NormalizedError
+//	@Failure		401			{object}	normalizederr.NormalizedError
+//	@Failure		403			{object}	normalizederr.NormalizedError
+//	@Failure		500			{object}	normalizederr.NormalizedError
+func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
+	bodyKeys := structop.New(auth.ExtraData{}).Keys()
+	c := controller.New(r).
+		ParseBody(bodyKeys...).
+		AddTarget().
+		AddActor()
+
+	var input accountcase.UpdateExtraDataInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	queries := g.BasePool.NewQueries(r.Context())
+	i := accountcase.UpdateExtraData{
+		AuthRepo: queries,
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
 // GetAccounntId godoc
 //
 //	@Summary		Get account id
@@ -374,11 +420,11 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-entry	header		string	true	"Email, username, phone or document."
-//	@Success		200			{object}	presenter.Success[string]
-//	@Failure		400			{object}	normalizederr.NormalizedError
-//	@Failure		401			{object}	normalizederr.NormalizedError
-//	@Failure		403			{object}	normalizederr.NormalizedError
-//	@Failure		500			{object}	normalizederr.NormalizedError
+//	@Success		200		{object}	presenter.Success[string]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		403		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) getAccountId(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddHeader("X-Entry", "entry")
@@ -413,7 +459,7 @@ func (g AuthGateway) getAccountId(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string									true	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible."
+//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
 //	@Success		200			{object}	presenter.Success[string]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError

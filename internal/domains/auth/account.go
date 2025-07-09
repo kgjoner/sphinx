@@ -50,7 +50,7 @@ type Account struct {
 type ExtraData struct {
 	Name    string         `json:"name,omitempty"`
 	Surname string         `json:"surname,omitempty"`
-	Address htypes.Address `json:"address,omitempty"`
+	Address htypes.Address `json:"-"`
 }
 
 /* ==============================================================================
