@@ -31,8 +31,10 @@ type Account struct {
 	ExtraData  `json:"extraData,omitempty"`
 
 	IsActive             bool                       `json:"isActive"`
-	HasEmailBeenVerified bool                       `json:"hasEmailBeenVerified"`
-	HasPhoneBeenVerified bool                       `json:"hasPhoneBeenVerified"`
+	PendingEmail         htypes.Email               `json:"-"`
+	HasEmailBeenVerified bool                       `json:"-"`
+	PendingPhone         htypes.PhoneNumber         `json:"-"`
+	HasPhoneBeenVerified bool                       `json:"-"`
 	Codes                map[AccountCodeKind]string `json:"-"`
 	Links                []Link                     `json:"-"`
 	ActiveSessions       []Session                  `json:"-"`
@@ -43,6 +45,7 @@ type Account struct {
 	AuthToken              *authToken `json:"-"`
 
 	PasswordUpdatedAt htypes.NullTime `json:"-"`
+	UsernameUpdatedAt htypes.NullTime `json:"-"`
 	CreatedAt         time.Time       `json:"createdAt" validate:"required"`
 	UpdatedAt         time.Time       `json:"updatedAt" validate:"required"`
 }
@@ -149,11 +152,11 @@ func (a *Account) VerifyAccount(kind AccountCodeKind, code string) error {
 
 	switch kind {
 	case AccountCodeKindValues.EMAIL_VERIFICATION:
-		if a.HasEmailBeenVerified {
+		if a.HasEmailBeenVerified && a.PendingEmail.IsZero() {
 			return normalizederr.NewRequestError("Email has already been verified.")
 		}
 	case AccountCodeKindValues.PHONE_VERIFICATION:
-		if a.HasPhoneBeenVerified {
+		if a.HasPhoneBeenVerified && a.PendingPhone.IsZero() {
 			return normalizederr.NewRequestError("Phone has already been verified.")
 		}
 	}
@@ -168,8 +171,20 @@ func (a *Account) VerifyAccount(kind AccountCodeKind, code string) error {
 
 	switch kind {
 	case AccountCodeKindValues.EMAIL_VERIFICATION:
+		if !a.PendingEmail.IsZero() {
+			// Confirm email update
+			a.Email = a.PendingEmail
+			var emptyEmail htypes.Email
+			a.PendingEmail = emptyEmail
+		}
 		a.HasEmailBeenVerified = true
 	case AccountCodeKindValues.PHONE_VERIFICATION:
+		if !a.PendingPhone.IsZero() {
+			// Confirm phone update
+			a.Phone = a.PendingPhone
+			var emptyPhone htypes.PhoneNumber
+			a.PendingPhone = emptyPhone
+		}
 		a.HasPhoneBeenVerified = true
 	}
 	a.clearCodeFor(kind)
@@ -243,12 +258,14 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 		return normalizederr.NewRequestError("Document was already added.", "")
 	}
 
+	now := time.Now()
 	if f.Username != "" {
 		f.Username = strings.ToLower(f.Username)
+		a.UsernameUpdatedAt = htypes.NullTime{Time: now}
 	}
 
 	structop.New(a).Update(f)
-	a.UpdatedAt = time.Now()
+	a.UpdatedAt = now
 
 	if !f.Phone.IsZero() {
 		a.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
@@ -256,10 +273,74 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 	return validator.Validate(a)
 }
 
+type AccountUniqueFields struct {
+	Email    htypes.Email       `json:"email"`
+	Phone    htypes.PhoneNumber `json:"phone"`
+	Username string             `json:"username"`
+	Document htypes.Document    `json:"document"`
+}
+
+func (a *Account) UpdateUniqueFields(f AccountUniqueFields) error {
+	if !f.Email.IsZero() {
+		a.PendingEmail = f.Email.Normalize()
+		a.generateCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
+	}
+
+	if !f.Phone.IsZero() {
+		a.PendingPhone = f.Phone
+		a.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+	}
+
+	now := time.Now()
+	if f.Username != "" {
+		if a.UsernameUpdatedAt.Time.After(now.Add(-time.Hour * 24 * 90)) {
+			return normalizederr.NewRequestError("Username can only be updated once every 90 days.")
+		}
+
+		a.Username = strings.ToLower(f.Username)
+		a.UsernameUpdatedAt = htypes.NullTime{Time: now}
+	}
+
+	if !f.Document.IsZero() {
+		a.Document = f.Document
+	}
+
+	a.UpdatedAt = now
+	return validator.Validate(a)
+}
+
 func (a *Account) UpdateExtraData(f ExtraData) error {
 	structop.New(&a.ExtraData).Update(f)
 	a.UpdatedAt = time.Now()
 	return validator.Validate(a)
+}
+
+// Allows users to cancel their pending email update
+func (a *Account) CancelPendingEmail() error {
+	if a.PendingEmail.IsZero() {
+		return normalizederr.NewRequestError("No pending email update to cancel.")
+	}
+
+	var emptyEmail htypes.Email
+	a.PendingEmail = emptyEmail
+	a.clearCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
+	a.UpdatedAt = time.Now()
+
+	return nil
+}
+
+// Allows users to cancel their pending phone update
+func (a *Account) CancelPendingPhone() error {
+	if a.PendingPhone.IsZero() {
+		return normalizederr.NewRequestError("No pending phone update to cancel.")
+	}
+
+	var emptyPhone htypes.PhoneNumber
+	a.PendingPhone = emptyPhone
+	a.clearCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+	a.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (a Account) DoesPasswordMatch(password string) bool {
@@ -719,10 +800,12 @@ type AccountPrivateView struct {
 	Surname  string             `json:"surname,omitempty"`
 	Address  htypes.Address     `json:"address,omitempty"`
 
-	IsActive             bool  `json:"isActive"`
-	HasEmailBeenVerified bool  `json:"hasEmailBeenVerified"`
-	HasPhoneBeenVerified bool  `json:"hasPhoneBeenVerified"`
-	Link                 *Link `json:"link"`
+	IsActive             bool               `json:"isActive"`
+	PendingEmail         htypes.Email       `json:"pendingEmail,omitempty"`
+	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
+	PendingPhone         htypes.PhoneNumber `json:"pendingPhone,omitempty"`
+	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
+	Link                 *Link              `json:"link"`
 }
 
 func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
@@ -745,7 +828,9 @@ func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
 		a.ExtraData.Surname,
 		a.ExtraData.Address,
 		a.IsActive,
+		a.PendingEmail,
 		a.HasEmailBeenVerified,
+		a.PendingPhone,
 		a.HasPhoneBeenVerified,
 		link,
 	}, nil
