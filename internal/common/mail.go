@@ -27,6 +27,8 @@ type MailInput struct {
 	Application auth.Application
 	Links       []i18n.CustomLink
 	Languages   []string
+	// Indicates if the email is being sent to the pending email
+	ToPending bool
 }
 
 func (i Mail) Execute(input MailInput) (bool, error) {
@@ -104,14 +106,21 @@ func (i Mail) Execute(input MailInput) (bool, error) {
 		input.Links[i].Link = config.Env.CLIENT.BASE_URL + path
 	}
 
+	receiver := input.Target.Email
+	if input.ToPending {
+		receiver = input.Target.PendingEmail
+	}
+
 	t := i18n.Resource(input.Languages).Mails[input.TemplateKey]
 	t.ParseContent(i18n.ResourceParams{
-		UserName:     input.Target.Name(),
-		AppName:      appName,
-		SupportEmail: config.Env.SUPPORT_EMAIL,
+		UserName:      input.Target.Name(),
+		ReceiverEmail: receiver.String(),
+		NewEmail:      input.Target.PendingEmail.String(),
+		AppName:       appName,
+		SupportEmail:  config.Env.SUPPORT_EMAIL,
 	})
 
-	err := i.MailService.SendCustomEmail(input.Target.Email, t.Subject.Content, t.FormatBody(input.Links...), opt...)
+	err := i.MailService.SendCustomEmail(receiver, t.Subject.Content, t.FormatBody(input.Links...), opt...)
 	if err != nil {
 		return false, err
 	}

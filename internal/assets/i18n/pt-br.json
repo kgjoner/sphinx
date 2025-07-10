@@ -59,7 +59,55 @@
         },
         {
           "kind": "text",
-          "content": "Se não foi você quem fez esta alteração, certifique-se de que ainda consegue entrar em sua conta. Então reporte a situação para o nosso suporte através do email: {{ .SupportMail }}."
+          "content": "Se não foi você quem fez esta alteração, certifique-se de que ainda consegue entrar em sua conta. Então reporte a situação para o nosso suporte através do email: {{ .SupportEmail }}."
+        }
+      ]
+    },
+    "emailUpdateNotice": {
+      "subject": {
+        "content": "Aviso de atualização de Email"
+      },
+      "body": [
+        {
+          "kind": "subtitle",
+          "content": "Olá, {{ .UserName }}"
+        },
+        {
+          "kind": "text",
+          "content": "Recebemos um pedido para atualizar o email da sua conta para {{ .NewEmail }}. Caso você não reconheça este pedido, clique no botão abaixo para cancelá-lo:"
+        },
+        {
+          "kind": "button",
+          "key": "email-cancel-update",
+          "content": "Cancelar atualização"
+        },
+        {
+          "kind": "text",
+          "content": "Se o email já tiver sido atualizado sem o seu consentimento, por favor entre em contato com o nosso suporte através do email: {{ .SupportEmail }}."
+        }
+      ]
+    },
+    "emailUpdateConfirmation": {
+      "subject": {
+        "content": "Atualização de Email"
+      },
+      "body": [
+        {
+          "kind": "subtitle",
+          "content": "Olá, {{ .UserName }}"
+        },
+        {
+          "kind": "text",
+          "content": "Recebemos um pedido para atualizar o email da sua conta. Ao confirmar, o email atual será substituído por este, {{ .NewEmail }}. A partir de então, nossa comunicação será toda destinada ao novo email, incluindo futuras recuperações de conta. Para prosseguir com a alteração, clique no botão abaixo."
+        },
+        {
+          "kind": "button",
+          "key": "email-verification",
+          "content": "Confirmar email"
+        },
+        {
+          "kind": "text",
+          "content": "Se você não fez essa solicitação, por favor ignore este email."
         }
       ]
     }

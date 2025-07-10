@@ -17,9 +17,11 @@ type resource struct {
 }
 
 type ResourceParams struct {
-	UserName    string
+	UserName      string
+	ReceiverEmail string
+	NewEmail      string
 	// Has fallback
-	AppName     string
+	AppName string
 	// Has fallback
 	SupportEmail string
 }

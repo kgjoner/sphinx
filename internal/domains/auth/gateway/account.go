@@ -18,6 +18,7 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 
 	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateAccount)
 	r.With(g.mid.Authenticate, g.mid.Target).Patch("/", g.updateExtraData)
+	r.With(g.mid.Authenticate, g.mid.Target).Patch("/unique", g.updateUniqueFields)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
 
 	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editAccountPermissions)
@@ -399,6 +400,55 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	queries := g.BasePool.NewQueries(r.Context())
 	i := accountcase.UpdateExtraData{
 		AuthRepo: queries,
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// UpdateUniqueFields godoc
+//
+//	@Summary		Update unique fields of target account
+//	@Description	Update unique data like email, phone, username and document of target account. Email and phone updates require verification.
+//	@Router			/account/unique [patch]
+//	@Tags			Account
+//	@Security		Bearer
+//	@Accept			json
+//	@Produce		json
+//	@Param			x-target		header		string							false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
+//	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			payload			body		auth.AccountUniqueFields		true	"At least one field must be defined."
+//	@Success		200				{object}	presenter.Success[auth.AccountPrivateView]
+//	@Failure		400				{object}	normalizederr.NormalizedError
+//	@Failure		401				{object}	normalizederr.NormalizedError
+//	@Failure		403				{object}	normalizederr.NormalizedError
+//	@Failure		500				{object}	normalizederr.NormalizedError
+func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
+	bodyKeys := structop.New(auth.AccountUniqueFields{}).Keys()
+	c := controller.New(r).
+		ParseBody(bodyKeys...).
+		AddTarget().
+		AddActor().
+		AddApplication().
+		AddLanguages()
+
+	var input accountcase.UpdateUniqueFieldsInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	queries := g.BasePool.NewQueries(r.Context())
+	i := accountcase.UpdateUniqueFields{
+		AuthRepo:    queries,
+		CacheRepo:   g.CachePool.NewDAO(r.Context()),
+		MailService: g.MailService,
 	}
 
 	output, err := i.Execute(input)

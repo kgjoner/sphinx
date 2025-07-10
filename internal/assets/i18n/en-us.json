@@ -58,6 +58,54 @@
           "content": "If it was not you who made this change, make sure that you can still log in your account. Then report the case to our support via the following email: {{ .SupportEmail }}."
         }
       ]
+    },
+    "emailUpdateNotice": {
+      "subject": {
+        "content": "Email update notice"
+      },
+      "body": [
+        {
+          "kind": "subtitle",
+          "content": "Hello, {{ .UserName }}"
+        },
+        {
+          "kind": "text",
+          "content": "We received a request to update your account email to {{ .NewEmail }}. If you don't recognize this request, click the button below to cancel it:"
+        },
+        {
+          "kind": "button",
+          "key": "email-cancel-update",
+          "content": "Cancel update"
+        },
+        {
+          "kind": "text",
+          "content": "If the email has already been updated without your consent, please contact our support at: {{ .SupportEmail }}."
+        }
+      ]
+    },
+    "emailUpdateConfirmation": {
+      "subject": {
+        "content": "Email update"
+      },
+      "body": [
+        {
+          "kind": "subtitle",
+          "content": "Hello, {{ .UserName }}"
+        },
+        {
+          "kind": "text",
+          "content": "We received a request to update your account email. By confirming, your current email will be replaced with this one, {{ .NewEmail }}. From then on, all our communication will be sent to the new email, including future account recoveries. To proceed with the change, click the button below."
+        },
+        {
+          "kind": "button",
+          "key": "email-verification",
+          "content": "Confirm email"
+        },
+        {
+          "kind": "text",
+          "content": "If you didn't make this request, please ignore this email."
+        }
+      ]
     }
   }
 }
