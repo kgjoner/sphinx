@@ -420,9 +420,9 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target		header		string							false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
-//	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		auth.AccountUniqueFields		true	"At least one field must be defined."
+//	@Param			x-target		header		string						false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
+//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			payload			body		auth.AccountUniqueFields	true	"At least one field must be defined."
 //	@Success		200				{object}	presenter.Success[auth.AccountPrivateView]
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		401				{object}	normalizederr.NormalizedError
@@ -434,7 +434,6 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 		ParseBody(bodyKeys...).
 		AddTarget().
 		AddActor().
-		AddApplication().
 		AddLanguages()
 
 	var input accountcase.UpdateUniqueFieldsInput

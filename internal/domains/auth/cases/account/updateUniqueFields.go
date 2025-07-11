@@ -3,6 +3,7 @@ package accountcase
 import (
 	"fmt"
 
+	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
@@ -21,14 +22,39 @@ type UpdateUniqueFields struct {
 
 type UpdateUniqueFieldsInput struct {
 	auth.AccountUniqueFields
-	Target      auth.Account `json:"-"`
-	Actor       auth.Account `json:"-"`
-	Application auth.Application
-	Languages   []string
+	Target    auth.Account `json:"-"`
+	Actor     auth.Account `json:"-"`
+	Languages []string
 }
 
 func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.AccountPrivateView, error) {
 	targetAcc := &input.Target
+
+	if !input.Email.IsZero() {
+		if input.Email == targetAcc.Email {
+			return nil, normalizederr.NewRequestError("email is already set to the same value")
+		}
+
+		acc, err := i.AuthRepo.GetAccountByEntry(input.Email.String())
+		if err != nil {
+		 return nil, err
+		} else if acc != nil {
+			return nil, normalizederr.NewRequestError("email is already registered")
+		}
+	}
+
+	if !input.Phone.IsZero() {
+		if input.Phone == targetAcc.Phone {
+			return nil, normalizederr.NewRequestError("phone is already set to the same value")
+		}
+
+		acc, err := i.AuthRepo.GetAccountByEntry(input.Phone.String())
+		if err != nil {
+		 return nil, err
+		} else if acc != nil {
+			return nil, normalizederr.NewRequestError("phone is already registered")
+		}
+	}
 
 	err := targetAcc.UpdateUniqueFields(input.AccountUniqueFields)
 	if err != nil {
@@ -52,7 +78,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 		_, err = mail.Execute(common.MailInput{
 			TemplateKey: "emailUpdateNotice",
 			Target:      *targetAcc,
-			Application: input.Application,
+			Application: input.Actor.AuthedSession.Application,
 			Links: []i18n.CustomLink{
 				{
 					Key: "email-cancel-update",
@@ -77,7 +103,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 			TemplateKey: "emailUpdateConfirmation",
 			Target:      *targetAcc,
 			ToPending:   true,
-			Application: input.Application,
+			Application: input.Actor.AuthedSession.Application,
 			Links: []i18n.CustomLink{
 				{
 					Key: "email-verification",
