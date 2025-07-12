@@ -2,12 +2,15 @@ package accountcase
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/common"
+	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
@@ -39,7 +42,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 		if err != nil {
 		 return nil, err
 		} else if acc != nil {
-			return nil, normalizederr.NewRequestError("email is already registered")
+			return nil, normalizederr.NewRequestError("email is already registered", errcode.DuplicateKey)
 		}
 	}
 
@@ -52,7 +55,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 		if err != nil {
 		 return nil, err
 		} else if acc != nil {
-			return nil, normalizederr.NewRequestError("phone is already registered")
+			return nil, normalizederr.NewRequestError("phone is already registered", errcode.DuplicateKey)
 		}
 	}
 
@@ -63,6 +66,12 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 
 	err = i.AuthRepo.UpdateAccount(*targetAcc)
 	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key") {
+			pattern := regexp.MustCompile("account_(.+)_key")
+			matches := pattern.FindStringSubmatch(err.Error())
+			msg := fmt.Sprintf("%v has already registered", matches[1])
+			return nil, normalizederr.NewRequestError(msg, errcode.DuplicateKey)
+		}
 		return nil, err
 	}
 

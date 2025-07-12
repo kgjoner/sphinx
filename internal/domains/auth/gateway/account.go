@@ -27,6 +27,7 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 
 	r.Get("/existence", g.checkEntryExistence)
 	r.Patch("/{id}/verification", g.verifyAccount)
+	r.Delete("/{id}/pending/{field}", g.cancelPendingField)
 }
 
 // CreateAccount godoc
@@ -448,6 +449,47 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 		AuthRepo:    queries,
 		CacheRepo:   g.CachePool.NewDAO(r.Context()),
 		MailService: g.MailService,
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	presenter.HttpSuccess(output, w, r)
+}
+
+// CancelPendingField godoc
+//
+//	@Summary		Cancel pending unique field update
+//	@Description	Cancel a pending email or phone update for the target account
+//	@Router		/account/{id}/pending/{field} [delete]
+//	@Tags			Account
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		string	true	"Account ID"
+//	@Param			field		path		string	true	"Field must be 'email' or 'phone'."
+//	@Success		200			{object}	presenter.Success[bool]
+//	@Failure		400			{object}	normalizederr.NormalizedError
+//	@Failure		401			{object}	normalizederr.NormalizedError
+//	@Failure		403			{object}	normalizederr.NormalizedError
+//	@Failure		500			{object}	normalizederr.NormalizedError
+func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		ParseUrlParam("id", "accountId").
+		ParseUrlParam("field")
+
+	var input accountcase.CancelPendingFieldInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HttpError(err, w, r)
+		return
+	}
+
+	queries := g.BasePool.NewQueries(r.Context())
+	i := accountcase.CancelPendingField{
+		AuthRepo: queries,
 	}
 
 	output, err := i.Execute(input)

@@ -315,8 +315,26 @@ func (a *Account) UpdateExtraData(f ExtraData) error {
 	return validator.Validate(a)
 }
 
+// Allows users to cancel their pending field update (email or phone).
+// It will remove the pending field and clear the code for it.
+func (a *Account) CancelPendingField(field string) error {
+	err := validator.Validate(field, "required", "oneof=email phone")
+	if err != nil {
+	 return err
+	}
+
+	switch field {
+	case "email":
+		return a.cancelPendingEmail()
+	case "phone":
+		return a.cancelPendingPhone()
+	default:
+		return normalizederr.NewRequestError("Invalid field name.")
+	}
+}
+
 // Allows users to cancel their pending email update
-func (a *Account) CancelPendingEmail() error {
+func (a *Account) cancelPendingEmail() error {
 	if a.PendingEmail.IsZero() {
 		return normalizederr.NewRequestError("No pending email update to cancel.")
 	}
@@ -330,7 +348,7 @@ func (a *Account) CancelPendingEmail() error {
 }
 
 // Allows users to cancel their pending phone update
-func (a *Account) CancelPendingPhone() error {
+func (a *Account) cancelPendingPhone() error {
 	if a.PendingPhone.IsZero() {
 		return normalizederr.NewRequestError("No pending phone update to cancel.")
 	}
