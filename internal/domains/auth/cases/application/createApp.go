@@ -20,7 +20,7 @@ func (i CreateApplication) Execute(input CreateApplicationInput) (*CreateApplica
 		return nil, err
 	}
 
-	_, err = i.AuthRepo.InsertApplication(*app)
+	err = i.AuthRepo.InsertApplication(app)
 	if err != nil {
 		return nil, err
 	}

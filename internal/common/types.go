@@ -5,15 +5,19 @@ import (
 
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
-	baserepo "github.com/kgjoner/sphinx/internal/repositories/base"
+	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type RepoFactory[T any] interface {
 	NewQueries(context.Context) T
 }
 
+type BaseRepo interface {
+	authcase.AuthRepo
+}
+
 type Pools struct {
-	BasePool  RepoFactory[*baserepo.Queries]
+	BasePool  RepoFactory[BaseRepo]
 	CachePool cache.Pool
 }
 

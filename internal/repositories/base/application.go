@@ -10,10 +10,10 @@ import (
 	"github.com/lib/pq"
 )
 
-func (q Queries) InsertApplication(app auth.Application) (int, error) {
+func (q Queries) InsertApplication(app *auth.Application) error {
 	raw, exists := rawQueries["CreateApplication"]
 	if !exists {
-		return 0, ErrNoQuery
+		return ErrNoQuery
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw,
@@ -24,9 +24,8 @@ func (q Queries) InsertApplication(app auth.Application) (int, error) {
 		pq.Array(app.AllowedRedirectUris),
 		datatransform.ToRawMessage(app.Brand),
 	)
-	var id int
-	err := row.Scan(&id)
-	return id, err
+	err := row.Scan(&app.InternalId)
+	return err
 }
 
 func (q Queries) UpdateApplication(app auth.Application) error {

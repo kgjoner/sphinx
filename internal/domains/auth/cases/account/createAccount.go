@@ -35,18 +35,17 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		return nil, err
 	}
 
-	id, err := i.AuthRepo.InsertAccount(*acc)
+	err = i.AuthRepo.InsertAccount(acc)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			pattern := regexp.MustCompile("account_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
-			return nil, normalizederr.NewRequestError(msg, errcode.DuplicateKey)
+			return nil, normalizederr.NewConflictError(msg, errcode.DuplicateKey)
 		}
 		return nil, err
 	}
 
-	acc.InternalId = id
 	err = acc.LinkTo(input.Application)
 	if err != nil {
 		return nil, err

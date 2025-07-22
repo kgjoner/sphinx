@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/kgjoner/sphinx/internal/common"
 	_ "github.com/lib/pq"
 )
 
@@ -35,7 +36,7 @@ type Queries struct {
 	db    *sql.DB
 }
 
-func (p Pool) NewQueries(ctx context.Context) *Queries {
+func (p Pool) NewQueries(ctx context.Context) common.BaseRepo {
 	return &Queries{
 		ctx,
 		p.db,

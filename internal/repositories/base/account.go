@@ -9,10 +9,10 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
-func (q Queries) InsertAccount(acc auth.Account) (int, error) {
+func (q Queries) InsertAccount(acc *auth.Account) error {
 	raw, exists := rawQueries["CreateAccount"]
 	if !exists {
-		return 0, ErrNoQuery
+		return ErrNoQuery
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw,
@@ -30,9 +30,8 @@ func (q Queries) InsertAccount(acc auth.Account) (int, error) {
 		acc.HasPhoneBeenVerified,
 		datatransform.ToRawMessage(acc.Codes),
 	)
-	var id int
-	err := row.Scan(&id)
-	return id, err
+	err := row.Scan(&acc.InternalId)
+	return err
 }
 
 func (q Queries) UpdateAccount(acc auth.Account) error {
