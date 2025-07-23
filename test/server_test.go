@@ -1,4 +1,5 @@
-package main_test
+// Test the most simple authentication flow with real server, i.e, real external integrations like postgres and redis.
+package server_test
 
 import (
 	"net/http/httptest"
