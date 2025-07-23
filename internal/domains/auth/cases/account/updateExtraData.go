@@ -10,14 +10,14 @@ type UpdateExtraData struct {
 }
 
 type UpdateExtraDataInput struct {
-	ExtraData auth.ExtraData
+	auth.AccountExtraFields
 	Target    auth.Account `json:"-"`
 	Actor     auth.Account `json:"-"`
 }
 
 func (i UpdateExtraData) Execute(input UpdateExtraDataInput) (*auth.AccountPrivateView, error) {
 	targetAcc := &input.Target
-	err := targetAcc.UpdateExtraData(input.ExtraData)
+	err := targetAcc.UpdateExtraData(input.AccountExtraFields)
 	if err != nil {
 		return nil, err
 	}

@@ -61,12 +61,12 @@ type ExtraData struct {
 ============================================================================== */
 
 type AccountCreationFields struct {
-	Email     htypes.Email       `json:"email" validate:"required"`
-	Phone     htypes.PhoneNumber `json:"phone"`
-	Password  string             `json:"password" validate:"required"`
-	Username  string             `json:"username"`
-	Document  htypes.Document    `json:"document"`
-	ExtraData `json:"extraData"`
+	Email    htypes.Email       `json:"email" validate:"required"`
+	Phone    htypes.PhoneNumber `json:"phone"`
+	Password string             `json:"password" validate:"required"`
+	Username string             `json:"username"`
+	Document htypes.Document    `json:"document"`
+	AccountExtraFields
 }
 
 func NewAccount(a *AccountCreationFields) (*Account, error) {
@@ -78,12 +78,12 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 	now := time.Now()
 	acc := &Account{
 		Id:        uuid.New(),
-		Email:     a.Email.Normalize(),
+		Email:     a.Email,
 		Phone:     a.Phone,
 		Password:  hashPassword(a.Password),
 		Username:  strings.ToLower(a.Username),
 		Document:  a.Document,
-		ExtraData: a.ExtraData,
+		ExtraData: ExtraData(a.AccountExtraFields),
 
 		IsActive:  true,
 		Codes:     map[AccountCodeKind]string{},
@@ -282,7 +282,7 @@ type AccountUniqueFields struct {
 
 func (a *Account) UpdateUniqueFields(f AccountUniqueFields) error {
 	if !f.Email.IsZero() {
-		a.PendingEmail = f.Email.Normalize()
+		a.PendingEmail = f.Email
 		a.generateCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
 	}
 
@@ -309,7 +309,13 @@ func (a *Account) UpdateUniqueFields(f AccountUniqueFields) error {
 	return validator.Validate(a)
 }
 
-func (a *Account) UpdateExtraData(f ExtraData) error {
+type AccountExtraFields struct {
+	Name    string         `json:"name"`
+	Surname string         `json:"surname"`
+	Address htypes.Address `json:"address"`
+}
+
+func (a *Account) UpdateExtraData(f AccountExtraFields) error {
 	structop.New(&a.ExtraData).Update(f)
 	a.UpdatedAt = time.Now()
 	return validator.Validate(a)
@@ -320,7 +326,7 @@ func (a *Account) UpdateExtraData(f ExtraData) error {
 func (a *Account) CancelPendingField(field string) error {
 	err := validator.Validate(field, "required", "oneof=email phone")
 	if err != nil {
-	 return err
+		return err
 	}
 
 	switch field {
@@ -816,7 +822,7 @@ type AccountPrivateView struct {
 	Document htypes.Document    `json:"document,omitempty"`
 	Name     string             `json:"name,omitempty"`
 	Surname  string             `json:"surname,omitempty"`
-	Address  htypes.Address     `json:"address,omitempty"`
+	Address  *htypes.Address     `json:"address,omitempty"`
 
 	IsActive             bool               `json:"isActive"`
 	PendingEmail         htypes.Email       `json:"pendingEmail,omitempty"`
@@ -836,6 +842,11 @@ func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
 		link = a.link(link.Application.Id)
 	}
 
+	var address *htypes.Address
+	if a.ExtraData.Address != (htypes.Address{}) {
+		address = &a.ExtraData.Address
+	}
+
 	return &AccountPrivateView{
 		a.Id,
 		a.Email,
@@ -844,7 +855,7 @@ func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
 		a.Document,
 		a.ExtraData.Name,
 		a.ExtraData.Surname,
-		a.ExtraData.Address,
+		address,
 		a.IsActive,
 		a.PendingEmail,
 		a.HasEmailBeenVerified,
