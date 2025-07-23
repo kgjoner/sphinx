@@ -15,7 +15,7 @@ type EditApp struct {
 type EditAppInput struct {
 	ApplicationId uuid.UUID
 	auth.ApplicationEditableFields
-	Actor auth.Account
+	Actor auth.Account `json:"-"`
 }
 
 func (i EditApp) Execute(input EditAppInput) (*auth.Application, error) {

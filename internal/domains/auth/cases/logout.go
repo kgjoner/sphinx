@@ -9,7 +9,7 @@ type Logout struct {
 }
 
 type LogoutInput struct {
-	Actor auth.Account
+	Actor auth.Account `json:"-"`
 }
 
 func (i Logout) Execute(input LogoutInput) (bool, error) {
@@ -17,7 +17,7 @@ func (i Logout) Execute(input LogoutInput) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	
+
 	err = i.AuthRepo.UpsertSessions(input.Actor.SessionsToPersist()...)
 	if err != nil {
 		return false, err

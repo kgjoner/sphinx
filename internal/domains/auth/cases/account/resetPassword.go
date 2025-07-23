@@ -21,8 +21,8 @@ type ResetPasswordInput struct {
 	AccountId   uuid.UUID `json:"-"`
 	Code        string
 	NewPassword string
-	Application auth.Application
-	Languages   []string `json:"-"`
+	Application auth.Application `json:"-"`
+	Languages   []string         `json:"-"`
 }
 
 func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
@@ -41,16 +41,16 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	// Send email
 	mail := common.Mail{
 		MailService: i.MailService,
-		CacheRepo: i.CacheRepo,
+		CacheRepo:   i.CacheRepo,
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordChange",
-		Target: *acc,
+		Target:      *acc,
 		Application: input.Application,
-		Languages: input.Languages,
+		Languages:   input.Languages,
 	})
 	if err != nil {
-	 return false, err
+		return false, err
 	}
 
 	// Save only after assuring notification email was sent

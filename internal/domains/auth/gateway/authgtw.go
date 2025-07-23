@@ -87,7 +87,7 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	presenter.Success[bool]
+//	@Success		204
 //	@Failure		400	{object}	normalizederr.NormalizedError
 //	@Failure		401	{object}	normalizederr.NormalizedError
 //	@Failure		500	{object}	normalizederr.NormalizedError
@@ -113,7 +113,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
 }
 
 // Init OAuth godoc

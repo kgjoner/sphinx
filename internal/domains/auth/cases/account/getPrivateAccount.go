@@ -10,8 +10,8 @@ type GetPrivateAccount struct {
 }
 
 type GetPrivateAccountInput struct {
-	Target auth.Account
-	Actor auth.Account
+	Target auth.Account `json:"-"`
+	Actor  auth.Account `json:"-"`
 }
 
 func (i GetPrivateAccount) Execute(input GetPrivateAccountInput) (*auth.AccountPrivateView, error) {

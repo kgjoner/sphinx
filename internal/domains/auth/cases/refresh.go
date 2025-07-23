@@ -10,7 +10,7 @@ type Refresh struct {
 }
 
 type RefreshInput struct {
-	Actor auth.Account
+	Actor auth.Account `json:"-"`
 }
 
 func (i Refresh) Execute(input RefreshInput) (*LoginOutput, error) {
@@ -25,9 +25,9 @@ func (i Refresh) Execute(input RefreshInput) (*LoginOutput, error) {
 	}
 
 	return &LoginOutput{
-		AccountId: input.Actor.Id,
-		AccessToken: accessToken.String(),
+		AccountId:    input.Actor.Id,
+		AccessToken:  accessToken.String(),
 		RefreshToken: refreshToken.String(),
-		ExpiresIn: config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
+		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
 	}, nil
 }

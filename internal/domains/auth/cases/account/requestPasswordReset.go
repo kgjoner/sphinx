@@ -22,8 +22,8 @@ type RequestPasswordReset struct {
 
 type RequestPasswordResetInput struct {
 	Entry       string
-	Application auth.Application
-	Languages   []string `json:"-"`
+	Application auth.Application `json:"-"`
+	Languages   []string         `json:"-"`
 }
 
 func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, error) {

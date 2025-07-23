@@ -11,7 +11,7 @@ type GetAccountEmail struct {
 }
 
 type GetAccountEmailInput struct {
-	Target auth.Account
+	Target auth.Account `json:"-"`
 }
 
 func (i GetAccountEmail) Execute(input GetAccountEmailInput) (htypes.Email, error) {

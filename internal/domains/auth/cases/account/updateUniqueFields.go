@@ -27,7 +27,7 @@ type UpdateUniqueFieldsInput struct {
 	auth.AccountUniqueFields
 	Target    auth.Account `json:"-"`
 	Actor     auth.Account `json:"-"`
-	Languages []string
+	Languages []string     `json:"-"`
 }
 
 func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.AccountPrivateView, error) {
@@ -40,7 +40,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 
 		acc, err := i.AuthRepo.GetAccountByEntry(input.Email.String())
 		if err != nil {
-		 return nil, err
+			return nil, err
 		} else if acc != nil {
 			return nil, normalizederr.NewRequestError("email is already registered", errcode.DuplicateKey)
 		}
@@ -53,7 +53,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 
 		acc, err := i.AuthRepo.GetAccountByEntry(input.Phone.String())
 		if err != nil {
-		 return nil, err
+			return nil, err
 		} else if acc != nil {
 			return nil, normalizederr.NewRequestError("phone is already registered", errcode.DuplicateKey)
 		}

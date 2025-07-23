@@ -11,7 +11,7 @@ type CreateApplication struct {
 
 type CreateApplicationInput struct {
 	auth.ApplicationCreationFields
-	Actor auth.Account
+	Actor auth.Account `json:"-"`
 }
 
 func (i CreateApplication) Execute(input CreateApplicationInput) (*CreateApplicationOutput, error) {

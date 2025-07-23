@@ -25,8 +25,8 @@ type CreateAccount struct {
 
 type CreateAccountInput struct {
 	auth.AccountCreationFields
-	Application auth.Application
-	Languages   []string
+	Application auth.Application `json:"-"`
+	Languages   []string         `json:"-"`
 }
 
 func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) {
@@ -59,11 +59,11 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 	// Send email
 	mail := common.Mail{
 		MailService: i.MailService,
-		CacheRepo: i.CacheRepo,
+		CacheRepo:   i.CacheRepo,
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "welcome",
-		Target: *acc,
+		Target:      *acc,
 		Application: input.Application,
 		Links: []i18n.CustomLink{
 			{
@@ -79,7 +79,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		Languages: input.Languages,
 	})
 	if err != nil {
-	 i.handleError(err, *acc)
+		i.handleError(err, *acc)
 	}
 
 	return acc, nil

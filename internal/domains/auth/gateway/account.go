@@ -6,8 +6,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/cornucopia/utils/structop"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
 	accountcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/account"
 )
 
@@ -46,9 +44,8 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 //	@Failure		401				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
 func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(accountcase.CreateAccountInput{}.AccountCreationFields).JsonKeys()
 	c := controller.New(r).
-		ParseBody(bodyKeys...).
+		JsonBody().
 		AddApplication().
 		AddLanguages()
 
@@ -163,12 +160,12 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			id		path		string							true	"Account ID"
 //	@Param			payload	body		accountcase.VerifyAccountInput	true	"Code kind must be email or phone."
-//	@Success		200		{object}	presenter.Success[bool]
+//	@Success		204
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.VerifyAccountInput{}).JsonKeys()...).
+		JsonBody().
 		ParseUrlParam("id", "accountId")
 
 	var input accountcase.VerifyAccountInput
@@ -189,7 +186,7 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
 }
 
 // ChangePassword godoc
@@ -203,13 +200,13 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		accountcase.ChangePasswordInput	true	"Old password and new one."
-//	@Success		200				{object}	presenter.Success[bool]
+//	@Success		204
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		401				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
 func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.ChangePasswordInput{}).JsonKeys()...).
+		JsonBody().
 		AddActor().
 		AddLanguages()
 
@@ -233,7 +230,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
 }
 
 // RequestPasswordReset godoc
@@ -247,12 +244,12 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Param			x-app			header		string									true	"Application ID"
 //	@Param			accept-language	header		string									false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		accountcase.RequestPasswordResetInput	true	"Old password and new one."
-//	@Success		200				{object}	presenter.Success[bool]
+//	@Success		204
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
 func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.RequestPasswordResetInput{}).JsonKeys()...).
+		JsonBody().
 		AddApplication().
 		AddLanguages()
 
@@ -276,7 +273,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
 }
 
 // ResetPassword godoc
@@ -291,12 +288,12 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			id				path		string							true	"Account ID"
 //	@Param			payload			body		accountcase.ResetPasswordInput	true	"Old password and new one."
-//	@Success		200				{object}	presenter.Success[bool]
+//	@Success		204
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
 func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody(structop.New(accountcase.ResetPasswordInput{}).JsonKeys()...).
+		JsonBody().
 		ParseUrlParam("id", "accountId").
 		AddApplication().
 		AddLanguages()
@@ -321,7 +318,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
 }
 
 // EditAccountPermissions godoc
@@ -335,15 +332,14 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			x-target	header		string									false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
 //	@Param			payload		body		accountcase.EditAccountPermissionsInput	true	"At least one of roles and grantings must be defined"
-//	@Success		200			{object}	presenter.Success[bool]
+//	@Success		204
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
 //	@Failure		500			{object}	normalizederr.NormalizedError
 func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(accountcase.EditAccountPermissionsInput{}).JsonKeys()
 	c := controller.New(r).
-		ParseBody(bodyKeys...).
+		JsonBody().
 		AddApplication().
 		AddTarget()
 
@@ -365,7 +361,7 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
 }
 
 // UpdateExtraData godoc
@@ -379,15 +375,14 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 //	@Produce		json
 //	@Param			x-target	header		string			false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
 //	@Param			payload		body		auth.ExtraData	true	"At least one data must be defined.""
-//	@Success		200			{object}	presenter.Success[bool]
+//	@Success		200			{object}	presenter.Success[auth.AccountPrivateView]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
 //	@Failure		500			{object}	normalizederr.NormalizedError
 func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(auth.ExtraData{}).Keys()
 	c := controller.New(r).
-		ParseBody(bodyKeys...).
+		JsonBody().
 		AddTarget().
 		AddActor()
 
@@ -430,9 +425,8 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
 func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(auth.AccountUniqueFields{}).Keys()
 	c := controller.New(r).
-		ParseBody(bodyKeys...).
+		JsonBody().
 		AddTarget().
 		AddActor().
 		AddLanguages()
@@ -464,17 +458,17 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //
 //	@Summary		Cancel pending unique field update
 //	@Description	Cancel a pending email or phone update for the target account
-//	@Router		/account/{id}/pending/{field} [delete]
+//	@Router			/account/{id}/pending/{field} [delete]
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
-//	@Param			id			path		string	true	"Account ID"
-//	@Param			field		path		string	true	"Field must be 'email' or 'phone'."
-//	@Success		200			{object}	presenter.Success[bool]
-//	@Failure		400			{object}	normalizederr.NormalizedError
-//	@Failure		401			{object}	normalizederr.NormalizedError
-//	@Failure		403			{object}	normalizederr.NormalizedError
-//	@Failure		500			{object}	normalizederr.NormalizedError
+//	@Param			id		path		string	true	"Account ID"
+//	@Param			field	path		string	true	"Field must be 'email' or 'phone'."
+//	@Success		204
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		403		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseUrlParam("id", "accountId").
@@ -498,7 +492,7 @@ func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
 }
 
 // GetAccounntId godoc
