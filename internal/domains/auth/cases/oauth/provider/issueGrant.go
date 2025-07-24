@@ -1,23 +1,26 @@
-package authcase
+package oauthcase
 
 import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/validator"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
+	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type InitOAuth struct {
-	AuthRepo AuthRepo
+type IssueGrant struct {
+	AuthRepo authcase.AuthRepo
 }
 
-type InitOAuthInput struct {
-	Entry       string           `validate:"required"`
-	Password    string           `validate:"required"`
-	Application auth.Application `json:"-" validate:"required"`
+type IssueGrantInput struct {
+	Entry               string           `validate:"required"`
+	Password            string           `validate:"required"`
+	CodeChallenge       string           `json:"code_challenge"`
+	CodeChallengeMethod string           `json:"code_challenge_method"`
+	Application         auth.Application `json:"-" validate:"required"`
 }
 
-func (i InitOAuth) Execute(input InitOAuthInput) (*string, error) {
+func (i IssueGrant) Execute(input IssueGrantInput) (*string, error) {
 	err := validator.Validate(input)
 	if err != nil {
 		return nil, err
@@ -35,7 +38,7 @@ func (i InitOAuth) Execute(input InitOAuthInput) (*string, error) {
 		return nil, err
 	}
 
-	code, err := acc.InitOAuth(input.Application)
+	code, err := acc.InitOAuth(input.Application, input.CodeChallenge, input.CodeChallengeMethod)
 	if err != nil {
 		return nil, err
 	}

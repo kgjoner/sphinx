@@ -8,6 +8,7 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
+	oauthcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/oauth/provider"
 )
 
 type AuthGateway struct {
@@ -30,9 +31,11 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 		r.With(authgtw.mid.AppId).Post("/login", authgtw.login)
 		r.With(authgtw.mid.Authenticate).Post("/logout", authgtw.logout)
 		r.With(authgtw.mid.Authenticate).Post("/refresh", authgtw.refresh)
+	})
 
-		r.With(authgtw.mid.AppId).Post("/open/init", authgtw.initOAuth)
-		r.With(authgtw.mid.AppId).Post("/open/login", authgtw.loginViaOAuth)
+	router.Route("/oauth", func(r chi.Router) {
+		r.With(authgtw.mid.AppId).Post("/authorize", authgtw.issueGrant)
+		r.Post("/token", authgtw.exchangeGrant)
 	})
 }
 
@@ -52,7 +55,7 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody("entry", "password").
+		JsonBody().
 		AddApplication().
 		AddIp().
 		AddHeader("user-agent", "device")
@@ -125,17 +128,17 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-app	header		string					true	"Application ID"
-//	@Param			payload	body		authcase.InitOAuthInput	true	"Credentials. Entry can be: email, phone, username or document"
+//	@Param			payload	body		oauthcase.IssueGrantInput	true	"Credentials. Entry can be: email, phone, username or document"
 //	@Success		200		{object}	presenter.Success[string]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
-func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody("entry", "password").
+		JsonBody().
 		AddApplication()
 
-	var input authcase.InitOAuthInput
+	var input oauthcase.IssueGrantInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HttpError(err, w, r)
@@ -143,7 +146,7 @@ func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := g.BasePool.NewQueries(r.Context())
-	i := authcase.InitOAuth{
+	i := oauthcase.IssueGrant{
 		AuthRepo: queries,
 	}
 
@@ -164,20 +167,19 @@ func (g AuthGateway) initOAuth(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app	header		string						true	"Application ID"
-//	@Param			payload	body		authcase.LoginViaOAuthInput	true	"Credentials. Entry can be: email, phone, username or document"
+//	@Param			payload	body		auth.OAuthAuthenticateFields	true	"You must inform either client_secret or code_verifier"
 //	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
-func (g AuthGateway) loginViaOAuth(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseBody("code", "appSecret").
+		JsonBody().
 		AddApplication().
 		AddIp().
 		AddHeader("user-agent", "device")
 
-	var input authcase.LoginViaOAuthInput
+	var input oauthcase.ExchangeGrantInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HttpError(err, w, r)
@@ -185,7 +187,7 @@ func (g AuthGateway) loginViaOAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := g.BasePool.NewQueries(r.Context())
-	i := authcase.LoginViaOAuth{
+	i := oauthcase.ExchangeGrant{
 		AuthRepo: queries,
 	}
 

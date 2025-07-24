@@ -551,13 +551,13 @@ func (a *Account) AuthenticateViaPassword(password string) error {
 	return nil
 }
 
-func (a *Account) AuthenticateViaOAuth(code string, appId uuid.UUID, appSecret string) error {
-	link := a.link(appId)
+func (a *Account) AuthenticateViaOAuth(f *OAuthAuthenticateFields) error {
+	link := a.link(f.AppId)
 	if link == nil {
 		return normalizederr.NewRequestError("Account is not linked to desired application.")
 	}
 
-	if err := link.useOAuth(code, appSecret); err != nil {
+	if err := link.useOAuth(f); err != nil {
 		return err
 	}
 
@@ -573,7 +573,7 @@ func (a Account) IsAuthenticated() bool {
 	return a.AuthToken != nil || a.hasValidCredentials
 }
 
-func (a *Account) InitOAuth(app Application) (code string, err error) {
+func (a *Account) InitOAuth(app Application, codeChallenge string, codeChallengeMethod string) (code string, err error) {
 	if !a.IsAuthenticated() {
 		return "", normalizederr.NewUnauthorizedError("User must be authenticated.")
 	}
@@ -591,7 +591,7 @@ func (a *Account) InitOAuth(app Application) (code string, err error) {
 		}
 	}
 
-	err = link.initOAuth()
+	err = link.initOAuth(codeChallenge, codeChallengeMethod)
 	if err != nil {
 		return "", err
 	}
@@ -822,7 +822,7 @@ type AccountPrivateView struct {
 	Document htypes.Document    `json:"document,omitempty"`
 	Name     string             `json:"name,omitempty"`
 	Surname  string             `json:"surname,omitempty"`
-	Address  *htypes.Address     `json:"address,omitempty"`
+	Address  *htypes.Address    `json:"address,omitempty"`
 
 	IsActive             bool               `json:"isActive"`
 	PendingEmail         htypes.Email       `json:"pendingEmail,omitempty"`

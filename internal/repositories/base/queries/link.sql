@@ -8,6 +8,8 @@ INSERT INTO
     grantings,
     oauth_code,
     oauth_expires_at,
+    oauth_code_challenge,
+    oauth_code_challenge_method,
     created_at,
     updated_at
   )
@@ -19,6 +21,8 @@ INSERT INTO
     l.grantings,
     l.oauth_code,
     l.oauth_expires_at,
+    l.oauth_code_challenge,
+    l.oauth_code_challenge_method,
     l.created_at,
     l.updated_at
   FROM 
@@ -30,4 +34,6 @@ DO UPDATE
     grantings = EXCLUDED.grantings,
     oauth_code = EXCLUDED.oauth_code,
     oauth_expires_at = EXCLUDED.oauth_expires_at,
+    oauth_code_challenge = EXCLUDED.oauth_code_challenge,
+    oauth_code_challenge_method = EXCLUDED.oauth_code_challenge_method,
     updated_at = EXCLUDED.updated_at;
