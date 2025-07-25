@@ -177,7 +177,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		}
 
 		app := ctx.Value(controller.ApplicationKey)
-		isAdmin := actor != nil && actor.(auth.Account).HasRoleOnAuth(auth.RoleValues.ADMIN)
+		isAdmin := actor != nil && actor.(auth.Account).HasRoleOnAuth(auth.ADMIN)
 		isAuthedApp := app != nil && app.(auth.Application).IsAuthenticated()
 		if !isAdmin && !isAuthedApp {
 			err := normalizederr.NewForbiddenError("does not have permission to execute this action")

@@ -46,7 +46,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		return nil, err
 	}
 
-	err = acc.LinkTo(input.Application)
+	err = acc.GiveConsent(input.Application)
 	if err != nil {
 		return nil, err
 	}

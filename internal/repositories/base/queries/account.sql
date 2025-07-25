@@ -167,7 +167,7 @@ WHERE
 GROUP BY
   a.internal_id;
 
--- name: GetAccountByOAuthCode :one
+-- name: GetAccountByLink :one
 WITH la AS (
   SELECT
     l.*,
@@ -176,7 +176,7 @@ WITH la AS (
     link l
     JOIN application app ON app.internal_id = l.application_id
   WHERE
-    l.oauth_code = $1
+    l.id = $1
   GROUP BY
     l.internal_id
 ), sa AS (

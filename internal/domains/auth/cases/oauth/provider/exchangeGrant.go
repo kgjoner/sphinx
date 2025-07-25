@@ -2,7 +2,7 @@ package oauthcase
 
 import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/validator"
+	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -10,58 +10,50 @@ import (
 )
 
 type ExchangeGrant struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo  authcase.AuthRepo
+	CacheRepo cache.DAO
 }
 
 type ExchangeGrantInput struct {
-	auth.OAuthAuthenticateFields
+	auth.GrantCredentials
 	auth.SessionCreationFields `json:"-"`
 }
 
 func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput, error) {
-	err := validator.Validate(input)
+	var grant *auth.AuthorizationGrant
+	err := i.CacheRepo.GetJson("grant:"+input.Code, &grant)
 	if err != nil {
+		if err == cache.ErrNil {
+			return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+		}
 		return nil, err
 	}
 
-	app, err := i.AuthRepo.GetApplicationById(input.AppId)
-	if err != nil {
-		return nil, err
-	} else if app == nil {
-		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
-	}
-	input.Application = *app
+	// Clear grant from cache independent of outcome
+	defer func() { i.CacheRepo.Clear("grant:"+grant.Code) }()
 
-	acc, err := i.AuthRepo.GetAccountByOAuthCode(input.Code)
+	// Get account by link ID
+	acc, err := i.AuthRepo.GetAccountByLink(grant.LinkId)
 	if err != nil {
 		return nil, err
 	} else if acc == nil {
 		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
-	err = acc.AuthenticateViaOAuth(&input.OAuthAuthenticateFields)
+	// Authenticate via authorization grant
+	err = acc.AuthenticateViaGrant(grant, &input.GrantCredentials)
 	if err != nil {
-		if normerr, ok := err.(normalizederr.NormalizedError); ok && normerr.Code == errcode.InvalidCredentials {
-			errRepo := i.AuthRepo.UpsertLinks(acc.LinksToPersist()...)
-			if errRepo != nil {
-				return nil, normalizederr.NewFatalUnauthorizedError(err.Error() + ", and links could not be persisted: " + errRepo.Error())
-			}
-		}
-
 		return nil, err
 	}
 
+	// Create session
 	access, refresh, err := acc.InitSession(&input.SessionCreationFields)
 	if err != nil {
 		return nil, err
 	}
 
+	// Persist sessions
 	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
-	if err != nil {
-		return nil, err
-	}
-
-	err = i.AuthRepo.UpsertLinks(acc.LinksToPersist()...)
 	if err != nil {
 		return nil, err
 	}

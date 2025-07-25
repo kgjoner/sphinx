@@ -136,13 +136,13 @@ func (q Queries) GetAccountByEntry(entry string) (*auth.Account, error) {
 	return &item, nil
 }
 
-func (q Queries) GetAccountByOAuthCode(oauthCode string) (*auth.Account, error) {
-	raw, exists := rawQueries["GetAccountByOAuthCode"]
+func (q Queries) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) {
+	raw, exists := rawQueries["GetAccountByLink"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, oauthCode)
+	row := q.db.QueryRowContext(q.ctx, raw, linkId)
 	var item auth.Account
 	err := row.Scan(
 		&item.InternalId,

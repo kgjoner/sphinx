@@ -173,7 +173,7 @@ func (m *MockQueries) GetAccountByEntry(entry string) (*auth.Account, error) {
 	return nil, nil
 }
 
-func (m *MockQueries) GetAccountByOAuthCode(oauthCode string) (*auth.Account, error) {
+func (m *MockQueries) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -181,19 +181,24 @@ func (m *MockQueries) GetAccountByOAuthCode(oauthCode string) (*auth.Account, er
 		return nil, m.errorToReturn
 	}
 
-	// In a real implementation, this would check oauth codes
-	// For mock purposes, we'll just return the first account if one exists
+	link, exists := m.links[linkId]
+	if !exists {
+		return nil, nil
+	}
+
 	for _, acc := range m.accounts {
-		// Create a copy of the account to avoid modifying the original
-		accountCopy := *acc
-
-		// Populate Links for this account
-		accountCopy.Links = m.getLinksForAccount(acc.InternalId)
-
-		// Populate ActiveSessions for this account (only active ones)
-		accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalId)
-
-		return &accountCopy, nil
+		if acc.InternalId == link.AccountId {
+			// Create a copy of the account to avoid modifying the original
+			accountCopy := *acc
+	
+			// Populate Links for this account
+			accountCopy.Links = m.getLinksForAccount(acc.InternalId)
+	
+			// Populate ActiveSessions for this account (only active ones)
+			accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalId)
+	
+			return &accountCopy, nil
+		}
 	}
 	return nil, nil
 }

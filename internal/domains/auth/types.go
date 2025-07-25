@@ -40,19 +40,11 @@ var AccountCodeKindValues = AccountCodeKind.Enumerate("").(accountCodeKind)
 
 type Role string
 
-type role struct {
-	ADMIN Role
-	STAFF Role
-}
-
-func (s Role) Enumerate() any {
-	return role{
-		"ADMIN",
-		"STAFF",
-	}
-}
-
-var RoleValues = Role.Enumerate("").(role)
+// Roles used in root application.
+const (
+	ADMIN Role = "ADMIN"
+	DEV   Role = "DEV"
+)
 
 /* ==============================================================================
 	Auth Token

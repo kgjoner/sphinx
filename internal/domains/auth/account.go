@@ -91,6 +91,8 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 		UpdatedAt: now,
 	}
 
+	// TODO: Add link for root Application as default
+
 	acc.generateCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
 	if !acc.Phone.IsZero() {
 		acc.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
@@ -386,11 +388,15 @@ func (a *Account) clearCodeFor(kind AccountCodeKind) {
 	LINK RELATED METHODS
 ============================================================================== */
 
-// Create link to desired application.
-func (a *Account) LinkTo(app Application) error {
-	for _, l := range a.Links {
+// Agrees with link to desired application. If there is no link, it will create a new one.
+func (a *Account) GiveConsent(app Application) error {
+	for i, l := range a.Links {
 		if l.Application.Id == app.Id {
-			return normalizederr.NewRequestError("Account has already been linked to desired application.", "")
+			if l.HasConsent {
+				return normalizederr.NewRequestError("Account has already given link to desired application.", "")
+			}
+
+			return a.Links[i].restoreConsent()
 		}
 	}
 
@@ -399,11 +405,26 @@ func (a *Account) LinkTo(app Application) error {
 	return validator.Validate(a)
 }
 
+// Revoke consent in linking with desired application.
+func (a *Account) RevokeConsent(app Application) error {
+	for i, l := range a.Links {
+		if l.Application.Id == app.Id {
+			if !l.HasConsent {
+				return normalizederr.NewRequestError("Account has already revoked link to desired application.", "")
+			}
+
+			return a.Links[i].revokeConsent()
+		}
+	}
+
+	return normalizederr.NewRequestError("Account has not given link to desired application.", "")
+}
+
 // Check whether account has role on application related to their authed session.
 // False is also returned when account is not authed.
 func (a Account) HasRoleOnAuth(roles ...Role) bool {
 	link := a.authedLink()
-	if link == nil {
+	if link == nil || !link.HasConsent {
 		return false
 	}
 
@@ -413,48 +434,26 @@ func (a Account) HasRoleOnAuth(roles ...Role) bool {
 // Check whether account has role on a target application.
 func (a Account) HasRole(app Application, roles ...Role) bool {
 	link := a.link(app.Id)
-	if link == nil {
+	if link == nil || !link.HasConsent {
 		return false
 	}
 
 	return link.hasRole(roles...)
 }
 
-// Check whether account has granting on a target application.
-func (a Account) HasGranting(app Application, grantings ...string) bool {
-	link := a.link(app.Id)
-	if link == nil {
-		return false
-	}
-
-	return link.hasGranting(grantings...)
-}
-
 func (a *Account) AddRole(r Role, app Application) error {
-	return a.updatePermission(app, func(l *Link) error {
-		return l.addRole(r)
+	return a.updatePermission(app, func(c *Link) error {
+		return c.addRole(r)
 	})
 }
 
 func (a *Account) RemoveRole(r Role, app Application) error {
-	return a.updatePermission(app, func(l *Link) error {
-		return l.removeRole(r)
+	return a.updatePermission(app, func(c *Link) error {
+		return c.removeRole(r)
 	})
 }
 
-func (a *Account) AddGranting(g string, app Application) error {
-	return a.updatePermission(app, func(l *Link) error {
-		return l.addGranting(g)
-	})
-}
-
-func (a *Account) RemoveGranting(g string, app Application) error {
-	return a.updatePermission(app, func(l *Link) error {
-		return l.removeGranting(g)
-	})
-}
-
-// Return links that have just been updated
+// Return application links that have just been updated
 func (a *Account) LinksToPersist() []Link {
 	links := []Link{}
 	for _, l := range a.Links {
@@ -466,15 +465,15 @@ func (a *Account) LinksToPersist() []Link {
 	return links
 }
 
-// Prepare and execute desired role and/or granting updates
+// Prepare and execute desired role updates
 func (a *Account) updatePermission(app Application, updaterFn func(*Link) error) error {
 	if !app.IsAuthenticated() {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
 	link := a.link(app.Id)
-	if link == nil {
-		return normalizederr.NewRequestError("Target account is not linked to desired application.")
+	if link == nil || !link.HasConsent {
+		return normalizederr.NewForbiddenError("target account has not consented to desired application")
 	}
 
 	err := updaterFn(link)
@@ -482,8 +481,8 @@ func (a *Account) updatePermission(app Application, updaterFn func(*Link) error)
 		return err
 	}
 
-	for i, l := range a.Links {
-		if l.Id == link.Id {
+	for i, c := range a.Links {
+		if c.Id == link.Id {
 			a.Links[i] = *link
 		}
 	}
@@ -491,10 +490,10 @@ func (a *Account) updatePermission(app Application, updaterFn func(*Link) error)
 	return nil
 }
 
-// Return desired application link or nil if account is not linked to it.
+// Return desired application link or nil if account has never given link to it.
 func (a *Account) link(appId uuid.UUID) *Link {
-	for i, l := range a.Links {
-		if l.Application.Id == appId {
+	for i, c := range a.Links {
+		if c.Application.Id == appId {
 			return &a.Links[i]
 		}
 	}
@@ -502,7 +501,7 @@ func (a *Account) link(appId uuid.UUID) *Link {
 	return nil
 }
 
-// Return link related to auth token or nil if account is not authenticated
+// Return application link related to auth token or nil if account is not authenticated
 func (a *Account) authedLink() *Link {
 	if !a.IsAuthenticated() {
 		return nil
@@ -525,8 +524,13 @@ func (a *Account) Authenticate(token *authToken) error {
 		doesMatch := s.doesRefreshTokenMatch(token.String())
 		if !doesMatch {
 			a.TerminateAllSessions()
-			return normalizederr.NewFatalUnauthorizedError("Revoked token.", errcode.ExpiredSession)
+			return normalizederr.NewFatalUnauthorizedError("revoked token", errcode.ExpiredSession)
 		}
+	}
+
+	link := a.link(s.Application.Id)
+	if link == nil || !link.HasConsent {
+		return normalizederr.NewForbiddenError("target account has revoked consent to desired application", errcode.RevokedConsent)
 	}
 
 	if !a.IsActive {
@@ -551,13 +555,8 @@ func (a *Account) AuthenticateViaPassword(password string) error {
 	return nil
 }
 
-func (a *Account) AuthenticateViaOAuth(f *OAuthAuthenticateFields) error {
-	link := a.link(f.AppId)
-	if link == nil {
-		return normalizederr.NewRequestError("Account is not linked to desired application.")
-	}
-
-	if err := link.useOAuth(f); err != nil {
+func (a *Account) AuthenticateViaGrant(grant *AuthorizationGrant, credentials *GrantCredentials) error {
+	if err := grant.use(*a, credentials); err != nil {
 		return err
 	}
 
@@ -573,30 +572,17 @@ func (a Account) IsAuthenticated() bool {
 	return a.AuthToken != nil || a.hasValidCredentials
 }
 
-func (a *Account) InitOAuth(app Application, codeChallenge string, codeChallengeMethod string) (code string, err error) {
+// Creates an authorization grant for an application that user has linked to
+func (a Account) IssueAuthorizationGrant(f *AuthorizationGrantCreationFields, appId uuid.UUID) (*AuthorizationGrant, error) {
 	if !a.IsAuthenticated() {
-		return "", normalizederr.NewUnauthorizedError("User must be authenticated.")
+		return nil, normalizederr.NewUnauthorizedError("User must be authenticated.")
 	}
 
-	link := a.link(app.Id)
-	if link == nil {
-		return "", normalizederr.NewRequestError("Target account is not linked to desired application.")
+	if a.AuthedSession != nil && !a.AuthedSession.Application.isRoot() {
+		return nil, normalizederr.NewForbiddenError("User can only issue grants with a root app auth token")
 	}
 
-	if a.AuthedSession != nil {
-		if !a.AuthedSession.Application.isRoot() {
-			return "", normalizederr.NewForbiddenError("User can only init oauth with an auth token if it is from root app.")
-		} else if link.Application.isRoot() {
-			return "", normalizederr.NewForbiddenError("User can only init oauth with an auth token for apps other than root one.")
-		}
-	}
-
-	err = link.initOAuth(codeChallenge, codeChallengeMethod)
-	if err != nil {
-		return "", err
-	}
-
-	return link.OAuthCode, validator.Validate(a)
+	return newAuthorizationGrant(a, f)
 }
 
 // Create a new session and generate tokens
@@ -605,20 +591,13 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 		return nil, nil, normalizederr.NewUnauthorizedError("User must be authenticated.")
 	}
 
-	if a.AuthedSession != nil {
-		if !a.AuthedSession.Application.isRoot() {
-			return nil, nil, normalizederr.NewForbiddenError("User can only init sessions with an auth token if it is from root app.")
-		} else if f.Application.isRoot() {
-			return nil, nil, normalizederr.NewForbiddenError("User can only init sessions with an auth token for apps other than root one.")
-		}
+	if !a.hasValidCredentials {
+		return nil, nil, normalizederr.NewForbiddenError("User can only init sessions with valid credentials, not with another auth token.")
 	}
 
-	// Check if link exists
-	if link := a.link(f.Application.Id); link == nil {
-		err := a.LinkTo(f.Application)
-		if err != nil {
-			return nil, nil, err
-		}
+	// Check if link exists and is active
+	if link := a.link(f.Application.Id); link == nil || !link.HasConsent {
+		return nil, nil, normalizederr.NewForbiddenError("User has not consented to this application.")
 	}
 
 	// Terminate exceeding sessions
@@ -829,11 +808,11 @@ type AccountPrivateView struct {
 	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
 	PendingPhone         htypes.PhoneNumber `json:"pendingPhone,omitempty"`
 	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
-	Link                 *Link              `json:"link"`
+	Link                 *Link              `json:"link,omitempty"`
 }
 
 func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
-	if a.Id != actor.Id && actor.HasRoleOnAuth(RoleValues.ADMIN) {
+	if !(a.Id == actor.Id || actor.HasRoleOnAuth(ADMIN)) {
 		return nil, normalizederr.NewForbiddenError("Does not have permission to view this user information.")
 	}
 

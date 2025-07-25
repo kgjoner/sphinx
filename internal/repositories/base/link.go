@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/utils/datatransform"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
@@ -19,12 +18,7 @@ func (q Queries) UpsertLinks(links ...auth.Link) error {
 		AccountId     int         `json:"account_id" validate:"required"`
 		ApplicationId int         `json:"application_id"`
 		Roles         []auth.Role `json:"roles"`
-		Grantings     []string    `json:"grantings"`
-
-		OAuthCode                string          `json:"oauth_code"`
-		OAuthExpiresAt           htypes.NullTime `json:"oauth_expires_at"`
-		OAuthCodeChallenge       string          `json:"oauth_code_challenge"`
-		OAuthCodeChallengeMethod string          `json:"oauth_code_challenge_method"`
+		HasConsent    bool        `json:"has_consent"`
 
 		CreatedAt time.Time `json:"created_at" validate:"required"`
 		UpdatedAt time.Time `json:"updated_at" validate:"required"`
@@ -48,11 +42,7 @@ func (q Queries) UpsertLinks(links ...auth.Link) error {
 			l.AccountId,
 			l.Application.InternalId,
 			l.Roles,
-			l.Grantings,
-			l.OAuthCode,
-			l.OAuthExpiresAt,
-			l.OAuthCodeChallenge,
-			l.OAuthCodeChallengeMethod,
+			l.HasConsent,
 			l.CreatedAt,
 			l.UpdatedAt,
 		}

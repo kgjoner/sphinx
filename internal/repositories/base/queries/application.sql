@@ -3,7 +3,7 @@ INSERT INTO
   application (
     id,
     name,
-    grantings,
+    possible_roles,
     secret,
     allowed_redirect_uris,
     brand
@@ -24,7 +24,7 @@ UPDATE
   application
 SET
   name = $2,
-  grantings = $3,
+  possible_roles = $3,
   allowed_redirect_uris = $4,
   brand = $5
 WHERE
@@ -35,7 +35,7 @@ SELECT
   internal_id,
   id,
   name,
-  grantings,
+  possible_roles,
   secret,
   allowed_redirect_uris,
   brand,

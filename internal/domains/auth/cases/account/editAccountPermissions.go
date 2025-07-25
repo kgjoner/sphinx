@@ -14,7 +14,6 @@ type EditAccountPermissions struct {
 
 type EditAccountPermissionsInput struct {
 	Roles        []auth.Role
-	Grantings    []string
 	ShouldRemove sql.NullBool     `validate:"required"`
 	Target       auth.Account     `json:"-"`
 	Application  auth.Application `json:"-"`
@@ -36,19 +35,6 @@ func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (bool
 				err = targetAcc.AddRole(r, input.Application)
 			}
 
-			if err != nil {
-				return false, err
-			}
-		}
-	}
-
-	if input.Grantings != nil {
-		for _, g := range input.Grantings {
-			if input.ShouldRemove.Bool {
-				err = targetAcc.RemoveGranting(g, input.Application)
-			} else {
-				err = targetAcc.AddGranting(g, input.Application)
-			}
 			if err != nil {
 				return false, err
 			}

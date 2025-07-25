@@ -66,8 +66,8 @@ func (m Middlewares) TryAuthenticate(next http.Handler) http.Handler {
 	})
 }
 
-// Ensure authenticated account has at least one of listed permissions. Admin accounts are always allowed.
-func (m Middlewares) Guard(permissions ...string) func(http.Handler) http.Handler {
+// Ensure authenticated account has at least one of listed roles. Admin accounts are always allowed.
+func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			actorValue := r.Context().Value(controller.ActorKey)
@@ -83,12 +83,7 @@ func (m Middlewares) Guard(permissions ...string) func(http.Handler) http.Handle
 				return
 			}
 
-			for _, p := range permissions {
-				if actor.HasGranting(p) {
-					next.ServeHTTP(w, r)
-					return
-				}
-
+			for _, p := range roles {
 				if actor.HasRole(p) {
 					next.ServeHTTP(w, r)
 					return

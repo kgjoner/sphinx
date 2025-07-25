@@ -47,7 +47,7 @@ var AdminRootLink = &auth.Link{
 	Application: *RootApplication,
 	CreatedAt:   time.Now(),
 	UpdatedAt:   time.Now(),
-	Roles:       []auth.Role{auth.RoleValues.ADMIN},
+	Roles:       []auth.Role{auth.ADMIN},
 }
 
 const SimpleUserPassword = "SimpleUserPassword123!"

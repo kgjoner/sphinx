@@ -34,7 +34,7 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 	})
 
 	router.Route("/oauth", func(r chi.Router) {
-		r.With(authgtw.mid.AppId).Post("/authorize", authgtw.issueGrant)
+		r.With(authgtw.mid.Authenticate).Post("/authorize", authgtw.issueGrant)
 		r.Post("/token", authgtw.exchangeGrant)
 	})
 }
@@ -136,7 +136,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JsonBody().
-		AddApplication()
+		AddActor()
 
 	var input oauthcase.IssueGrantInput
 	err := c.Write(&input)
@@ -175,7 +175,6 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JsonBody().
-		AddApplication().
 		AddIp().
 		AddHeader("user-agent", "device")
 
