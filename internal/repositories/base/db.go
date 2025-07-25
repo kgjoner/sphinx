@@ -27,6 +27,13 @@ func NewPool(url string) (*Pool, error) {
 	}, nil
 }
 
+func (p Pool) Close() error {
+	if p.db != nil {
+		return p.db.Close()
+	}
+	return nil
+}
+
 func (p Pool) DatabaseUrl() string {
 	return p.url
 }

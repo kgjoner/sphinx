@@ -1,10 +1,14 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -157,8 +161,33 @@ func (s *Server) Setup() *Server {
 }
 
 func (s *Server) Start() {
-	fmt.Println("Server running at port 8080")
-	log.Fatal(http.ListenAndServe(":8080", s.Handler))
+	defer s.basePool.Close()
+	defer s.cachePool.Close()
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: s.Handler,
+	}
+
+	go func() {
+		fmt.Println("Server running at port 8080")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server startup error:", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	fmt.Println("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
 }
 
 var (
