@@ -2,6 +2,8 @@ package mocks
 
 import (
 	"context"
+	"database/sql"
+
 	"github.com/kgjoner/sphinx/internal/common"
 )
 
@@ -22,4 +24,17 @@ func (m *MockBasePool) NewQueries(ctx context.Context) common.BaseRepo {
 
 func (m *MockBasePool) GetMockQueries() *MockQueries {
 	return m.mockQueries
+}
+
+func (m *MockBasePool) Close() error {
+	m.mockQueries.Clear()
+	return nil
+}
+
+func (m *MockBasePool) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(common.BaseRepo) (any, error)) (any, error) {
+	return fn(m.mockQueries)
+}
+
+func (m *MockBasePool) WithReadOnlyTransaction(ctx context.Context, fn func(common.BaseRepo) (any, error)) (any, error) {
+	return fn(m.mockQueries)
 }

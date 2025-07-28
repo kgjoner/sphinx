@@ -10,8 +10,8 @@ import (
 )
 
 type Pool struct {
-	url       string
-	db        *sql.DB
+	url string
+	db  *sql.DB
 }
 
 // Creates a new pool for connections.
@@ -39,13 +39,62 @@ func (p Pool) DatabaseUrl() string {
 }
 
 type Queries struct {
-	ctx   context.Context
-	db    *sql.DB
+	ctx context.Context
+	db  *sql.DB
+	tx  *sql.Tx
 }
 
 func (p Pool) NewQueries(ctx context.Context) common.BaseRepo {
 	return &Queries{
 		ctx,
 		p.db,
+		nil,
 	}
+}
+
+// Creates a new transaction to be used in the function passed.
+// If opts is nil, it defaults to READ COMMITTED isolation level.
+//
+// If an error occurs, the transaction is rolled back.
+// If successful, the transaction is committed.
+// The function fn receives a BaseRepo interface to perform operations within the transaction.
+// It returns the result of the function or an error if it fails.
+func (p Pool) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(common.BaseRepo) (any, error)) (any, error) {
+	if opts == nil {
+		opts = &sql.TxOptions{
+			Isolation: sql.LevelReadCommitted,
+		}
+	}
+
+	tx, err := p.db.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("baserepo: unable to begin transaction: %v", err)
+	}
+
+	queries := &Queries{
+		ctx: ctx,
+		db:  p.db,
+		tx:  tx,
+	}
+
+	output, err := fn(queries)
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return nil, fmt.Errorf("baserepo: transaction rollback failed: %v, original error: %v", rollbackErr, err)
+		}
+		return nil, fmt.Errorf("baserepo: transaction failed: %v", err)
+	}
+
+	return output, tx.Commit()
+}
+
+// Creates a read-only transaction with REPEATABLE READ isolation level.
+// This is useful for operations that require consistent reads without modifying data.
+func (p Pool) WithReadOnlyTransaction(ctx context.Context, fn func(common.BaseRepo) (any, error)) (any, error) {
+	opts := &sql.TxOptions{
+		Isolation: sql.LevelReadCommitted,
+		ReadOnly:  true,
+	}
+
+	return p.WithTransaction(ctx, opts, fn)
 }

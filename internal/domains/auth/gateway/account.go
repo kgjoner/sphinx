@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/sphinx/internal/common"
 	accountcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/account"
 )
 
@@ -56,14 +57,16 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
-	i := accountcase.CreateAccount{
-		AuthRepo:    queries,
-		CacheRepo:   g.CachePool.NewDAO(r.Context()),
-		MailService: g.MailService,
-	}
+	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
+		i := accountcase.CreateAccount{
+			AuthRepo:    tx,
+			CacheRepo:   g.CachePool.NewDAO(r.Context()),
+			MailService: g.MailService,
+		}
 
-	output, err := i.Execute(input)
+		return i.Execute(input)
+	})
+
 	if err != nil {
 		presenter.HttpError(err, w, r)
 		return
@@ -217,14 +220,15 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
-	i := accountcase.ChangePassword{
-		AuthRepo:    queries,
-		CacheRepo:   g.CachePool.NewDAO(r.Context()),
-		MailService: g.MailService,
-	}
+	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
+		i := accountcase.ChangePassword{
+			AuthRepo:    tx,
+			CacheRepo:   g.CachePool.NewDAO(r.Context()),
+			MailService: g.MailService,
+		}
 
-	output, err := i.Execute(input)
+		return i.Execute(input)
+	})
 	if err != nil {
 		presenter.HttpError(err, w, r)
 		return
@@ -305,14 +309,15 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
-	i := accountcase.ResetPassword{
-		AuthRepo:    queries,
-		CacheRepo:   g.CachePool.NewDAO(r.Context()),
-		MailService: g.MailService,
-	}
+	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
+		i := accountcase.ResetPassword{
+			AuthRepo:    tx,
+			CacheRepo:   g.CachePool.NewDAO(r.Context()),
+			MailService: g.MailService,
+		}
 
-	output, err := i.Execute(input)
+		return i.Execute(input)
+	})
 	if err != nil {
 		presenter.HttpError(err, w, r)
 		return
