@@ -3,6 +3,7 @@ package accountcase
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
@@ -10,7 +11,6 @@ import (
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
@@ -22,7 +22,6 @@ type RequestPasswordReset struct {
 
 type RequestPasswordResetInput struct {
 	Entry       string
-	Application auth.Application `json:"-"`
 	Languages   []string         `json:"-"`
 }
 
@@ -44,6 +43,13 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 		return false, err
 	}
 
+	app, err := i.AuthRepo.GetApplicationById(uuid.MustParse(config.Env.ROOT_APP_ID))
+	if err != nil {
+		return false, err
+	} else if app == nil {
+		return false, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
+	}
+
 	// Send email
 	mail := common.Mail{
 		MailService: i.MailService,
@@ -52,7 +58,7 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordReset",
 		Target:      *acc,
-		Application: input.Application,
+		Application: *app,
 		Links: []i18n.CustomLink{
 			{
 				Key: "password-reset",

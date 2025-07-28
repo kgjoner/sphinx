@@ -22,10 +22,10 @@ func hashPassword(password string) string {
 const RootAppSecret = "testsecret"
 
 var RootApplication = &auth.Application{
-	Name:       "Root Application",
-	Secret:     hashPassword(RootAppSecret),
-	CreatedAt:  time.Now(),
-	UpdatedAt:  time.Now(),
+	Name:      "Root Application",
+	Secret:    hashPassword(RootAppSecret),
+	CreatedAt: time.Now(),
+	UpdatedAt: time.Now(),
 }
 
 const AdminPassword = "AdminPassword123!"
@@ -45,6 +45,7 @@ var AdminRootLink = &auth.Link{
 	Id:          uuid.New(),
 	AccountId:   AdminAccount.InternalId,
 	Application: *RootApplication,
+	HasConsent:  true,
 	CreatedAt:   time.Now(),
 	UpdatedAt:   time.Now(),
 	Roles:       []auth.Role{auth.ADMIN},
@@ -67,6 +68,7 @@ var SimpleUserRootLink = &auth.Link{
 	Id:          uuid.New(),
 	AccountId:   SimpleUserAccount.InternalId,
 	Application: *RootApplication,
+	HasConsent:  true,
 	CreatedAt:   time.Now(),
 	UpdatedAt:   time.Now(),
 }

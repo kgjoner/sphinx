@@ -31,6 +31,14 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 		return nil, err
 	}
 
+	app, err := i.AuthRepo.GetApplicationById(uuid.MustParse(config.Env.ROOT_APP_ID))
+	if err != nil {
+		return nil, err
+	} else if app == nil {
+		return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
+	}
+	input.Application = *app
+
 	access, refresh, err := acc.InitSession(&input.SessionCreationFields)
 	if err != nil {
 		return nil, err
@@ -39,14 +47,6 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
 	if err != nil {
 		return nil, err
-	}
-
-	newLinks := acc.LinksToPersist()
-	if len(newLinks) > 0 {
-		err = i.AuthRepo.UpsertLinks(newLinks...)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return &LoginOutput{

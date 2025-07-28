@@ -45,11 +45,7 @@ func TestAccount(t *testing.T) {
 			"username": mockedAccount.Username,
 			"phone":    mockedAccount.Phone,
 			"document": mockedAccount.Document,
-		}, &httputil.Options{
-			Headers: map[string]string{
-				"x-app": config.Env.ROOT_APP_ID,
-			},
-		})(&respData)
+		}, nil)(&respData)
 
 		assert.Nil(t, err)
 		assert.Equal(t, 201, resp.StatusCode)
@@ -62,11 +58,7 @@ func TestAccount(t *testing.T) {
 		resp, err := api.Post("/auth/login", map[string]any{
 			"entry":    mockedAccount.Email.String(),
 			"password": unhashedPassword,
-		}, &httputil.Options{
-			Headers: map[string]string{
-				"x-app": config.Env.ROOT_APP_ID,
-			},
-		})(&respData)
+		}, nil)(&respData)
 
 		currentToken := respData.Data.AccessToken
 

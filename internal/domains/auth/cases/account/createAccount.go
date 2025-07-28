@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
@@ -25,7 +26,6 @@ type CreateAccount struct {
 
 type CreateAccountInput struct {
 	auth.AccountCreationFields
-	Application auth.Application `json:"-"`
 	Languages   []string         `json:"-"`
 }
 
@@ -33,6 +33,13 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 	acc, err := auth.NewAccount(&input.AccountCreationFields)
 	if err != nil {
 		return nil, err
+	}
+
+	app, err := i.AuthRepo.GetApplicationById(uuid.MustParse(config.Env.ROOT_APP_ID))
+	if err != nil {
+	 return nil, err
+	} else if app == nil {
+	 return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
 	}
 
 	err = i.AuthRepo.InsertAccount(acc)
@@ -46,7 +53,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		return nil, err
 	}
 
-	err = acc.GiveConsent(input.Application)
+	err = acc.GiveConsent(*app)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +71,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "welcome",
 		Target:      *acc,
-		Application: input.Application,
+		Application: *app,
 		Links: []i18n.CustomLink{
 			{
 				Key: "email-verification",

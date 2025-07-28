@@ -11,9 +11,9 @@ import (
 )
 
 func (g AuthGateway) accountHandler(r chi.Router) {
-	r.With(g.mid.AppId).Post("/", g.createAccount)
-	r.With(g.mid.AppId).Post("/password/request", g.requestPasswordReset)
-	r.With(g.mid.AppId).Patch("/{id}/password", g.resetPassword)
+	r.Post("/", g.createAccount)
+	r.Post("/password/request", g.requestPasswordReset)
+	r.Patch("/{id}/password", g.resetPassword)
 
 	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateAccount)
 	r.With(g.mid.Authenticate, g.mid.Target).Patch("/", g.updateExtraData)
@@ -32,12 +32,11 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 // CreateAccount godoc
 //
 //	@Summary		Create an account
-//	@Description	Register a new account linked to source app, and send email validation code.
+//	@Description	Register a new account linked to root app, and send email validation code.
 //	@Router			/account [post]
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app			header		string						true	"Application ID"
 //	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		auth.AccountCreationFields	true	"Email and password are mandatory."
 //	@Success		200				{object}	presenter.Success[auth.Account]
@@ -47,7 +46,6 @@ func (g AuthGateway) accountHandler(r chi.Router) {
 func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JsonBody().
-		AddApplication().
 		AddLanguages()
 
 	var input accountcase.CreateAccountInput
@@ -245,7 +243,6 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app			header		string									true	"Application ID"
 //	@Param			accept-language	header		string									false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		accountcase.RequestPasswordResetInput	true	"Old password and new one."
 //	@Success		204
@@ -254,7 +251,6 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JsonBody().
-		AddApplication().
 		AddLanguages()
 
 	var input accountcase.RequestPasswordResetInput
@@ -288,7 +284,6 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Tags			Account
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app			header		string							true	"Application ID"
 //	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			id				path		string							true	"Account ID"
 //	@Param			payload			body		accountcase.ResetPasswordInput	true	"Old password and new one."
@@ -299,7 +294,6 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JsonBody().
 		ParseUrlParam("id", "accountId").
-		AddApplication().
 		AddLanguages()
 
 	var input accountcase.ResetPasswordInput

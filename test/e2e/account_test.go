@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	"github.com/kgjoner/sphinx/test/mocks"
@@ -22,7 +21,7 @@ func TestAccountCreation(t *testing.T) {
 	t.Run("should create a new account", func(t *testing.T) {
 		accountData := factory.CreateAccountData()
 
-		resp, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+		resp, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -85,7 +84,7 @@ func TestAccountCreation(t *testing.T) {
 			"username": "testuser",
 		}
 
-		resp, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+		resp, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -99,7 +98,7 @@ func TestAccountCreation(t *testing.T) {
 			"username": "testuser2",
 		}
 
-		resp, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+		resp, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -113,13 +112,13 @@ func TestAccountCreation(t *testing.T) {
 		}
 
 		// Create first account
-		resp1, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+		resp1, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		resp1.Body.Close()
 		assert.Equal(t, http.StatusCreated, resp1.StatusCode)
 
 		// Try to create duplicate
-		resp2, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+		resp2, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		assert.Equal(t, http.StatusConflict, resp2.StatusCode)
@@ -133,7 +132,7 @@ func TestAccountManagement(t *testing.T) {
 	factory := NewTestDataFactory()
 
 	// Login
-	loginResp, err := ts.AppRequest("POST", "/auth/login", factory.SimpleUserLoginData(), config.Env.ROOT_APP_ID)
+	loginResp, err := ts.Request("POST", "/auth/login", factory.SimpleUserLoginData(), nil)
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
 
@@ -212,13 +211,13 @@ func TestPasswordChange(t *testing.T) {
 
 	t.Run("should handle password change flow", func(t *testing.T) {
 		// Create account
-		resp1, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+		resp1, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		resp1.Body.Close()
 
 		// Login to get token
 		loginData := factory.CreateLoginData(accountData["email"].(string), accountData["password"].(string))
-		resp2, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+		resp2, err := ts.Request("POST", "/auth/login", loginData, nil)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 
@@ -242,7 +241,7 @@ func TestPasswordChange(t *testing.T) {
 		t.Run("should unauthorize login with old password", func(t *testing.T) {
 			// Attempt login with old password
 			loginData := factory.CreateLoginData(accountData["email"].(string), accountData["password"].(string))
-			resp, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+			resp, err := ts.Request("POST", "/auth/login", loginData, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
@@ -252,7 +251,7 @@ func TestPasswordChange(t *testing.T) {
 		t.Run("should login with new password", func(t *testing.T) {
 			// Attempt login with new password
 			loginData := factory.CreateLoginData(accountData["email"].(string), newPassword)
-			resp, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+			resp, err := ts.Request("POST", "/auth/login", loginData, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
@@ -277,7 +276,7 @@ func TestPasswordReset(t *testing.T) {
 
 	t.Run("should handle password reset flow", func(t *testing.T) {
 		// Create account
-		resp1, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+		resp1, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
 
@@ -290,7 +289,7 @@ func TestPasswordReset(t *testing.T) {
 			"entry": accountData["email"],
 		}
 
-		resp, err := ts.AppRequest("POST", "/account/password/request", resetRequest, config.Env.ROOT_APP_ID)
+		resp, err := ts.Request("POST", "/account/password/request", resetRequest, nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -306,7 +305,7 @@ func TestPasswordReset(t *testing.T) {
 				"newPassword": newPassword,
 			}
 
-			resp, err := ts.AppRequest("PATCH", "/account/"+acc.Id.String()+"/password", resetData, config.Env.ROOT_APP_ID)
+			resp, err := ts.Request("PATCH", "/account/"+acc.Id.String()+"/password", resetData, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
@@ -314,7 +313,7 @@ func TestPasswordReset(t *testing.T) {
 
 			t.Run("should login with new password", func(t *testing.T) {
 				loginData := factory.CreateLoginData(accountData["email"].(string), newPassword)
-				resp, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+				resp, err := ts.Request("POST", "/auth/login", loginData, nil)
 				require.NoError(t, err)
 				defer resp.Body.Close()
 
@@ -330,7 +329,7 @@ func TestPasswordReset(t *testing.T) {
 			t.Run("should reject login with old password", func(t *testing.T) {
 				// Attempt login with old password
 				loginData := factory.CreateLoginData(accountData["email"].(string), accountData["password"].(string))
-				resp, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+				resp, err := ts.Request("POST", "/auth/login", loginData, nil)
 				require.NoError(t, err)
 				defer resp.Body.Close()
 

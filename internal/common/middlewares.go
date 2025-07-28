@@ -122,41 +122,6 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 	})
 }
 
-func (m Middlewares) AppId(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		appToken := r.Header.Get("x-app")
-		if appToken == "" {
-			err := normalizederr.NewUnauthorizedError("missing app token", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
-			return
-		}
-
-		appId, err := uuid.Parse(appToken)
-		if err != nil {
-			err := normalizederr.NewUnauthorizedError("bad formatted app token", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
-			return
-		}
-
-		authRepo := m.BasePool.NewQueries(r.Context())
-		application, err := authRepo.GetApplicationById(appId)
-		if err != nil {
-			presenter.HttpError(err, w, r)
-			return
-		} else if application == nil {
-			err := normalizederr.NewUnauthorizedError("invalid app token", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
-			return
-		}
-
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, controller.ApplicationKey, *application)
-		r = r.WithContext(ctx)
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (m Middlewares) Target(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

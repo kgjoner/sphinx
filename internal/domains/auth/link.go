@@ -32,7 +32,7 @@ func newLink(acc *Account, app Application) *Link {
 		Id:          uuid.New(),
 		AccountId:   acc.InternalId,
 		Application: app,
-		HasConsent:    true,
+		HasConsent:  true,
 
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -96,4 +96,3 @@ func (c *Link) restoreConsent() error {
 	c.UpdatedAt = time.Now()
 	return validator.Validate(c)
 }
-

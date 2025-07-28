@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	"github.com/kgjoner/sphinx/test/mocks"
@@ -23,7 +22,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 	// Test 1: Login
 	t.Run("should login with valid credentials", func(t *testing.T) {
-		resp, err := ts.AppRequest("POST", "/auth/login", factory.SimpleUserLoginData(), config.Env.ROOT_APP_ID)
+		resp, err := ts.Request("POST", "/auth/login", factory.SimpleUserLoginData(), nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -82,7 +81,7 @@ func TestAuthenticationErrors(t *testing.T) {
 			"password": "wrongpassword",
 		}
 
-		resp, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+		resp, err := ts.Request("POST", "/auth/login", loginData, nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -120,13 +119,13 @@ func TestRefreshToken(t *testing.T) {
 	accountData["email"] = "refresh@example.com" // Use unique email
 
 	// Create account
-	resp1, err := ts.AppRequest("POST", "/account", accountData, config.Env.ROOT_APP_ID)
+	resp1, err := ts.Request("POST", "/account", accountData, nil)
 	require.NoError(t, err)
 	resp1.Body.Close()
 
 	// Login to get tokens
 	loginData := factory.CreateLoginData(accountData["email"].(string), accountData["password"].(string))
-	loginResp, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+	loginResp, err := ts.Request("POST", "/auth/login", loginData, nil)
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
 
@@ -162,13 +161,13 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("should handle multiple sessions", func(t *testing.T) {
 		loginData := factory.SimpleUserLoginData()
 		// Login first session
-		session1, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+		session1, err := ts.Request("POST", "/auth/login", loginData, nil)
 		require.NoError(t, err)
 		defer session1.Body.Close()
 		assert.Equal(t, http.StatusOK, session1.StatusCode)
 
 		// Login second session
-		session2, err := ts.AppRequest("POST", "/auth/login", loginData, config.Env.ROOT_APP_ID)
+		session2, err := ts.Request("POST", "/auth/login", loginData, nil)
 		require.NoError(t, err)
 		defer session2.Body.Close()
 		assert.Equal(t, http.StatusOK, session2.StatusCode)

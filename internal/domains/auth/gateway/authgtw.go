@@ -28,7 +28,7 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 	router.Route("/application", authgtw.applicationHandler)
 
 	router.Route("/auth", func(r chi.Router) {
-		r.With(authgtw.mid.AppId).Post("/login", authgtw.login)
+		r.Post("/login", authgtw.login)
 		r.With(authgtw.mid.Authenticate).Post("/logout", authgtw.logout)
 		r.With(authgtw.mid.Authenticate).Post("/refresh", authgtw.refresh)
 	})
@@ -42,12 +42,11 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 // Login godoc
 //
 //	@Summary		Log user in
-//	@Description	Exchange user credentials for auth tokens
+//	@Description	Exchange user credentials for root app auth tokens
 //	@Router			/auth/login [post]
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app	header		string				true	"Application ID"
 //	@Param			payload	body		authcase.LoginInput	true	"Credentials. Entry can be: email, phone, username or document"
 //	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError
@@ -56,7 +55,6 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JsonBody().
-		AddApplication().
 		AddIp().
 		AddHeader("user-agent", "device")
 
@@ -127,7 +125,6 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-app	header		string					true	"Application ID"
 //	@Param			payload	body		oauthcase.IssueGrantInput	true	"Credentials. Entry can be: email, phone, username or document"
 //	@Success		200		{object}	presenter.Success[string]
 //	@Failure		400		{object}	normalizederr.NormalizedError
