@@ -9,7 +9,7 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
-func (q Queries) InsertAccount(acc *auth.Account) error {
+func (q DAO) InsertAccount(acc *auth.Account) error {
 	raw, exists := rawQueries["CreateAccount"]
 	if !exists {
 		return ErrNoQuery
@@ -34,7 +34,7 @@ func (q Queries) InsertAccount(acc *auth.Account) error {
 	return err
 }
 
-func (q Queries) UpdateAccount(acc auth.Account) error {
+func (q DAO) UpdateAccount(acc auth.Account) error {
 	raw, exists := rawQueries["UpdateAccount"]
 	if !exists {
 		return ErrNoQuery
@@ -60,7 +60,7 @@ func (q Queries) UpdateAccount(acc auth.Account) error {
 	return err
 }
 
-func (q Queries) GetAccountById(id uuid.UUID) (*auth.Account, error) {
+func (q DAO) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 	raw, exists := rawQueries["GetAccountById"]
 	if !exists {
 		return nil, ErrNoQuery
@@ -98,7 +98,7 @@ func (q Queries) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 	return &item, nil
 }
 
-func (q Queries) GetAccountByEntry(entry string) (*auth.Account, error) {
+func (q DAO) GetAccountByEntry(entry string) (*auth.Account, error) {
 	raw, exists := rawQueries["GetAccountByEntry"]
 	if !exists {
 		return nil, ErrNoQuery
@@ -136,7 +136,7 @@ func (q Queries) GetAccountByEntry(entry string) (*auth.Account, error) {
 	return &item, nil
 }
 
-func (q Queries) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) {
+func (q DAO) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) {
 	raw, exists := rawQueries["GetAccountByLink"]
 	if !exists {
 		return nil, ErrNoQuery

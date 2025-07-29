@@ -8,7 +8,7 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
-func (q Queries) UpsertLinks(links ...auth.Link) error {
+func (q DAO) UpsertLinks(links ...auth.Link) error {
 	if len(links) == 0 {
 		return nil
 	}

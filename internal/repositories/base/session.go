@@ -9,7 +9,7 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
-func (q Queries) UpsertSessions(sessions ...auth.Session) error {
+func (q DAO) UpsertSessions(sessions ...auth.Session) error {
 	if len(sessions) == 0 {
 		return nil
 	}

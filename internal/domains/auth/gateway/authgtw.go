@@ -65,7 +65,7 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := authcase.Login{
 		AuthRepo: queries,
 	}
@@ -103,7 +103,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := authcase.Logout{
 		AuthRepo: queries,
 	}
@@ -142,7 +142,7 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := oauthcase.IssueGrant{
 		AuthRepo: queries,
 	}
@@ -182,7 +182,7 @@ func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := oauthcase.ExchangeGrant{
 		AuthRepo: queries,
 	}
@@ -220,7 +220,7 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := authcase.Refresh{
 		AuthRepo: queries,
 	}

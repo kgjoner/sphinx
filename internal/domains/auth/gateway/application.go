@@ -43,7 +43,7 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := appcase.CreateApplication{
 		AuthRepo: queries,
 	}
@@ -86,7 +86,7 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := appcase.EditApp{
 		AuthRepo: queries,
 	}
@@ -122,7 +122,7 @@ func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := appcase.GetApp{
 		AuthRepo: queries,
 	}

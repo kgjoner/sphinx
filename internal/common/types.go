@@ -10,7 +10,7 @@ import (
 )
 
 type RepoPool[T any] interface {
-	NewQueries(context.Context) T
+	NewDAO(context.Context) T
 	WithTransaction(context.Context, *sql.TxOptions, func(T) (any, error)) (any, error)
 	WithReadOnlyTransaction(context.Context, func(T) (any, error)) (any, error)
 	Close() error

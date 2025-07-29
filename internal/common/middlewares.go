@@ -41,7 +41,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		authRepo := m.BasePool.NewQueries(r.Context())
+		authRepo := m.BasePool.NewDAO(r.Context())
 		account, err := authRepo.GetAccountById(token.Claims.Sub)
 		if err != nil {
 			presenter.HttpError(err, w, r)
@@ -98,7 +98,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 		appId, _ := uuid.Parse(credentials[0])
 		appSecret := credentials[1]
 
-		authRepo := m.BasePool.NewQueries(r.Context())
+		authRepo := m.BasePool.NewDAO(r.Context())
 		application, err := authRepo.GetApplicationById(appId)
 		if err != nil {
 			presenter.HttpError(err, w, r)
@@ -150,7 +150,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 			return
 		}
 
-		authRepo := m.BasePool.NewQueries(r.Context())
+		authRepo := m.BasePool.NewDAO(r.Context())
 		var err error
 		var target *auth.Account
 		if id, errif := uuid.Parse(targetEntry); errif == nil {

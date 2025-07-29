@@ -8,7 +8,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (q Queries) InsertApplication(app *auth.Application) error {
+func (q DAO) InsertApplication(app *auth.Application) error {
 	raw, exists := rawQueries["CreateApplication"]
 	if !exists {
 		return ErrNoQuery
@@ -25,7 +25,7 @@ func (q Queries) InsertApplication(app *auth.Application) error {
 	return err
 }
 
-func (q Queries) UpdateApplication(app auth.Application) error {
+func (q DAO) UpdateApplication(app auth.Application) error {
 	raw, exists := rawQueries["UpdateApplication"]
 	if !exists {
 		return ErrNoQuery
@@ -40,7 +40,7 @@ func (q Queries) UpdateApplication(app auth.Application) error {
 	return err
 }
 
-func (q Queries) GetApplicationById(id uuid.UUID) (*auth.Application, error) {
+func (q DAO) GetApplicationById(id uuid.UUID) (*auth.Application, error) {
 	raw, exists := rawQueries["GetApplicationById"]
 	if !exists {
 		return nil, ErrNoQuery

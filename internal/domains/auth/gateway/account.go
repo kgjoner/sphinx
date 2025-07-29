@@ -96,7 +96,7 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.CheckEntryExistence{
 		AuthRepo: queries,
 	}
@@ -137,7 +137,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.GetPrivateAccount{
 		AuthRepo: queries,
 	}
@@ -176,7 +176,7 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.VerifyAccount{
 		AuthRepo: queries,
 	}
@@ -260,7 +260,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.RequestPasswordReset{
 		AuthRepo:    queries,
 		CacheRepo:   g.CachePool.NewDAO(r.Context()),
@@ -349,7 +349,7 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.EditAccountPermissions{
 		AuthRepo: queries,
 	}
@@ -392,7 +392,7 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.UpdateExtraData{
 		AuthRepo: queries,
 	}
@@ -437,7 +437,7 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.UpdateUniqueFields{
 		AuthRepo:    queries,
 		CacheRepo:   g.CachePool.NewDAO(r.Context()),
@@ -480,7 +480,7 @@ func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.CancelPendingField{
 		AuthRepo: queries,
 	}
@@ -520,7 +520,7 @@ func (g AuthGateway) getAccountId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.GetAccountId{
 		AuthRepo: queries,
 	}
@@ -560,7 +560,7 @@ func (g AuthGateway) getAccountEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewQueries(r.Context())
+	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.GetAccountEmail{
 		AuthRepo: queries,
 	}

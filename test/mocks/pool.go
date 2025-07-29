@@ -18,7 +18,7 @@ func NewMockBasePool() *MockBasePool {
 	}
 }
 
-func (m *MockBasePool) NewQueries(ctx context.Context) common.BaseRepo {
+func (m *MockBasePool) NewDAO(ctx context.Context) common.BaseRepo {
 	return m.mockQueries
 }
 

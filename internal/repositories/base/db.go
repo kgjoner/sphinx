@@ -38,21 +38,21 @@ func (p Pool) DatabaseUrl() string {
 	return p.url
 }
 
-type Queries struct {
+type DAO struct {
 	ctx context.Context
 	db  *sql.DB
 	tx  *sql.Tx
 }
 
-func (p Pool) NewQueries(ctx context.Context) common.BaseRepo {
-	return &Queries{
+func (p Pool) NewDAO(ctx context.Context) common.BaseRepo {
+	return &DAO{
 		ctx,
 		p.db,
 		nil,
 	}
 }
 
-// Creates a new transaction to be used in the function passed.
+// Creates a new DAO with transaction enabled to be used in the function passed.
 // If opts is nil, it defaults to READ COMMITTED isolation level.
 //
 // If an error occurs, the transaction is rolled back.
@@ -71,13 +71,13 @@ func (p Pool) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(
 		return nil, fmt.Errorf("baserepo: unable to begin transaction: %v", err)
 	}
 
-	queries := &Queries{
+	dao := &DAO{
 		ctx: ctx,
 		db:  p.db,
 		tx:  tx,
 	}
 
-	output, err := fn(queries)
+	output, err := fn(dao)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return nil, fmt.Errorf("baserepo: transaction rollback failed: %v, original error: %v", rollbackErr, err)
@@ -88,7 +88,7 @@ func (p Pool) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(
 	return output, tx.Commit()
 }
 
-// Creates a read-only transaction with REPEATABLE READ isolation level.
+// Creates a new DAO with a read-only transaction enabled. It has REPEATABLE READ isolation level.
 // This is useful for operations that require consistent reads without modifying data.
 func (p Pool) WithReadOnlyTransaction(ctx context.Context, fn func(common.BaseRepo) (any, error)) (any, error) {
 	opts := &sql.TxOptions{
