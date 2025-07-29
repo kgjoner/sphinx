@@ -5,8 +5,7 @@ INSERT INTO
     name,
     possible_roles,
     secret,
-    allowed_redirect_uris,
-    brand
+    allowed_redirect_uris
   )
 VALUES
   (
@@ -14,8 +13,7 @@ VALUES
     $2,
     $3,
     $4,
-    $5,
-    $6
+    $5
   )
 RETURNING internal_id;
 
@@ -25,8 +23,7 @@ UPDATE
 SET
   name = $2,
   possible_roles = $3,
-  allowed_redirect_uris = $4,
-  brand = $5
+  allowed_redirect_uris = $4
 WHERE
   id = $1;
 
@@ -38,7 +35,6 @@ SELECT
   possible_roles,
   secret,
   allowed_redirect_uris,
-  brand,
   created_at,
   updated_at
 FROM

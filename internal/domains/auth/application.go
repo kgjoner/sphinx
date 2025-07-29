@@ -21,25 +21,11 @@ type Application struct {
 
 	Secret              string   `json:"-" validate:"required"`
 	AllowedRedirectUris []string `json:"allowedRedirectUris" validate:"uri"`
-	Brand               brand    `json:"brand"`
 
 	HasValidCredentials bool `json:"-"`
 
 	CreatedAt time.Time `json:"createdAt" validate:"required"`
 	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
-}
-
-type brand struct {
-	LogoUrl  string `json:"logoUrl" validate:"uri"`
-	StyleUrl string `json:"styleUrl" validate:"uri"`
-	// For applications that renders sphinx client inside an iframe, this is the URL to it.
-	//
-	// It must accept a "path" as query parameter to route user inside client.
-	ClientEntrypointUrl string `json:"clientEntrypointUrl" validate:"uri"`
-	// Whether brand config should be used when this api is mailing
-	IsValidOnEmail bool `json:"isValidOnEmail"`
-	// Whether brand config should be used for sphinx client
-	IsValidOnClient bool `json:"isValidOnClient"`
 }
 
 /* ==============================================================================
@@ -50,7 +36,6 @@ type ApplicationCreationFields struct {
 	Name                string   `json:"name" validate:"required"`
 	PossibleRoles       []Role   `json:"possibleRoles"`
 	AllowedRedirectUris []string `json:"allowedRedirectUris"`
-	Brand               brand    `json:"brand"`
 }
 
 func NewApplication(f *ApplicationCreationFields, actor Account) (app *Application, secret string, err error) {
@@ -88,7 +73,6 @@ type ApplicationEditableFields struct {
 	Name                string   `json:"name"`
 	PossibleRoles       []Role   `json:"possibleRoles"`
 	AllowedRedirectUris []string `json:"allowedRedirectUris"`
-	Brand               brand    `json:"brand"`
 }
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {

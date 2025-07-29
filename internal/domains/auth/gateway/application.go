@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/cornucopia/utils/structop"
 	appcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/application"
 )
 
@@ -33,9 +32,8 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 //	@Failure		403		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(appcase.CreateApplicationInput{}.ApplicationCreationFields).JsonKeys()
 	c := controller.New(r).
-		ParseBody(bodyKeys...).
+		JsonBody().
 		AddActor()
 
 	var input appcase.CreateApplicationInput
@@ -76,9 +74,8 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
-	bodyKeys := structop.New(appcase.EditAppInput{}.ApplicationEditableFields).JsonKeys()
 	c := controller.New(r).
-		ParseBody(bodyKeys...).
+		JsonBody().
 		ParseUrlParam("id", "applicationId").
 		AddActor()
 

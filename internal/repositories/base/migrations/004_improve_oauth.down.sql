@@ -11,4 +11,5 @@ UPDATE link
   SET grantings = roles;
 
 ALTER TABLE application
+  ADD COLUMN IF NOT EXISTS brand jsonb,
   RENAME COLUMN IF EXISTS possible_roles TO grantings;

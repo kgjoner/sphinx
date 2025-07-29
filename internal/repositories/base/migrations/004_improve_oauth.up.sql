@@ -1,5 +1,6 @@
 ALTER TABLE application
-  RENAME COLUMN IF EXISTS grantings TO possible_roles;
+  RENAME COLUMN IF EXISTS grantings TO possible_roles,
+  DROP COLUMN IF EXISTS brand;
 
 UPDATE link
   SET has_consent = true,
