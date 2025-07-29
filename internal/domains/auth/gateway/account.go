@@ -58,7 +58,6 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
 		i := accountcase.CreateAccount{
 			AuthRepo:    tx,
-			CacheRepo:   g.CachePool.NewDAO(r.Context()),
 			MailService: g.MailService,
 		}
 
@@ -221,7 +220,6 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
 		i := accountcase.ChangePassword{
 			AuthRepo:    tx,
-			CacheRepo:   g.CachePool.NewDAO(r.Context()),
 			MailService: g.MailService,
 		}
 
@@ -263,7 +261,6 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.RequestPasswordReset{
 		AuthRepo:    queries,
-		CacheRepo:   g.CachePool.NewDAO(r.Context()),
 		MailService: g.MailService,
 	}
 
@@ -306,7 +303,6 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
 		i := accountcase.ResetPassword{
 			AuthRepo:    tx,
-			CacheRepo:   g.CachePool.NewDAO(r.Context()),
 			MailService: g.MailService,
 		}
 
@@ -440,7 +436,6 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 	queries := g.BasePool.NewDAO(r.Context())
 	i := accountcase.UpdateUniqueFields{
 		AuthRepo:    queries,
-		CacheRepo:   g.CachePool.NewDAO(r.Context()),
 		MailService: g.MailService,
 	}
 

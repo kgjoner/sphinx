@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/common"
@@ -15,7 +14,6 @@ import (
 
 type RequestPasswordReset struct {
 	AuthRepo    authcase.AuthRepo
-	CacheRepo   cache.DAO
 	MailService hermes.MailService
 }
 
@@ -45,7 +43,6 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 	// Send email
 	mail := common.Mail{
 		MailService: i.MailService,
-		CacheRepo:   i.CacheRepo,
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordReset",

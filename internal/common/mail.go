@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/config"
@@ -13,7 +12,6 @@ import (
 
 type Mail struct {
 	MailService hermes.MailService
-	CacheRepo   cache.DAO
 }
 
 type MailInput struct {

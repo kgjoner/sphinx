@@ -145,6 +145,7 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 	queries := g.BasePool.NewDAO(r.Context())
 	i := oauthcase.IssueGrant{
 		AuthRepo: queries,
+		CacheRepo: g.CachePool.NewDAO(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -185,6 +186,7 @@ func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 	queries := g.BasePool.NewDAO(r.Context())
 	i := oauthcase.ExchangeGrant{
 		AuthRepo: queries,
+		CacheRepo: g.CachePool.NewDAO(r.Context()),
 	}
 
 	output, err := i.Execute(input)

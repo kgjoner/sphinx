@@ -1,7 +1,6 @@
 package accountcase
 
 import (
-	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -10,7 +9,6 @@ import (
 
 type ChangePassword struct {
 	AuthRepo    authcase.AuthRepo
-	CacheRepo   cache.DAO
 	MailService hermes.MailService
 }
 
@@ -31,7 +29,6 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
 	// Send email
 	mail := common.Mail{
 		MailService: i.MailService,
-		CacheRepo: i.CacheRepo,
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordChange",
