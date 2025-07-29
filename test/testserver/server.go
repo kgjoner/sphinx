@@ -33,7 +33,7 @@ func New() *TestServer {
 	// Initialize mocks
 	mockRepoFactory := mocks.NewMockBasePool()
 	mockCachePool, _ := memorydb.NewPool()
-	mockMailService := hermes.NewMock("", "")
+	mockMailService := hermes.NewMock()
 
 	// Create pools and services using mocks
 	pools := common.Pools{

@@ -36,7 +36,6 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordChange",
 		Target: acc,
-		Application: input.Actor.AuthedSession.Application,
 		Languages: input.Languages,
 	})
 	if err != nil {

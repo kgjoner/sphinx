@@ -7,7 +7,6 @@ import (
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
-	"github.com/kgjoner/sphinx/internal/config"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
@@ -37,13 +36,6 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 		return false, err
 	}
 
-	app, err := i.AuthRepo.GetApplicationById(uuid.MustParse(config.Env.ROOT_APP_ID))
-	if err != nil {
-		return false, err
-	} else if app == nil {
-		return false, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
-	}
-
 	// Send email
 	mail := common.Mail{
 		MailService: i.MailService,
@@ -52,7 +44,6 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordChange",
 		Target:      *acc,
-		Application: *app,
 		Languages:   input.Languages,
 	})
 	if err != nil {

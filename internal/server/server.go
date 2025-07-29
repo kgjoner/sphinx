@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/cornucopia/repositories/cache/redisdb"
@@ -26,8 +24,6 @@ import (
 	"github.com/kgjoner/sphinx/internal/config"
 	authgtw "github.com/kgjoner/sphinx/internal/domains/auth/gateway"
 	baserepo "github.com/kgjoner/sphinx/internal/repositories/base"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -35,6 +31,7 @@ import (
 type Server struct {
 	basePool  *baserepo.Pool
 	cachePool cache.Pool
+	mailSvc   *hermes.Service
 	Handler   http.Handler
 }
 
@@ -49,9 +46,12 @@ func New() *Server {
 		log.Fatalln(err)
 	}
 
+	mailSvc := hermes.New(config.Env.HERMES.BASE_URL, config.Env.HERMES.API_KEY)
+
 	return &Server{
 		basePool:  db,
 		cachePool: rdb,
+		mailSvc:   mailSvc,
 	}
 }
 
@@ -86,33 +86,9 @@ func (s *Server) Setup() *Server {
 		CachePool: s.cachePool,
 	}
 
+	updateHermesStyle(s.mailSvc)
 	services := common.Services{
-		MailService: hermes.New(config.Env.HERMES.BASE_URL, config.Env.HERMES.API_KEY, hermes.Options{
-			PrimaryColor:      style.Root.Colors.PrimaryPure,
-			PrimaryHoverColor: style.Root.Colors.PrimaryDark,
-			Header: struct {
-				Logo      string       "json:\"logo\""
-				Title     string       "json:\"title\""
-				Style     template.CSS "json:\"style\""
-				LogoStyle template.CSS "json:\"logoStyle\""
-			}{
-				Logo:  config.Env.HOST + "/root/logo.svg",
-				Title: config.Env.APP_NAME,
-				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundLight)),
-			},
-			Footer: struct {
-				Text  string       "json:\"text\""
-				Style template.CSS "json:\"style\""
-			}{
-				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundDark)),
-			},
-			Alias: struct {
-				Address htypes.Email "json:\"address\""
-				Name    string       "json:\"name\""
-			}{
-				Name: config.Env.APP_NAME,
-			},
-		}),
+		MailService: s.mailSvc,
 	}
 
 	r := chi.NewRouter()
@@ -169,39 +145,36 @@ func (s *Server) Start() {
 		Handler: s.Handler,
 	}
 
+	// Start the server in a goroutine
+	serverErr := make(chan error, 1)
 	go func() {
 		fmt.Println("Server running at port 8080")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("Server startup error:", err)
-		}
+		serverErr <- server.ListenAndServe()
 	}()
+
+	// Start all jobs
+	jobCtx, cancelJobs := context.WithCancel(context.Background())
+	defer cancelJobs()
+	s.runJobs(jobCtx)
 
 	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	fmt.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	select {
+	case err := <-serverErr:
+		if err != nil && err != http.ErrServerClosed {
+			log.Println("Server startup error: ", err)
+		}
+		return
+	case <-quit:
+		fmt.Println("Shutting down server...")
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
-	}
-}
-
-var (
-	RequestCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "api_request_count",
-		Help: "The total number of requests",
-	})
-)
-
-func countRequestMetric() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			RequestCounter.Inc()
-			next.ServeHTTP(w, r)
-		})
+		if err := server.Shutdown(ctx); err != nil {
+			log.Println("Server forced to shutdown: ", err)
+		}
+		return
 	}
 }

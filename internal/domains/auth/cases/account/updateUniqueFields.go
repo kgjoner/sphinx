@@ -33,30 +33,12 @@ type UpdateUniqueFieldsInput struct {
 func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.AccountPrivateView, error) {
 	targetAcc := &input.Target
 
-	if !input.Email.IsZero() {
-		if input.Email == targetAcc.Email {
-			return nil, normalizederr.NewRequestError("email is already set to the same value")
-		}
-
-		acc, err := i.AuthRepo.GetAccountByEntry(input.Email.String())
-		if err != nil {
-			return nil, err
-		} else if acc != nil {
-			return nil, normalizederr.NewRequestError("email is already registered", errcode.DuplicateKey)
-		}
+	if !input.Email.IsZero() && input.Email == targetAcc.Email {
+		return nil, normalizederr.NewRequestError("email is already set to the same value")
 	}
 
-	if !input.Phone.IsZero() {
-		if input.Phone == targetAcc.Phone {
-			return nil, normalizederr.NewRequestError("phone is already set to the same value")
-		}
-
-		acc, err := i.AuthRepo.GetAccountByEntry(input.Phone.String())
-		if err != nil {
-			return nil, err
-		} else if acc != nil {
-			return nil, normalizederr.NewRequestError("phone is already registered", errcode.DuplicateKey)
-		}
+	if !input.Phone.IsZero() && input.Phone == targetAcc.Phone {
+		return nil, normalizederr.NewRequestError("phone is already set to the same value")
 	}
 
 	err := targetAcc.UpdateUniqueFields(input.AccountUniqueFields)
@@ -87,7 +69,6 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 		_, err = mail.Execute(common.MailInput{
 			TemplateKey: "emailUpdateNotice",
 			Target:      *targetAcc,
-			Application: input.Actor.AuthedSession.Application,
 			Links: []i18n.CustomLink{
 				{
 					Key: "email-cancel-update",
@@ -112,7 +93,6 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 			TemplateKey: "emailUpdateConfirmation",
 			Target:      *targetAcc,
 			ToPending:   true,
-			Application: input.Actor.AuthedSession.Application,
 			Links: []i18n.CustomLink{
 				{
 					Key: "email-verification",

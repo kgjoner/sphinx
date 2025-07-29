@@ -71,7 +71,6 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "welcome",
 		Target:      *acc,
-		Application: *app,
 		Links: []i18n.CustomLink{
 			{
 				Key: "email-verification",

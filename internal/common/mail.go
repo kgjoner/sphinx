@@ -1,17 +1,12 @@
 package common
 
 import (
-	"fmt"
-	"html/template"
+	"net/url"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/cornucopia/repositories/cache"
-	"github.com/kgjoner/cornucopia/utils/httputil"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
-	"github.com/kgjoner/sphinx/internal/assets/style"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
@@ -24,7 +19,6 @@ type Mail struct {
 type MailInput struct {
 	TemplateKey string
 	Target      auth.Account
-	Application auth.Application
 	Links       []i18n.CustomLink
 	Languages   []string
 	// Indicates if the email is being sent to the pending email
@@ -34,76 +28,17 @@ type MailInput struct {
 func (i Mail) Execute(input MailInput) (bool, error) {
 	appName := config.Env.APP_NAME
 	opt := []hermes.Options{}
-	if input.Application.Brand.IsValidOnEmail {
-		appName = input.Application.Name
-
-		// resp, err := cache.RunWithCache[presenter.Success[style.AppStyle]](
-		// 	i.CacheRepo,
-		// 	7*24*time.Hour,
-		// 	httputil.Get[presenter.Success[style.AppStyle]],
-		// )(input.Application.Brand.StyleUrl)
-		resp, err := httputil.Get[presenter.Success[style.AppStyle]](input.Application.Brand.StyleUrl)
-		if err != nil {
-			return false, err
-		}
-		appStyle := resp.Data
-
-		opt = append(opt, hermes.Options{
-			PrimaryColor:      appStyle.Colors.PrimaryPure,
-			PrimaryHoverColor: appStyle.Colors.PrimaryLight,
-			Header: struct {
-				Logo      string       "json:\"logo\""
-				Title     string       "json:\"title\""
-				Style     template.CSS "json:\"style\""
-				LogoStyle template.CSS "json:\"logoStyle\""
-			}{
-				Logo:      input.Application.Brand.LogoUrl,
-				Title:     input.Application.Name,
-				Style:     appStyle.Mail.Header,
-				LogoStyle: appStyle.Mail.Logo,
-			},
-			Footer: struct {
-				Text  string       "json:\"text\""
-				Style template.CSS "json:\"style\""
-			}{
-				Style: appStyle.Mail.Footer,
-			},
-			Alias: struct {
-				Address htypes.Email "json:\"address\""
-				Name    string       "json:\"name\""
-			}{
-				Name: appName,
-			},
-		})
-	}
 
 	for i, link := range input.Links {
 		if !strings.HasPrefix(link.Link, "/") {
 			continue
 		}
 
-		if !input.Application.Brand.IsValidOnEmail {
-			input.Links[i].Link = config.Env.CLIENT.BASE_URL + link.Link
-			continue
+		if strings.HasSuffix(config.Env.CLIENT.BASE_URL, "path=") {
+			link.Link = url.QueryEscape(link.Link)
 		}
 
-		if input.Application.Brand.ClientEntrypointUrl != "" {
-			if strings.Contains(input.Application.Brand.ClientEntrypointUrl, "?") {
-				input.Links[i].Link = fmt.Sprintf("%s&path=%s", input.Application.Brand.ClientEntrypointUrl, link.Link)
-			} else {
-				input.Links[i].Link = fmt.Sprintf("%s?path=%s", input.Application.Brand.ClientEntrypointUrl, link.Link)
-			}
-			continue
-		}
-
-		path := ""
-		parts := strings.Split(link.Link, "?")
-		if len(parts) > 1 {
-			path = fmt.Sprintf("/%s?path=%s&%s", input.Application.Id, parts[0], parts[1])
-		} else {
-			path = fmt.Sprintf("/%s?path=%s", input.Application.Id, parts[0])
-		}
-		input.Links[i].Link = config.Env.CLIENT.BASE_URL + path
+		input.Links[i].Link = config.Env.CLIENT.BASE_URL + link.Link
 	}
 
 	receiver := input.Target.Email
