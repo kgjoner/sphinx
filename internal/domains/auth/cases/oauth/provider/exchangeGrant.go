@@ -24,7 +24,7 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	err := i.CacheRepo.GetJson("grant:"+input.Code, &grant)
 	if err != nil {
 		if err == cache.ErrNil {
-			return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+			return nil, normalizederr.NewUnauthorizedError("Invalid code", errcode.InvalidCredentials)
 		}
 		return nil, err
 	}
@@ -47,6 +47,7 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	}
 
 	// Create session
+	input.SessionCreationFields.Application.Id = input.ClientId
 	access, refresh, err := acc.InitSession(&input.SessionCreationFields)
 	if err != nil {
 		return nil, err

@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,7 +21,7 @@ type AuthorizationGrant struct {
 	Type        string    `json:"grantType" validate:"required,oneof=authorization_code"`
 	LinkId      uuid.UUID `json:"linkId" validate:"required"`
 	ExpiresAt   time.Time `json:"expiresAt" validate:"required"`
-	RedirectUri string    `json:"redirectUri" validate:"required,url"`
+	RedirectUri string    `json:"redirectUri" validate:"required,uri"`
 	IsUsed      bool      `json:"isUsed"`
 
 	Code          string `json:"code" validate:"required"`
@@ -38,7 +37,7 @@ type AuthorizationGrant struct {
 type AuthorizationGrantCreationFields struct {
 	Type                string    `json:"grant_type" validate:"required,oneof=authorization_code"`
 	ClientId            uuid.UUID `json:"client_id" validate:"required"` // Application ID
-	RedirectUri         string    `json:"redirect_uri" validate:"required,url"`
+	RedirectUri         string    `json:"redirect_uri" validate:"required,uri"`
 	CodeChallenge       string    `json:"code_challenge"`
 	CodeChallengeMethod string    `json:"code_challenge_method" validate:"oneof=S256 plain"`
 }
@@ -72,6 +71,7 @@ func newAuthorizationGrant(acc Account, g *AuthorizationGrantCreationFields) (*A
 
 	now := time.Now()
 	grant := &AuthorizationGrant{
+		Type:                g.Type,
 		Code:                code,
 		LinkId:              link.Id,
 		ExpiresAt:           now.Add(time.Second * time.Duration(config.Env.AUTH_GRANT_LIFETIME_IN_SEC)),
@@ -114,7 +114,7 @@ func (g *AuthorizationGrant) isActive() bool {
 type GrantCredentials struct {
 	GrantType   string    `json:"grant_type" validate:"required,oneof=authorization_code"`
 	Code        string    `json:"code" validate:"required"`
-	RedirectUri string    `json:"redirect_uri" validate:"required,url"`
+	RedirectUri string    `json:"redirect_uri" validate:"required,uri"`
 	ClientId    uuid.UUID `json:"client_id" validate:"required"` // Application ID
 
 	AppSecret    string `json:"client_secret"` // For confidential clients
@@ -202,7 +202,7 @@ func (g AuthorizationGrant) validateAuthorizationCode(link *Link, credentials *G
 	case "S256":
 		hash := sha256.Sum256([]byte(credentials.CodeVerifier))
 		// Base64 URL encode (without padding)
-		computed := strings.TrimRight(base64.URLEncoding.EncodeToString(hash[:]), "=")
+		computed := base64.RawURLEncoding.EncodeToString(hash[:])
 		isCodeVerifierValid = computed == g.CodeChallenge
 	case "plain":
 		isCodeVerifierValid = credentials.CodeVerifier == g.CodeChallenge

@@ -596,9 +596,11 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 	}
 
 	// Check if link exists and is active
-	if link := a.link(f.Application.Id); link == nil || !link.HasConsent {
+	link := a.link(f.Application.Id)
+	if link == nil || !link.HasConsent {
 		return nil, nil, normalizederr.NewForbiddenError("User has not consented to this application.")
 	}
+	f.Application = link.Application
 
 	// Terminate exceeding sessions
 	if concurrentSessions :=
