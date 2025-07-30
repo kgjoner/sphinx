@@ -34,6 +34,8 @@ func NewMockQueries() *MockQueries {
 	AdminRootLink.Application = *RootApplication
 	SimpleUserRootLink.Application = *RootApplication
 
+	q.InsertApplication(CommonApplication)
+
 	q.InsertAccount(AdminAccount)
 	AdminRootLink.AccountId = AdminAccount.InternalId
 	q.InsertAccount(SimpleUserAccount)

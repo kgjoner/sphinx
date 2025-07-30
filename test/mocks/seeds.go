@@ -28,6 +28,17 @@ var RootApplication = &auth.Application{
 	UpdatedAt: time.Now(),
 }
 
+const CommonAppSecret = "commonappsecret"
+const CommonRedirectUri = "http://common.app/callback"
+
+var CommonApplication = &auth.Application{
+	Name:      "Common Application",
+	Secret:    hashPassword(CommonAppSecret),
+	AllowedRedirectUris: []string{CommonRedirectUri},
+	CreatedAt: time.Now(),
+	UpdatedAt: time.Now(),
+}
+
 const AdminPassword = "AdminPassword123!"
 
 var AdminAccount = &auth.Account{
