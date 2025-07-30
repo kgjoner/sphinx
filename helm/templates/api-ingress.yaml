@@ -1,3 +1,4 @@
+{{- $versionPath := regexFind "^v\\d+" .Chart.AppVersion -}}
 {{- if eq .Values.ingress.className "traefik" }}
 # ======================================================
 # TRAEFIK
@@ -5,16 +6,16 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ .Chart.Name }}-ingress
+  name: {{ template "prefix" . }}-ingress
 spec:
   entryPoints:
     - web
   routes:
   {{- range .Values.ingress.rules }}
     {{- if and (not (empty .path)) (not (eq .path "/"))}}
-  - match: Host(`{{ .host }}`) && Path(`{{ .path }}`)
+  - match: Host(`{{ .host }}`) && PathPrefix(`{{ .path }}/{{ $versionPath }}`)
     {{- else }}
-  - match: Host(`{{ .host }}`)
+  - match: Host(`{{ .host }}`) && PathPrefix(`/{{ $versionPath }}`)
     {{- end }}
     kind: Rule
     services:
@@ -28,16 +29,16 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ .Chart.Name }}-ingress-tls
+  name: {{ template "prefix" . }}-ingress-tls
 spec:
   entryPoints:
     - websecure
   routes:
   {{- range .Values.ingress.rules }}
     {{- if and (not (empty .path)) (not (eq .path "/"))}}
-  - match: Host(`{{ .host }}`) && Path(`{{ .path }}`)
+  - match: Host(`{{ .host }}`) && PathPrefix(`{{ .path }}/{{ $versionPath }}`)
     {{- else }}
-  - match: Host(`{{ .host }}`)
+  - match: Host(`{{ .host }}`) && PathPrefix(`/{{ $versionPath }}`)
     {{- end }}
     kind: Rule
     services:
@@ -45,14 +46,14 @@ spec:
       port: 80
   {{- end }}
   tls:
-    secretName: {{ .Release.Name }}-{{ .Chart.Name }}-tls
+    secretName: {{ template "prefix" . }}-tls
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ .Release.Name }}-{{ .Chart.Name }}-cert
+  name: {{ template "prefix" . }}-cert
 spec:
-  secretName: {{ .Release.Name }}-{{ .Chart.Name }}-tls
+  secretName: {{ template "prefix" . }}-tls
   issuerRef:
     kind: ClusterIssuer
     name: letsencrypt-prod
@@ -70,7 +71,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}-{{ .Chart.Name }}-ingress
+  name: {{ template "prefix" . }}-ingress
   annotations:
     {{- if not (empty .Values.ingress.tls.issuer) }}
     cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.issuer | quote }}
@@ -84,7 +85,7 @@ spec:
       {{- range .Values.ingress.rules }}
       - {{ .host }}
       {{- end }}
-      secretName: {{ .Release.Name }}-{{ .Chart.Name }}-tls
+      secretName: {{ template "prefix" . }}-tls
   {{- end }}
   rules:
     {{- range .Values.ingress.rules }}

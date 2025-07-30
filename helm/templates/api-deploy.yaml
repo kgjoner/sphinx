@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata: 
-  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  name: {{ template "prefix" . }}
 spec:
   replicas: {{ .Values.api.replicaCount }}
   selector:
@@ -11,6 +11,8 @@ spec:
     metadata: 
       labels:
         app: {{ .Chart.Name }}-api
+        version: {{ .Chart.AppVersion }}
+        component: backend
       {{- if .Values.prometheus.enabled }}
       annotations:
         prometheus.io/scrape: "true"
@@ -20,7 +22,7 @@ spec:
     spec:
       containers:
       - name: {{ .Chart.Name }}-api
-        image: docker.kgjoner.com.br/sphinx:{{ .Values.api.version }}
+        image: docker.kgjoner.com.br/sphinx:{{ .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.api.imagePullPolicy }}
         envFrom:
         - secretRef:

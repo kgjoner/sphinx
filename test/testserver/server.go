@@ -57,12 +57,12 @@ func New() *TestServer {
 	}))
 
 	// Api versioning
-	r.Route("/v1", func(r chi.Router) {
+	r.Route("/api", func(r chi.Router) {
 		authgtw.Raise(r, pools, services)
 	})
 
 	// Root app files (copied from original server)
-	r.Route("/root", func(r chi.Router) {
+	r.Route("/asset", func(r chi.Router) {
 		r.Get("/logo.svg", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "image/svg+xml")
 			w.Header().Set("Content-Length", fmt.Sprintf("%v", len(img.Logo)))

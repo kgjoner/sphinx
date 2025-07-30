@@ -1,21 +1,38 @@
+{{- define "version.major" -}}
+{{- regexFind "^v\\d+" .Chart.AppVersion -}}
+{{- end -}}
+
+{{- define "prefix" -}}
+{{ .Chart.Name }}-{{ template "version.major" . }}
+{{- end -}}
+
 {{- define "api.serviceName" -}}
-{{ .Chart.Name }}
+{{ template "prefix" . }}
 {{- end -}}
 
 {{- define "api.configMapName" -}}
-{{ .Chart.Name }}-configmap
+{{ template "prefix" . }}-config
 {{- end -}}
 
 {{- define "api.secretName" -}}
-{{ .Chart.Name }}-secret
+{{ template "prefix" . }}-secret
 {{- end -}}
 
 {{- define "db.serviceName" -}}
-{{ .Chart.Name }}-db
+{{ template "prefix" . }}-pg
 {{- end -}}
 
 {{- define "db.secretName" -}}
-{{ .Chart.Name }}-db-secret
+{{ template "prefix" . }}-pg-secret
 {{- end -}}
+
+{{- define "redis.serviceName" -}}
+{{ template "prefix" . }}-redis
+{{- end -}}
+
+{{- define "redis.configName" -}}
+{{ template "prefix" . }}-redis-config
+{{- end -}}
+
 
 

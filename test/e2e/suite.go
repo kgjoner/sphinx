@@ -46,7 +46,7 @@ func (ts *TestSuite) Request(method, endpoint string, body interface{}, headers 
 		json.NewEncoder(&reqBody).Encode(body)
 	}
 
-	req, err := http.NewRequest(method, ts.server.URL()+"/v1"+endpoint, &reqBody)
+	req, err := http.NewRequest(method, ts.server.URL()+"/api"+endpoint, &reqBody)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (ts *TestSuite) AuthenticatedAppRequest(method, endpoint string, body inter
 	return ts.Request(method, endpoint, body, headers)
 }
 
-// Helper method to make app-authenticated requests
+// Deprecated: There is no need of x-app anymore. Helper method to make app-authenticated requests
 func (ts *TestSuite) AppRequest(method, endpoint string, body interface{}, appId string) (*http.Response, error) {
 	headers := map[string]string{
 		"x-app": appId,

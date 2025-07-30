@@ -1,11 +1,14 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/vrischmann/envconfig"
 )
 
 var Env struct {
 	HOST         string `envconfig:"default=localhost:8080"`
+	APP_VERSION  string `envconfig:"default=v0.1.0"`
 	DATABASE_URL string `envconfig:"default=postgres://postgres:postgres@db:5432/sphynx?sslmode=disable&pool_max_conns=20"`
 	REDIS_URL    string `envconfig:"default=redis://redis:redis@rdb:6379/0"`
 	ROOT_APP_ID  string `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
@@ -26,8 +29,8 @@ var Env struct {
 	}
 
 	APP_NAME          string `envconfig:"default=Sphinx"`
-	APP_STYLE_URL     string // if none is provided, the default style will be used (see assets/style/style.go)
-	APP_LOGO_URL      string // if none is provided, the default logo will be used (see assets/img/logo.svg)
+	APP_STYLE_URL     string `envconfig:"optional"` // if none is provided, the default style will be used (see assets/style/style.go)
+	APP_LOGO_URL      string `envconfig:"optional"` // if none is provided, the default logo will be used (see assets/img/logo.svg)
 	SUPPORT_EMAIL     string `envconfig:"default=support@example.com"`
 	FALLBACK_LANGUAGE string `envconfig:"default=pt-br"`
 	HERMES            struct {
@@ -36,8 +39,21 @@ var Env struct {
 	}
 }
 
+var BASE_PATH string
+
 func Must() {
 	if err := envconfig.Init(&Env); err != nil {
 		panic(err)
 	}
+
+	if !strings.HasPrefix(Env.APP_VERSION, "v") {
+		Env.APP_VERSION = "v" + Env.APP_VERSION
+	}
+
+	semver := strings.Split(Env.APP_VERSION, ".")
+	if len(semver) != 3 {
+		panic("APP_VERSION env must be in form of semantic versioning")
+	}
+
+	BASE_PATH = "/" + semver[0]
 }

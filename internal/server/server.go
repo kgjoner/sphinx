@@ -56,7 +56,7 @@ func New() *Server {
 }
 
 //	@title			Sphinx API
-//	@version		0.1
+//	@version		{{ .Version }}
 //	@description	An authentication and authorization server.
 
 //	@contact.name	Kaio Rosa
@@ -79,7 +79,7 @@ func New() *Server {
 //	@description				Type "Bearer" followed by a space and a JWT Refresh token.
 
 // @host		{{ .Host }}
-// @basePath	/v1
+// @basePath	{{ .BasePath }}
 func (s *Server) Setup() *Server {
 	pools := common.Pools{
 		BasePool:  s.basePool,
@@ -103,16 +103,19 @@ func (s *Server) Setup() *Server {
 	}))
 
 	// Api versioning
-	r.Route("/v1", func(r chi.Router) {
+	r.Route("/api", func(r chi.Router) {
 		r.Use(countRequestMetric())
 
 		authgtw.Raise(r, pools, services)
 	})
 
+	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(config.Env.APP_VERSION))
+	})
 	r.Mount("/metrics", promhttp.Handler())
 
 	// Root app files
-	r.Route("/root", func(r chi.Router) {
+	r.Route("/assets", func(r chi.Router) {
 		r.Get("/logo.svg", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "image/svg+xml")
 			w.Header().Set("Content-Length", fmt.Sprintf("%v", len(img.Logo)))

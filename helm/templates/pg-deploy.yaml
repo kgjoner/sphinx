@@ -2,20 +2,20 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata: 
-  name: {{ .Release.Name }}-{{ .Chart.Name }}-db
+  name: {{ template "prefix" . }}-db
 spec:
   serviceName: {{ template "db.serviceName" . }}
   replicas: {{ .Values.db.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}-db
+      app: {{ .Chart.Name }}-pg
   template:
     metadata: 
       labels:
-        app: {{ .Chart.Name }}-db
+        app: {{ .Chart.Name }}-pg
     spec:
       containers:
-      - name: {{ .Chart.Name }}-db
+      - name: {{ .Chart.Name }}-pg
         image: postgres:16.0
         ports:
         - containerPort: 5432
