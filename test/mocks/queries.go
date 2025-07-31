@@ -150,7 +150,7 @@ func (m *MockQueries) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 	return nil, nil
 }
 
-func (m *MockQueries) GetAccountByEntry(entry string) (*auth.Account, error) {
+func (m *MockQueries) GetAccountByEntry(entry auth.Entry) (*auth.Account, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -159,7 +159,7 @@ func (m *MockQueries) GetAccountByEntry(entry string) (*auth.Account, error) {
 	}
 
 	for _, acc := range m.accounts {
-		if acc.Email.String() == entry || acc.Username == entry || acc.Document.String() == entry || acc.Phone.String() == entry {
+		if acc.Email.String() == entry.String() || acc.Username == entry.String() || acc.Document.String() == entry.String() || acc.Phone.String() == entry.String() {
 			// Create a copy of the account to avoid modifying the original
 			accountCopy := *acc
 

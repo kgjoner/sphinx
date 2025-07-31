@@ -115,8 +115,7 @@ func TestRefreshToken(t *testing.T) {
 	defer ts.Close()
 
 	factory := NewTestDataFactory()
-	accountData := factory.CreateAccountData()
-	accountData["email"] = "refresh@example.com" // Use unique email
+	accountData := factory.RandomAccount()
 
 	// Create account
 	resp1, err := ts.Request("POST", "/account", accountData, nil)

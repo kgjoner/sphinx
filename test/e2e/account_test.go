@@ -3,9 +3,11 @@ package e2e
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/utils/sanitizer"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	"github.com/kgjoner/sphinx/test/mocks"
@@ -19,7 +21,7 @@ func TestAccountCreation(t *testing.T) {
 
 	factory := NewTestDataFactory()
 	t.Run("should create a new account", func(t *testing.T) {
-		accountData := factory.CreateAccountData()
+		accountData := factory.FullAccount()
 
 		resp, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
@@ -77,6 +79,37 @@ func TestAccountCreation(t *testing.T) {
 		})
 	})
 
+	t.Run("should normalize email, document and phone", func(t *testing.T) {
+		accountData := factory.RandomAccount()
+		accountData["email"] = strings.ToUpper(accountData["email"].(string))
+		accountData["document"] = GenerateCPF("XXX.XXX.XXX-XX")
+		accountData["phone"] = GeneratePhone("X (X) XXXX-XXXX")
+
+		resp, err := ts.Request("POST", "/account", accountData, nil)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		var respData presenter.Success[auth.Account]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		acc, err := ts.server.GetMockQueries().GetAccountById(respData.Data.Id)
+		require.NoError(t, err)
+		require.NotNil(t, acc)
+
+		// Assert not returned data
+		expectedData := map[string]interface{}{
+			"email":    strings.ToLower(accountData["email"].(string)),
+			"document": "cpf:" + sanitizer.Digit(accountData["document"].(string)),
+			"phone":    "+" + sanitizer.Digit(accountData["phone"].(string)),
+		}
+		assert.Equal(t, expectedData["email"], acc.Email.String())
+		assert.Equal(t, expectedData["phone"], acc.Phone.String())
+		assert.Equal(t, expectedData["document"], acc.Document.String())
+	})
+
 	t.Run("should reject invalid email", func(t *testing.T) {
 		accountData := map[string]interface{}{
 			"email":    "invalid-email",
@@ -122,6 +155,13 @@ func TestAccountCreation(t *testing.T) {
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		assert.Equal(t, http.StatusConflict, resp2.StatusCode)
+
+		// Try to create duplicate with different case
+		accountData["email"] = "Duplicate@EXAMPLE.COM"
+		resp3, err := ts.Request("POST", "/account", accountData, nil)
+		require.NoError(t, err)
+		defer resp3.Body.Close()
+		assert.Equal(t, http.StatusConflict, resp3.StatusCode)
 	})
 }
 
@@ -206,7 +246,7 @@ func TestPasswordChange(t *testing.T) {
 
 	factory := NewTestDataFactory()
 
-	accountData := factory.CreateAccountData()
+	accountData := factory.RandomAccount()
 	newPassword := "NewTestPassword123!"
 
 	t.Run("should handle password change flow", func(t *testing.T) {
@@ -271,7 +311,7 @@ func TestPasswordReset(t *testing.T) {
 	defer ts.Close()
 
 	factory := NewTestDataFactory()
-	accountData := factory.CreateAccountData()
+	accountData := factory.RandomAccount()
 	newPassword := "NewPassword123!"
 
 	t.Run("should handle password reset flow", func(t *testing.T) {
@@ -337,5 +377,159 @@ func TestPasswordReset(t *testing.T) {
 			})
 		})
 
+	})
+}
+
+func TestAccountExistence(t *testing.T) {
+	ts := NewTestSuite(t)
+	defer ts.Close()
+
+	
+	t.Run("should handle different entry types, even not normalized", func(t *testing.T) {
+		factory := NewTestDataFactory()
+		accountData := factory.FullAccount()
+	
+		resp, err := ts.Request("POST", "/account", accountData, nil)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+	
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+		
+		t.Run("should check existence by username", func(t *testing.T) {
+			// Username as-is
+			existsResp1, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": accountData["username"].(string),
+			})
+			require.NoError(t, err)
+			defer existsResp1.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
+	
+			var existsData1 presenter.Success[bool]
+			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
+			require.NoError(t, err)
+	
+			assert.True(t, existsData1.Data, "Account should exist for username entry")
+
+			// Username in upper case (case insensitive check)
+			newFormatUsername := strings.ToUpper(accountData["username"].(string))
+
+			existsResp2, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": newFormatUsername,
+			})
+			require.NoError(t, err)
+			defer existsResp2.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
+	
+			var existsData2 presenter.Success[bool]
+			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
+			require.NoError(t, err)
+	
+			assert.True(t, existsData2.Data, "Account should exist for username in upper case entry")
+		})
+
+		t.Run("should check existence by email", func(t *testing.T) {
+			// Email as-is
+			existsResp1, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": accountData["email"].(string),
+			})
+			require.NoError(t, err)
+			defer existsResp1.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
+	
+			var existsData1 presenter.Success[bool]
+			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
+			require.NoError(t, err)
+	
+			assert.True(t, existsData1.Data, "Account should exist for email entry")
+
+			// Email in upper case (case insensitive check)
+			newFormatEmail := strings.ToUpper(accountData["email"].(string))
+
+			existsResp2, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": newFormatEmail,
+			})
+			require.NoError(t, err)
+			defer existsResp2.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
+
+			var existsData2 presenter.Success[bool]
+			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
+			require.NoError(t, err)
+
+			assert.True(t, existsData2.Data, "Account should exist for email in upper case entry")
+		})
+
+		t.Run("should check existence by phone", func(t *testing.T) {
+			// Phone as-is
+			existsResp1, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": accountData["phone"].(string),
+			})
+			require.NoError(t, err)
+			defer existsResp1.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
+	
+			var existsData1 presenter.Success[bool]
+			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
+			require.NoError(t, err)
+	
+			assert.True(t, existsData1.Data, "Account should exist for phone entry")
+
+			// Phone in different format
+			newFormatPhone := sanitizer.Digit(accountData["phone"].(string))
+			newFormatPhone = "+" + newFormatPhone[:3] + " (" + newFormatPhone[3:5] + ")" + newFormatPhone[5:]
+
+			existsResp2, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": newFormatPhone,
+			})
+			require.NoError(t, err)
+			defer existsResp2.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
+
+			var existsData2 presenter.Success[bool]
+			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
+			require.NoError(t, err)
+
+			assert.True(t, existsData2.Data, "Account should exist for phone in different format")
+		})
+
+		t.Run("should check existence by document", func(t *testing.T) {
+			// Document as-is
+			existsResp1, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": accountData["document"].(string),
+			})
+			require.NoError(t, err)
+			defer existsResp1.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
+	
+			var existsData1 presenter.Success[bool]
+			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
+			require.NoError(t, err)
+	
+			assert.True(t, existsData1.Data, "Account should exist for document entry")
+
+			// Document in only digit format
+			newFormatDocument := sanitizer.Digit(accountData["document"].(string))
+
+			existsResp2, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
+				"x-entry": newFormatDocument,
+			})
+			require.NoError(t, err)
+			defer existsResp2.Body.Close()
+	
+			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
+	
+			var existsData2 presenter.Success[bool]
+			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
+			require.NoError(t, err)
+	
+			assert.True(t, existsData2.Data, "Account should exist for document in only digit format")
+		})
 	})
 }
