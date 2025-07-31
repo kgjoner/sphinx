@@ -98,13 +98,13 @@ func (q DAO) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 	return &item, nil
 }
 
-func (q DAO) GetAccountByEntry(entry string) (*auth.Account, error) {
+func (q DAO) GetAccountByEntry(entry auth.Entry) (*auth.Account, error) {
 	raw, exists := rawQueries["GetAccountByEntry"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, entry)
+	row := q.db.QueryRowContext(q.ctx, raw, entry.String())
 	var item auth.Account
 	err := row.Scan(
 		&item.InternalId,

@@ -153,10 +153,14 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		authRepo := m.BasePool.NewDAO(r.Context())
 		var err error
 		var target *auth.Account
+		var entry auth.Entry
 		if id, errif := uuid.Parse(targetEntry); errif == nil {
 			target, err = authRepo.GetAccountById(id)
 		} else {
-			target, err = authRepo.GetAccountByEntry(targetEntry)
+			entry, err = auth.ParseEntry(targetEntry)
+			if err == nil {
+				target, err = authRepo.GetAccountByEntry(entry)
+			}
 		}
 
 		if err != nil {

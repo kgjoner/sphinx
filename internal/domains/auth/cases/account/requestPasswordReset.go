@@ -9,6 +9,7 @@ import (
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
@@ -18,7 +19,7 @@ type RequestPasswordReset struct {
 }
 
 type RequestPasswordResetInput struct {
-	Entry       string
+	Entry       auth.Entry
 	Languages   []string         `json:"-"`
 }
 

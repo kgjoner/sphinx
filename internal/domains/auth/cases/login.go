@@ -13,7 +13,7 @@ type Login struct {
 }
 
 type LoginInput struct {
-	Entry                      string
+	Entry                      auth.Entry
 	Password                   string
 	auth.SessionCreationFields `json:"-"`
 }

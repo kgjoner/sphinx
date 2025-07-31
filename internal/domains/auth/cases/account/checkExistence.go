@@ -1,13 +1,16 @@
 package accountcase
 
-import authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
+import (
+	"github.com/kgjoner/sphinx/internal/domains/auth"
+	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
+)
 
 type CheckEntryExistence struct {
 	AuthRepo authcase.AuthRepo
 }
 
 type CheckEntryExistenceInput struct {
-	Entry string
+	Entry auth.Entry
 }
 
 func (i CheckEntryExistence) Execute(input CheckEntryExistenceInput) (bool, error) {
