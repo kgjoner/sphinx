@@ -13,9 +13,9 @@ type VerifyAccount struct {
 }
 
 type VerifyAccountInput struct {
-	AccountId uuid.UUID `json:"-"`
-	CodeKind  auth.AccountCodeKind
-	Code      string
+	AccountId        uuid.UUID             `json:"-"`
+	VerificationKind auth.VerificationKind `json:"kind" validate:"required,oneof=email phone"`
+	VerificationCode string                `json:"code" validate:"required"`
 }
 
 func (i VerifyAccount) Execute(input VerifyAccountInput) (bool, error) {
@@ -26,7 +26,7 @@ func (i VerifyAccount) Execute(input VerifyAccountInput) (bool, error) {
 		return false, normalizederr.NewRequestError("Account does not exit", errcode.AccountNotFound)
 	}
 
-	err = acc.VerifyAccount(input.CodeKind, input.Code)
+	err = acc.VerifyAccount(input.VerificationKind, input.VerificationCode)
 	if err != nil {
 		return false, err
 	}

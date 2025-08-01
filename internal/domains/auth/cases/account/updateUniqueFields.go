@@ -96,7 +96,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 						"%v?kind=email&id=%v&code=%v",
 						config.Env.CLIENT.DATA_VERIFICATION,
 						targetAcc.Id,
-						targetAcc.Codes[auth.AccountCodeKindValues.EMAIL_VERIFICATION],
+						targetAcc.VerificationCodes[auth.VerificationEmail],
 					),
 				},
 			},

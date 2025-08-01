@@ -17,26 +17,24 @@ import (
 )
 
 /* ==============================================================================
-	AccountCodeKind
+	VerificationKind
 ============================================================================== */
 
-type AccountCodeKind string
+type VerificationKind string
 
-type accountCodeKind struct {
-	EMAIL_VERIFICATION AccountCodeKind
-	PHONE_VERIFICATION AccountCodeKind
-	PASSWORD_RESET     AccountCodeKind
-}
+const (
+	VerificationEmail         VerificationKind = "email"
+	VerificationPhone         VerificationKind = "phone"
+	VerificationPasswordReset VerificationKind = "password_reset"
+)
 
-func (s AccountCodeKind) Enumerate() any {
-	return accountCodeKind{
-		"email_verification",
-		"phone_verification",
-		"password_reset",
+func (s VerificationKind) Enumerate() any {
+	return []VerificationKind{
+		VerificationEmail,
+		VerificationPhone,
+		VerificationPasswordReset,
 	}
 }
-
-var AccountCodeKindValues = AccountCodeKind.Enumerate("").(accountCodeKind)
 
 /* ==============================================================================
 	Roles
@@ -46,8 +44,8 @@ type Role string
 
 // Roles used in root application.
 const (
-	ADMIN Role = "ADMIN"
-	DEV   Role = "DEV"
+	RoleAdmin Role = "ADMIN"
+	RoleDev   Role = "DEV"
 )
 
 /* ==============================================================================
@@ -75,7 +73,7 @@ func ParseEntry(str string) (Entry, error) {
 	// Try to parse a document even if it does not contain a colon.
 	document, err := htypes.ParseDocument(str)
 	if err == nil || (strings.Contains(str, ":") || sanitizer.IsDigitOnly(str)) {
-		// If it contains a colon or digit, it should be a document.		
+		// If it contains a colon or digit, it should be a document.
 		return Entry(document), err
 	}
 
@@ -123,7 +121,6 @@ func (e Entry) String() string {
 }
 
 func (e *Entry) UnmarshalJSON(data []byte) error {
-	fmt.Println("Called UnmarshalJSON for Entry")
 	var s string
 	err := json.Unmarshal(data, &s)
 	if err != nil {

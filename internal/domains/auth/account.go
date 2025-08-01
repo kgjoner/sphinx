@@ -30,14 +30,14 @@ type Account struct {
 	Document   htypes.Document    `json:"-"`
 	ExtraData  `json:"extraData,omitempty"`
 
-	IsActive             bool                       `json:"isActive"`
-	PendingEmail         htypes.Email               `json:"-"`
-	HasEmailBeenVerified bool                       `json:"-"`
-	PendingPhone         htypes.PhoneNumber         `json:"-"`
-	HasPhoneBeenVerified bool                       `json:"-"`
-	Codes                map[AccountCodeKind]string `json:"-"`
-	Links                []Link                     `json:"-"`
-	ActiveSessions       []Session                  `json:"-"`
+	IsActive             bool                        `json:"isActive"`
+	PendingEmail         htypes.Email                `json:"-"`
+	HasEmailBeenVerified bool                        `json:"-"`
+	PendingPhone         htypes.PhoneNumber          `json:"-"`
+	HasPhoneBeenVerified bool                        `json:"-"`
+	VerificationCodes    map[VerificationKind]string `json:"-"`
+	Links                []Link                      `json:"-"`
+	ActiveSessions       []Session                   `json:"-"`
 
 	justTerminatedSessions []Session  `json:"-"`
 	hasValidCredentials    bool       `json:"-"`
@@ -85,17 +85,17 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 		Document:  a.Document,
 		ExtraData: ExtraData(a.AccountExtraFields),
 
-		IsActive:  true,
-		Codes:     map[AccountCodeKind]string{},
-		CreatedAt: now,
-		UpdatedAt: now,
+		IsActive:          true,
+		VerificationCodes: map[VerificationKind]string{},
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}
 
 	// TODO: Add link for root Application as default
 
-	acc.generateCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
+	acc.generateCodeFor(VerificationEmail)
 	if !acc.Phone.IsZero() {
-		acc.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+		acc.generateCodeFor(VerificationPhone)
 	}
 
 	return acc, validator.Validate(acc)
@@ -141,7 +141,7 @@ func (a Account) Name() string {
 	return matches[1]
 }
 
-func (a *Account) VerifyAccount(kind AccountCodeKind, code string) error {
+func (a *Account) VerifyAccount(kind VerificationKind, code string) error {
 	err := validator.Validate(code, "required")
 	if err != nil {
 		return err
@@ -153,26 +153,26 @@ func (a *Account) VerifyAccount(kind AccountCodeKind, code string) error {
 	}
 
 	switch kind {
-	case AccountCodeKindValues.EMAIL_VERIFICATION:
+	case VerificationEmail:
 		if a.HasEmailBeenVerified && a.PendingEmail.IsZero() {
 			return normalizederr.NewRequestError("Email has already been verified.")
 		}
-	case AccountCodeKindValues.PHONE_VERIFICATION:
+	case VerificationPhone:
 		if a.HasPhoneBeenVerified && a.PendingPhone.IsZero() {
 			return normalizederr.NewRequestError("Phone has already been verified.")
 		}
 	}
 
-	if a.Codes[kind] == "" {
+	if a.VerificationCodes[kind] == "" {
 		return normalizederr.NewConflictError("Account does not have a verification code.")
 	}
 
-	if code != a.Codes[kind] {
+	if code != a.VerificationCodes[kind] {
 		return normalizederr.NewRequestError("Invalid code.")
 	}
 
 	switch kind {
-	case AccountCodeKindValues.EMAIL_VERIFICATION:
+	case VerificationEmail:
 		if !a.PendingEmail.IsZero() {
 			// Confirm email update
 			a.Email = a.PendingEmail
@@ -180,7 +180,7 @@ func (a *Account) VerifyAccount(kind AccountCodeKind, code string) error {
 			a.PendingEmail = emptyEmail
 		}
 		a.HasEmailBeenVerified = true
-	case AccountCodeKindValues.PHONE_VERIFICATION:
+	case VerificationPhone:
 		if !a.PendingPhone.IsZero() {
 			// Confirm phone update
 			a.Phone = a.PendingPhone
@@ -215,16 +215,16 @@ func (a *Account) ChangePassword(oldPassword string, newPassword string) error {
 }
 
 func (a *Account) RequestPasswordReset() (string, error) {
-	a.generateCodeFor(AccountCodeKindValues.PASSWORD_RESET)
+	a.generateCodeFor(VerificationPasswordReset)
 	a.UpdatedAt = time.Now()
-	return a.Codes[AccountCodeKindValues.PASSWORD_RESET], validator.Validate(a)
+	return a.VerificationCodes[VerificationPasswordReset], validator.Validate(a)
 }
 
 func (a *Account) ResetPassword(newPassword string, code string) error {
-	resetCode := a.Codes[AccountCodeKindValues.PASSWORD_RESET]
+	resetCode := a.VerificationCodes[VerificationPasswordReset]
 	if resetCode == "" {
 		return normalizederr.NewRequestError("Account did not request a password reset.", "")
-	} else if code != a.Codes[AccountCodeKindValues.PASSWORD_RESET] {
+	} else if code != a.VerificationCodes[VerificationPasswordReset] {
 		return normalizederr.NewRequestError("Invalid code.", "")
 	}
 
@@ -234,7 +234,7 @@ func (a *Account) ResetPassword(newPassword string, code string) error {
 	}
 
 	a.Password = hashPassword(newPassword)
-	a.clearCodeFor(AccountCodeKindValues.PASSWORD_RESET)
+	a.clearCodeFor(VerificationPasswordReset)
 	a.TerminateAllSessions()
 
 	now := time.Now()
@@ -270,7 +270,7 @@ func (a *Account) AddMissingFields(f AccountMissableFields) error {
 	a.UpdatedAt = now
 
 	if !f.Phone.IsZero() {
-		a.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+		a.generateCodeFor(VerificationPhone)
 	}
 	return validator.Validate(a)
 }
@@ -285,12 +285,12 @@ type AccountUniqueFields struct {
 func (a *Account) UpdateUniqueFields(f AccountUniqueFields) error {
 	if !f.Email.IsZero() {
 		a.PendingEmail = f.Email
-		a.generateCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
+		a.generateCodeFor(VerificationEmail)
 	}
 
 	if !f.Phone.IsZero() {
 		a.PendingPhone = f.Phone
-		a.generateCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+		a.generateCodeFor(VerificationPhone)
 	}
 
 	now := time.Now()
@@ -349,7 +349,7 @@ func (a *Account) cancelPendingEmail() error {
 
 	var emptyEmail htypes.Email
 	a.PendingEmail = emptyEmail
-	a.clearCodeFor(AccountCodeKindValues.EMAIL_VERIFICATION)
+	a.clearCodeFor(VerificationEmail)
 	a.UpdatedAt = time.Now()
 
 	return nil
@@ -363,7 +363,7 @@ func (a *Account) cancelPendingPhone() error {
 
 	var emptyPhone htypes.PhoneNumber
 	a.PendingPhone = emptyPhone
-	a.clearCodeFor(AccountCodeKindValues.PHONE_VERIFICATION)
+	a.clearCodeFor(VerificationPhone)
 	a.UpdatedAt = time.Now()
 
 	return nil
@@ -376,12 +376,12 @@ func (a Account) DoesPasswordMatch(password string) bool {
 
 // It will generate an random string and save it in the field Code, under the desired key (kind).
 // It overwrites old value, if any.
-func (a *Account) generateCodeFor(kind AccountCodeKind) {
-	a.Codes[kind] = pwdgen.Generate(12, "lower", "upper", "number")
+func (a *Account) generateCodeFor(kind VerificationKind) {
+	a.VerificationCodes[kind] = pwdgen.Generate(12, "lower", "upper", "number")
 }
 
-func (a *Account) clearCodeFor(kind AccountCodeKind) {
-	delete(a.Codes, kind)
+func (a *Account) clearCodeFor(kind VerificationKind) {
+	delete(a.VerificationCodes, kind)
 }
 
 /* ==============================================================================
@@ -814,7 +814,7 @@ type AccountPrivateView struct {
 }
 
 func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
-	if !(a.Id == actor.Id || actor.HasRoleOnAuth(ADMIN)) {
+	if !(a.Id == actor.Id || actor.HasRoleOnAuth(RoleAdmin)) {
 		return nil, normalizederr.NewForbiddenError("Does not have permission to view this user information.")
 	}
 

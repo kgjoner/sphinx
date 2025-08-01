@@ -40,7 +40,7 @@ type ApplicationCreationFields struct {
 
 func NewApplication(f *ApplicationCreationFields, actor Account) (app *Application, secret string, err error) {
 	actorApp := actor.AuthedSession.Application
-	if !actorApp.isRoot() || !(actor.HasRole(actorApp, ADMIN) || actor.HasRole(actorApp, DEV)) {
+	if !actorApp.isRoot() || !(actor.HasRole(actorApp, RoleAdmin) || actor.HasRole(actorApp, RoleDev)) {
 		return nil, "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
@@ -77,7 +77,7 @@ type ApplicationEditableFields struct {
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 	actorApp := actor.AuthedSession.Application
-	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(ADMIN) {
+	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(RoleAdmin) {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
@@ -88,7 +88,7 @@ func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 
 func (a *Application) GenerateNewSecret(actor Account) (secret string, err error) {
 	actorApp := actor.AuthedSession.Application
-	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(ADMIN) {
+	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(RoleAdmin) {
 		return "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 

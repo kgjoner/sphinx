@@ -28,7 +28,7 @@ func (q DAO) InsertAccount(acc *auth.Account) error {
 		datatransform.ToNullString(acc.PendingPhone.String()),
 		acc.HasEmailBeenVerified,
 		acc.HasPhoneBeenVerified,
-		datatransform.ToRawMessage(acc.Codes),
+		datatransform.ToRawMessage(acc.VerificationCodes),
 	)
 	err := row.Scan(&acc.InternalId)
 	return err
@@ -53,7 +53,7 @@ func (q DAO) UpdateAccount(acc auth.Account) error {
 		datatransform.ToNullString(acc.PendingPhone.String()),
 		acc.HasEmailBeenVerified,
 		acc.HasPhoneBeenVerified,
-		datatransform.ToRawMessage(acc.Codes),
+		datatransform.ToRawMessage(acc.VerificationCodes),
 		acc.PasswordUpdatedAt,
 		acc.UpdatedAt,
 	)
@@ -82,7 +82,7 @@ func (q DAO) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 		&item.PendingPhone,
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
-		dbhandler.Map(&item.Codes),
+		dbhandler.Map(&item.VerificationCodes),
 		dbhandler.StructArray(&item.Links),
 		dbhandler.StructArray(&item.ActiveSessions),
 		&item.PasswordUpdatedAt,
@@ -120,7 +120,7 @@ func (q DAO) GetAccountByEntry(entry auth.Entry) (*auth.Account, error) {
 		&item.PendingPhone,
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
-		dbhandler.Map(&item.Codes),
+		dbhandler.Map(&item.VerificationCodes),
 		dbhandler.StructArray(&item.Links),
 		dbhandler.StructArray(&item.ActiveSessions),
 		&item.PasswordUpdatedAt,
@@ -158,7 +158,7 @@ func (q DAO) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) {
 		&item.PendingPhone,
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
-		dbhandler.Map(&item.Codes),
+		dbhandler.Map(&item.VerificationCodes),
 		dbhandler.StructArray(&item.Links),
 		dbhandler.StructArray(&item.ActiveSessions),
 		&item.PasswordUpdatedAt,

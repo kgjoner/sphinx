@@ -59,7 +59,7 @@ var AdminRootLink = &auth.Link{
 	HasConsent:  true,
 	CreatedAt:   time.Now(),
 	UpdatedAt:   time.Now(),
-	Roles:       []auth.Role{auth.ADMIN},
+	Roles:       []auth.Role{auth.RoleAdmin},
 }
 
 const SimpleUserPassword = "SimpleUserPassword123!"

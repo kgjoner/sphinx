@@ -64,8 +64,8 @@ func TestAccountCreation(t *testing.T) {
 
 		t.Run("should verify email", func(t *testing.T) {
 			resp, err := ts.Request("PATCH", "/account/"+respData.Data.Id.String()+"/verification", map[string]string{
-				"code":     acc.Codes[auth.AccountCodeKindValues.EMAIL_VERIFICATION],
-				"codeKind": string(auth.AccountCodeKindValues.EMAIL_VERIFICATION),
+				"code":     acc.VerificationCodes[auth.VerificationEmail],
+				"codeKind": string(auth.VerificationEmail),
 			}, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
@@ -341,7 +341,7 @@ func TestPasswordReset(t *testing.T) {
 			require.NotNil(t, acc)
 
 			resetData := map[string]interface{}{
-				"code":        acc.Codes[auth.AccountCodeKindValues.PASSWORD_RESET],
+				"code":        acc.VerificationCodes[auth.VerificationPasswordReset],
 				"newPassword": newPassword,
 			}
 
@@ -384,17 +384,16 @@ func TestAccountExistence(t *testing.T) {
 	ts := NewTestSuite(t)
 	defer ts.Close()
 
-	
 	t.Run("should handle different entry types, even not normalized", func(t *testing.T) {
 		factory := NewTestDataFactory()
 		accountData := factory.FullAccount()
-	
+
 		resp, err := ts.Request("POST", "/account", accountData, nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
-	
+
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
-		
+
 		t.Run("should check existence by username", func(t *testing.T) {
 			// Username as-is
 			existsResp1, err := ts.Request("GET", "/account/existence", accountData, map[string]string{
@@ -402,13 +401,13 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp1.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
-	
+
 			var existsData1 presenter.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
-	
+
 			assert.True(t, existsData1.Data, "Account should exist for username entry")
 
 			// Username in upper case (case insensitive check)
@@ -419,13 +418,13 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp2.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
-	
+
 			var existsData2 presenter.Success[bool]
 			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
 			require.NoError(t, err)
-	
+
 			assert.True(t, existsData2.Data, "Account should exist for username in upper case entry")
 		})
 
@@ -436,13 +435,13 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp1.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
-	
+
 			var existsData1 presenter.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
-	
+
 			assert.True(t, existsData1.Data, "Account should exist for email entry")
 
 			// Email in upper case (case insensitive check)
@@ -453,7 +452,7 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp2.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
 
 			var existsData2 presenter.Success[bool]
@@ -470,13 +469,13 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp1.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
-	
+
 			var existsData1 presenter.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
-	
+
 			assert.True(t, existsData1.Data, "Account should exist for phone entry")
 
 			// Phone in different format
@@ -488,7 +487,7 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp2.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
 
 			var existsData2 presenter.Success[bool]
@@ -505,13 +504,13 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp1.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
-	
+
 			var existsData1 presenter.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
-	
+
 			assert.True(t, existsData1.Data, "Account should exist for document entry")
 
 			// Document in only digit format
@@ -522,13 +521,13 @@ func TestAccountExistence(t *testing.T) {
 			})
 			require.NoError(t, err)
 			defer existsResp2.Body.Close()
-	
+
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
-	
+
 			var existsData2 presenter.Success[bool]
 			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
 			require.NoError(t, err)
-	
+
 			assert.True(t, existsData2.Data, "Account should exist for document in only digit format")
 		})
 	})

@@ -24,7 +24,7 @@ type CreateAccount struct {
 
 type CreateAccountInput struct {
 	auth.AccountCreationFields
-	Languages   []string         `json:"-"`
+	Languages []string `json:"-"`
 }
 
 func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) {
@@ -35,9 +35,9 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 
 	app, err := i.AuthRepo.GetApplicationById(uuid.MustParse(config.Env.ROOT_APP_ID))
 	if err != nil {
-	 return nil, err
+		return nil, err
 	} else if app == nil {
-	 return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
+		return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
 	}
 
 	err = i.AuthRepo.InsertAccount(acc)
@@ -75,7 +75,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 					"%v?kind=email&id=%v&code=%v",
 					config.Env.CLIENT.DATA_VERIFICATION,
 					acc.Id,
-					acc.Codes[auth.AccountCodeKindValues.EMAIL_VERIFICATION],
+					acc.VerificationCodes[auth.VerificationEmail],
 				),
 			},
 		},

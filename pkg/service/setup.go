@@ -46,7 +46,7 @@ type Account struct {
 
 func (a Account) IsAdmin() bool {
 	for _, r := range a.Link.Roles {
-		if r == auth.ADMIN {
+		if r == auth.RoleAdmin {
 			return true
 		}
 	}
@@ -56,7 +56,7 @@ func (a Account) IsAdmin() bool {
 
 func (a Account) IsDev() bool {
 	for _, r := range a.Link.Roles {
-		if r == auth.DEV {
+		if r == auth.RoleDev {
 			return true
 		}
 	}

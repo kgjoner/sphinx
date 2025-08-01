@@ -159,7 +159,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path		string							true	"Account ID"
-//	@Param			payload	body		accountcase.VerifyAccountInput	true	"Code kind must be email or phone."
+//	@Param			payload	body		accountcase.VerifyAccountInput	true	"Verification kind must be email or phone."
 //	@Success		204
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
