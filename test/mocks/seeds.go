@@ -11,7 +11,7 @@ import (
 
 func init() {
 	config.Must()
-	RootApplication.Id = uuid.MustParse(config.Env.ROOT_APP_ID)
+	RootApplication.ID = uuid.MustParse(config.Env.ROOT_APP_ID)
 }
 
 func hashPassword(password string) string {
@@ -32,17 +32,17 @@ const CommonAppSecret = "commonappsecret"
 const CommonRedirectUri = "http://common.app/callback"
 
 var CommonApplication = &auth.Application{
-	Name:      "Common Application",
-	Secret:    hashPassword(CommonAppSecret),
+	Name:                "Common Application",
+	Secret:              hashPassword(CommonAppSecret),
 	AllowedRedirectUris: []string{CommonRedirectUri},
-	CreatedAt: time.Now(),
-	UpdatedAt: time.Now(),
+	CreatedAt:           time.Now(),
+	UpdatedAt:           time.Now(),
 }
 
 const AdminPassword = "AdminPassword123!"
 
 var AdminAccount = &auth.Account{
-	Id:                   uuid.New(),
+	ID:                   uuid.New(),
 	Email:                "admin@example.com",
 	Password:             hashPassword(AdminPassword),
 	Username:             "admin",
@@ -53,8 +53,8 @@ var AdminAccount = &auth.Account{
 }
 
 var AdminRootLink = &auth.Link{
-	Id:          uuid.New(),
-	AccountId:   AdminAccount.InternalId,
+	ID:          uuid.New(),
+	AccountID:   AdminAccount.InternalID,
 	Application: *RootApplication,
 	HasConsent:  true,
 	CreatedAt:   time.Now(),
@@ -65,7 +65,7 @@ var AdminRootLink = &auth.Link{
 const SimpleUserPassword = "SimpleUserPassword123!"
 
 var SimpleUserAccount = &auth.Account{
-	Id:                   uuid.New(),
+	ID:                   uuid.New(),
 	Email:                "user@example.com",
 	Password:             hashPassword(SimpleUserPassword),
 	Username:             "user",
@@ -76,8 +76,8 @@ var SimpleUserAccount = &auth.Account{
 }
 
 var SimpleUserRootLink = &auth.Link{
-	Id:          uuid.New(),
-	AccountId:   SimpleUserAccount.InternalId,
+	ID:          uuid.New(),
+	AccountID:   SimpleUserAccount.InternalID,
 	Application: *RootApplication,
 	HasConsent:  true,
 	CreatedAt:   time.Now(),

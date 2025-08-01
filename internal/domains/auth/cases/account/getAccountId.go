@@ -6,23 +6,23 @@ import (
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type GetAccountId struct {
+type GetAccountID struct {
 	AuthRepo authcase.AuthRepo
 }
 
-type GetAccountIdInput struct {
+type GetAccountIDInput struct {
 	Entry auth.Entry
 }
 
-func (i GetAccountId) Execute(input GetAccountIdInput) (*uuid.UUID, error) {
-	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry);
+func (i GetAccountID) Execute(input GetAccountIDInput) (*uuid.UUID, error) {
+	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry)
 	if err != nil {
-	 return nil, err
+		return nil, err
 	}
 
 	if acc == nil {
 		return nil, nil
 	}
 
-	return &acc.Id, nil
+	return &acc.ID, nil
 }

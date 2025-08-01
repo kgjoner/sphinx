@@ -92,7 +92,7 @@ func (e Entry) IsValid() error {
 	case "document":
 		err = htypes.Document(string(e)).IsValid()
 	case "username":
-		err = validator.Validate(string(e), "wordId", "atLeastOne=letter")
+		err = validator.Validate(string(e), "wordID", "atLeastOne=letter")
 	}
 
 	if err != nil {
@@ -143,12 +143,12 @@ type authToken struct {
 
 type authTokenCreationFields struct {
 	Account   Account
-	SessionId uuid.UUID
+	SessionID uuid.UUID
 	IsRefresh bool
 }
 
 func newAuthToken(f authTokenCreationFields) (*authToken, error) {
-	s := f.Account.session(f.SessionId)
+	s := f.Account.session(f.SessionID)
 	if s == nil {
 		return nil, normalizederr.NewRequestError("Account and session do not match.")
 	}
@@ -165,11 +165,11 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	}
 
 	claims := jwtClaims{
-		f.Account.Id,
-		s.Application.Id,
+		f.Account.ID,
+		s.Application.ID,
 		now.Unix(),
 		now.Add(duration).Unix(),
-		s.Id,
+		s.ID,
 		kind,
 	}
 
@@ -235,7 +235,7 @@ type jwtClaims struct {
 	Aud       uuid.UUID `json:"aud"`
 	Iat       int64     `json:"iat"`
 	Exp       int64     `json:"exp"`
-	SessionId uuid.UUID `json:"sessionId"`
+	SessionID uuid.UUID `json:"sessionID"`
 	Kind      string    `json:"kind" validate:"oneof=refresh access"`
 }
 

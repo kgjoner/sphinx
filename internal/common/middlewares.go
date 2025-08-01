@@ -24,31 +24,31 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" {
 			err := normalizederr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
 		tokenStr := authHeaderParts[1]
 		token, err := auth.ParseAuthToken(tokenStr)
 		if err != nil {
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
 		if token.IsRefresh() && !strings.Contains(r.URL.Path, "refresh") {
 			err := normalizederr.NewUnauthorizedError("must provide an access token", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
 		authRepo := m.BasePool.NewDAO(r.Context())
-		account, err := authRepo.GetAccountById(token.Claims.Sub)
+		account, err := authRepo.GetAccountByID(token.Claims.Sub)
 		if err != nil {
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		} else if account == nil {
 			err := normalizederr.NewFatalUnauthorizedError("not existing user", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
@@ -58,7 +58,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, controller.ActorKey, *account)
 			r = r.WithContext(ctx)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
@@ -77,35 +77,35 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Basic" {
 			err := normalizederr.NewUnauthorizedError("missing app basic token", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
 		tokenStr := authHeaderParts[1]
 		decodedBytes, err := base64.StdEncoding.DecodeString(tokenStr)
 		if err != nil {
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
 		credentials := strings.Split(string(decodedBytes), ":")
 		if len(credentials) != 2 {
 			err := normalizederr.NewUnauthorizedError("invalid credentials", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
-		appId, _ := uuid.Parse(credentials[0])
+		appID, _ := uuid.Parse(credentials[0])
 		appSecret := credentials[1]
 
 		authRepo := m.BasePool.NewDAO(r.Context())
-		application, err := authRepo.GetApplicationById(appId)
+		application, err := authRepo.GetApplicationByID(appID)
 		if err != nil {
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		} else if application == nil {
 			err := normalizederr.NewUnauthorizedError("not existing app", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
@@ -114,7 +114,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, controller.ApplicationKey, *application)
 		r = r.WithContext(ctx)
 		if err != nil {
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
@@ -131,7 +131,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		if targetEntry == "" {
 			if actor == nil {
 				err := normalizederr.NewRequestError("must provide a target header", errcode.InvalidAccess)
-				presenter.HttpError(err, w, r)
+				presenter.HTTPError(err, w, r)
 				return
 			}
 
@@ -146,7 +146,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		isAuthedApp := app != nil && app.(auth.Application).IsAuthenticated()
 		if !isAdmin && !isAuthedApp {
 			err := normalizederr.NewForbiddenError("does not have permission to execute this action")
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
@@ -155,7 +155,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		var target *auth.Account
 		var entry auth.Entry
 		if id, errif := uuid.Parse(targetEntry); errif == nil {
-			target, err = authRepo.GetAccountById(id)
+			target, err = authRepo.GetAccountByID(id)
 		} else {
 			entry, err = auth.ParseEntry(targetEntry)
 			if err == nil {
@@ -164,11 +164,11 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		}
 
 		if err != nil {
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		} else if target == nil {
 			err := normalizederr.NewRequestError("target account does not exist", errcode.AccountNotFound)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 

@@ -54,7 +54,7 @@ SET
 WHERE
   id = $1;
 
--- name: GetAccountById :one
+-- name: GetAccountByID :one
 WITH la AS (
   SELECT
     l.*,

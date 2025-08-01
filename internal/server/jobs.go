@@ -26,9 +26,9 @@ func (s Server) runJobs(ctx context.Context) {
 
 // Retrieves app style accordingly to configuration and applies it to Hermes service.
 func updateHermesStyle(hms *hermes.Service) error {
-	logoUrl := config.Env.APP_LOGO_URL
-	if logoUrl == "" {
-		logoUrl = config.Env.HOST + "/root/logo.svg"
+	logoURL := config.Env.APP_LOGO_URL
+	if logoURL == "" {
+		logoURL = config.Env.HOST + "/root/logo.svg"
 	}
 
 	if config.Env.APP_STYLE_URL == "" {
@@ -42,7 +42,7 @@ func updateHermesStyle(hms *hermes.Service) error {
 				Style     template.CSS "json:\"style\""
 				LogoStyle template.CSS "json:\"logoStyle\""
 			}{
-				Logo:  logoUrl,
+				Logo:  logoURL,
 				Title: config.Env.APP_NAME,
 				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundLight)),
 			},
@@ -78,7 +78,7 @@ func updateHermesStyle(hms *hermes.Service) error {
 			Style     template.CSS "json:\"style\""
 			LogoStyle template.CSS "json:\"logoStyle\""
 		}{
-			Logo:      logoUrl,
+			Logo:      logoURL,
 			Title:     config.Env.APP_NAME,
 			Style:     appStyle.Mail.Header,
 			LogoStyle: appStyle.Mail.Logo,

@@ -29,7 +29,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" || authHeaderParts[1] == "" {
 			err := normalizederr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
@@ -37,10 +37,10 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		acc, err := m.sphinx.Account(tokenStr)
 		if err != nil {
 			if nerr, ok := err.(normalizederr.NormalizedError); ok {
-				presenter.HttpError(nerr.MakeItInternal(), w, r)
+				presenter.HTTPError(nerr.MakeItInternal(), w, r)
 				return
 			}
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 			return
 		}
 
@@ -73,7 +73,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 			actorValue := r.Context().Value(controller.ActorKey)
 			if actorValue == nil {
 				err := normalizederr.NewUnauthorizedError("no actor found, user must be authenticated prior guard middleware", errcode.InvalidAccess)
-				presenter.HttpError(err, w, r)
+				presenter.HTTPError(err, w, r)
 				return
 			}
 
@@ -91,7 +91,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 			}
 
 			err := normalizederr.NewForbiddenError("user does not have enough permission")
-			presenter.HttpError(err, w, r)
+			presenter.HTTPError(err, w, r)
 		})
 	}
 }

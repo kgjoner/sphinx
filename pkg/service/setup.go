@@ -10,29 +10,29 @@ import (
 )
 
 type Service struct {
-	httpApi   *httputil.HttpUtil
-	appId     string
+	httpApi   *httputil.HTTPUtil
+	appID     string
 	appSecret string
 	appToken  string
 }
 
-func New(baseUrl, appId, appSecret string) *Service {
-	httpApi := httputil.New(baseUrl)
-	appToken := base64.StdEncoding.EncodeToString([]byte(appId + ":" + appSecret))
+func New(baseURL, appID, appSecret string) *Service {
+	httpApi := httputil.New(baseURL)
+	appToken := base64.StdEncoding.EncodeToString([]byte(appID + ":" + appSecret))
 
 	return &Service{
 		httpApi:   httpApi,
-		appId:     appId,
+		appID:     appID,
 		appSecret: appSecret,
 		appToken:  appToken,
 	}
 }
 
 type Account struct {
-	Id       uuid.UUID          `json:"id" validate:"required"`
+	ID       uuid.UUID          `json:"id" validate:"required"`
 	Email    htypes.Email       `json:"email" validate:"required"`
 	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
-	Username string             `json:"username,omitempty" validate:"wordId"`
+	Username string             `json:"username,omitempty" validate:"wordID"`
 	Document htypes.Document    `json:"document,omitempty"`
 	Name     string             `json:"name,omitempty"`
 	Surname  string             `json:"surname,omitempty"`

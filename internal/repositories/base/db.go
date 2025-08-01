@@ -34,7 +34,7 @@ func (p Pool) Close() error {
 	return nil
 }
 
-func (p Pool) DatabaseUrl() string {
+func (p Pool) DatabaseURL() string {
 	return p.url
 }
 

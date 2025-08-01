@@ -13,13 +13,13 @@ type VerifyAccount struct {
 }
 
 type VerifyAccountInput struct {
-	AccountId        uuid.UUID             `json:"-"`
+	AccountID        uuid.UUID             `json:"-"`
 	VerificationKind auth.VerificationKind `json:"kind" validate:"required,oneof=email phone"`
 	VerificationCode string                `json:"code" validate:"required"`
 }
 
 func (i VerifyAccount) Execute(input VerifyAccountInput) (bool, error) {
-	acc, err := i.AuthRepo.GetAccountById(input.AccountId)
+	acc, err := i.AuthRepo.GetAccountByID(input.AccountID)
 	if err != nil {
 		return false, err
 	} else if acc == nil {

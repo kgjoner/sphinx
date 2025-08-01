@@ -33,7 +33,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		return nil, err
 	}
 
-	app, err := i.AuthRepo.GetApplicationById(uuid.MustParse(config.Env.ROOT_APP_ID))
+	app, err := i.AuthRepo.GetApplicationByID(uuid.MustParse(config.Env.ROOT_APP_ID))
 	if err != nil {
 		return nil, err
 	} else if app == nil {
@@ -74,7 +74,7 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 				Link: fmt.Sprintf(
 					"%v?kind=email&id=%v&code=%v",
 					config.Env.CLIENT.DATA_VERIFICATION,
-					acc.Id,
+					acc.ID,
 					acc.VerificationCodes[auth.VerificationEmail],
 				),
 			},
@@ -92,6 +92,6 @@ func (i CreateAccount) handleError(err error, target auth.Account) {
 	logrus.WithFields(logrus.Fields{
 		"Kind":  "Mail Failed",
 		"Path":  "AccountCreation",
-		"Actor": target.Id,
+		"Actor": target.ID,
 	}).Log(logrus.ErrorLevel, err.Error())
 }

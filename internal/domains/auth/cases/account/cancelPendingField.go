@@ -12,12 +12,12 @@ type CancelPendingField struct {
 }
 
 type CancelPendingFieldInput struct {
-	AccountId uuid.UUID `json:"-"`
+	AccountID uuid.UUID `json:"-"`
 	Field     string    `json:"-"`
 }
 
 func (i CancelPendingField) Execute(input CancelPendingFieldInput) (bool, error) {
-	acc, err := i.AuthRepo.GetAccountById(input.AccountId)
+	acc, err := i.AuthRepo.GetAccountByID(input.AccountID)
 	if err != nil {
 		return false, err
 	} else if acc == nil {

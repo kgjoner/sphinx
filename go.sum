@@ -42,12 +42,16 @@ github.com/kgjoner/cornucopia v1.2.2 h1:RlPs9KuIBq+aXZLh1wqPJBLN61FHmJTFhcLogXuR
 github.com/kgjoner/cornucopia v1.2.2/go.mod h1:mMc0tLiIOwDQuOElhHeLA1SsnmjqnFyx5CyKDIscBcA=
 github.com/kgjoner/cornucopia v1.2.3 h1:DWWHF9O0PeTsBiwkOhk9KsK0sTlKwXTGxUBwX06u7AU=
 github.com/kgjoner/cornucopia v1.2.3/go.mod h1:mMc0tLiIOwDQuOElhHeLA1SsnmjqnFyx5CyKDIscBcA=
+github.com/kgjoner/cornucopia v1.3.0 h1:UcI/cxeRjAlEPTm/cMnWL/t0ASzEWg8ZNxm8bXjnqNA=
+github.com/kgjoner/cornucopia v1.3.0/go.mod h1:mMc0tLiIOwDQuOElhHeLA1SsnmjqnFyx5CyKDIscBcA=
 github.com/kgjoner/hermes v0.3.2 h1:ybgI/X3Wr1luIYM0eHDMvJSgC/89JYwvqwNRJX8P6JQ=
 github.com/kgjoner/hermes v0.3.2/go.mod h1:kJ3KFZqFLaZpbKbsChD+xz2gzNLBkikSymkCM6mqW44=
 github.com/kgjoner/hermes v0.4.1 h1:y0Lp9SZqW54Sw9zFFbWs7degdgdZDR9LFTtVQePygkI=
 github.com/kgjoner/hermes v0.4.1/go.mod h1:kJ3KFZqFLaZpbKbsChD+xz2gzNLBkikSymkCM6mqW44=
 github.com/kgjoner/hermes v0.5.0 h1:kUhXOxqFQKqv7idugglxaDZiKRf0rstVzuKobdmUwLY=
 github.com/kgjoner/hermes v0.5.0/go.mod h1:kJ3KFZqFLaZpbKbsChD+xz2gzNLBkikSymkCM6mqW44=
+github.com/kgjoner/hermes v0.5.1 h1:ku3Av308gUJg/hXQqq76lBigDqhPSe2owzEhENOrJ9A=
+github.com/kgjoner/hermes v0.5.1/go.mod h1:RKzv1Mends8pSvEq9aw6hDzo/8aNLPaUqBRvPfJGD5Y=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=

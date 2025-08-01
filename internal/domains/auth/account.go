@@ -21,12 +21,12 @@ import (
 )
 
 type Account struct {
-	InternalId int                `json:"-"`
-	Id         uuid.UUID          `json:"id" validate:"required"`
+	InternalID int                `json:"-"`
+	ID         uuid.UUID          `json:"id" validate:"required"`
 	Email      htypes.Email       `json:"-" validate:"required"`
 	Phone      htypes.PhoneNumber `json:"-"`
 	Password   string             `json:"-" validate:"required"`
-	Username   string             `json:"username" validate:"wordId,atLeastOne=letter"`
+	Username   string             `json:"username" validate:"wordID,atLeastOne=letter"`
 	Document   htypes.Document    `json:"-"`
 	ExtraData  `json:"extraData,omitempty"`
 
@@ -77,7 +77,7 @@ func NewAccount(a *AccountCreationFields) (*Account, error) {
 
 	now := time.Now()
 	acc := &Account{
-		Id:        uuid.New(),
+		ID:        uuid.New(),
 		Email:     a.Email,
 		Phone:     a.Phone,
 		Password:  hashPassword(a.Password),
@@ -391,7 +391,7 @@ func (a *Account) clearCodeFor(kind VerificationKind) {
 // Agrees with link to desired application. If there is no link, it will create a new one.
 func (a *Account) GiveConsent(app Application) error {
 	for i, l := range a.Links {
-		if l.Application.Id == app.Id {
+		if l.Application.ID == app.ID {
 			if l.HasConsent {
 				return normalizederr.NewRequestError("Account has already given link to desired application.", "")
 			}
@@ -408,7 +408,7 @@ func (a *Account) GiveConsent(app Application) error {
 // Revoke consent in linking with desired application.
 func (a *Account) RevokeConsent(app Application) error {
 	for i, l := range a.Links {
-		if l.Application.Id == app.Id {
+		if l.Application.ID == app.ID {
 			if !l.HasConsent {
 				return normalizederr.NewRequestError("Account has already revoked link to desired application.", "")
 			}
@@ -433,7 +433,7 @@ func (a Account) HasRoleOnAuth(roles ...Role) bool {
 
 // Check whether account has role on a target application.
 func (a Account) HasRole(app Application, roles ...Role) bool {
-	link := a.link(app.Id)
+	link := a.link(app.ID)
 	if link == nil || !link.HasConsent {
 		return false
 	}
@@ -471,7 +471,7 @@ func (a *Account) updatePermission(app Application, updaterFn func(*Link) error)
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
-	link := a.link(app.Id)
+	link := a.link(app.ID)
 	if link == nil || !link.HasConsent {
 		return normalizederr.NewForbiddenError("target account has not consented to desired application")
 	}
@@ -482,7 +482,7 @@ func (a *Account) updatePermission(app Application, updaterFn func(*Link) error)
 	}
 
 	for i, c := range a.Links {
-		if c.Id == link.Id {
+		if c.ID == link.ID {
 			a.Links[i] = *link
 		}
 	}
@@ -491,9 +491,9 @@ func (a *Account) updatePermission(app Application, updaterFn func(*Link) error)
 }
 
 // Return desired application link or nil if account has never given link to it.
-func (a *Account) link(appId uuid.UUID) *Link {
+func (a *Account) link(appID uuid.UUID) *Link {
 	for i, c := range a.Links {
-		if c.Application.Id == appId {
+		if c.Application.ID == appID {
 			return &a.Links[i]
 		}
 	}
@@ -507,7 +507,7 @@ func (a *Account) authedLink() *Link {
 		return nil
 	}
 
-	return a.link(a.AuthedSession.Application.Id)
+	return a.link(a.AuthedSession.Application.ID)
 }
 
 /* ==============================================================================
@@ -528,7 +528,7 @@ func (a *Account) Authenticate(token *authToken) error {
 		}
 	}
 
-	link := a.link(s.Application.Id)
+	link := a.link(s.Application.ID)
 	if link == nil || !link.HasConsent {
 		return normalizederr.NewForbiddenError("target account has revoked consent to desired application", errcode.RevokedConsent)
 	}
@@ -573,7 +573,7 @@ func (a Account) IsAuthenticated() bool {
 }
 
 // Creates an authorization grant for an application that user has linked to
-func (a Account) IssueAuthorizationGrant(f *AuthorizationGrantCreationFields, appId uuid.UUID) (*AuthorizationGrant, error) {
+func (a Account) IssueAuthorizationGrant(f *AuthorizationGrantCreationFields, appID uuid.UUID) (*AuthorizationGrant, error) {
 	if !a.IsAuthenticated() {
 		return nil, normalizederr.NewUnauthorizedError("User must be authenticated.")
 	}
@@ -596,7 +596,7 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 	}
 
 	// Check if link exists and is active
-	link := a.link(f.Application.Id)
+	link := a.link(f.Application.ID)
 	if link == nil || !link.HasConsent {
 		return nil, nil, normalizederr.NewForbiddenError("User has not consented to this application.")
 	}
@@ -613,7 +613,7 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 		sort.Sort(concurrentSessions)
 		sessionsToTerminate := concurrentSessions[:(previousExcess + 1)]
 		for _, s := range sessionsToTerminate {
-			_, err := a.TerminateSession(s.Id)
+			_, err := a.TerminateSession(s.ID)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -624,7 +624,7 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 	session := newSession(*a, f)
 	a.ActiveSessions = append(a.ActiveSessions, *session)
 
-	refreshToken, err := newAuthToken(authTokenCreationFields{*a, session.Id, true})
+	refreshToken, err := newAuthToken(authTokenCreationFields{*a, session.ID, true})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -632,7 +632,7 @@ func (a *Account) InitSession(f *SessionCreationFields) (access *authToken, refr
 	session.updateRefreshToken(*refreshToken)
 	a.ActiveSessions[len(a.ActiveSessions)-1] = *session
 
-	accessToken, err := newAuthToken(authTokenCreationFields{*a, session.Id, false})
+	accessToken, err := newAuthToken(authTokenCreationFields{*a, session.ID, false})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -650,19 +650,19 @@ func (a *Account) IssueNewTokens() (access *authToken, refresh *authToken, err e
 		return nil, nil, normalizederr.NewUnauthorizedError("Non refresh token", errcode.InvalidAccess)
 	}
 
-	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.Id, true})
+	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.ID, true})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	a.AuthedSession = a.session(a.AuthedSession.Id)
+	a.AuthedSession = a.session(a.AuthedSession.ID)
 	if a.AuthedSession == nil {
 		return nil, nil, normalizederr.NewConflictError("No active session.", errcode.SessionNotFound)
 	}
 
 	a.AuthedSession.updateRefreshToken(*newRefreshToken)
 
-	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.Id, false})
+	newAccessToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.ID, false})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -672,9 +672,9 @@ func (a *Account) IssueNewTokens() (access *authToken, refresh *authToken, err e
 	return newAccessToken, newRefreshToken, nil
 }
 
-func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
+func (a *Account) TerminateSession(sessionID uuid.UUID) (*Session, error) {
 	for i, s := range a.ActiveSessions {
-		if s.Id == sessionId {
+		if s.ID == sessionID {
 			err := s.terminate()
 			if err != nil {
 				return nil, err
@@ -686,7 +686,7 @@ func (a *Account) TerminateSession(sessionId uuid.UUID) (*Session, error) {
 			a.justTerminatedSessions = append(a.justTerminatedSessions, s)
 			a.ActiveSessions = sliceman.Remove(a.ActiveSessions, i)
 
-			if a.AuthedSession != nil && sessionId == a.AuthedSession.Id {
+			if a.AuthedSession != nil && sessionID == a.AuthedSession.ID {
 				a.AuthedSession = nil
 				a.AuthToken = nil
 			}
@@ -703,7 +703,7 @@ func (a *Account) TerminateAuthedSession() (*Session, error) {
 		return nil, normalizederr.NewUnauthorizedError("Unauthenticated")
 	}
 
-	s, err := a.TerminateSession(a.AuthedSession.Id)
+	s, err := a.TerminateSession(a.AuthedSession.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -756,12 +756,12 @@ func (a *Account) verifyToken(token *authToken) (*Session, error) {
 		return nil, normalizederr.NewUnauthorizedError("Expired token", code)
 	}
 
-	s := a.session(token.Claims.SessionId)
+	s := a.session(token.Claims.SessionID)
 	if s == nil {
 		return nil, normalizederr.NewUnauthorizedError("Invalid session", errcode.InvalidAccess)
 	}
 
-	if token.Claims.Sub != a.Id || token.Claims.Aud != s.Application.Id {
+	if token.Claims.Sub != a.ID || token.Claims.Aud != s.Application.ID {
 		return nil, normalizederr.NewUnauthorizedError("Mismatched authentication", errcode.InvalidAccess)
 	}
 
@@ -769,9 +769,9 @@ func (a *Account) verifyToken(token *authToken) (*Session, error) {
 }
 
 // Return desired active session or nil if it does not exist
-func (a *Account) session(sessionId uuid.UUID) *Session {
+func (a *Account) session(sessionID uuid.UUID) *Session {
 	for i, s := range a.ActiveSessions {
-		if s.Id == sessionId && s.IsActive {
+		if s.ID == sessionID && s.IsActive {
 			return &a.ActiveSessions[i]
 		}
 	}
@@ -783,7 +783,7 @@ func (a *Account) session(sessionId uuid.UUID) *Session {
 func (a *Account) sessionsByApp(app Application) []Session {
 	sessions := []Session{}
 	for _, s := range a.ActiveSessions {
-		if s.Application.Id == app.Id && s.IsActive {
+		if s.Application.ID == app.ID && s.IsActive {
 			sessions = append(sessions, s)
 		}
 	}
@@ -796,10 +796,10 @@ func (a *Account) sessionsByApp(app Application) []Session {
 ============================================================================== */
 
 type AccountPrivateView struct {
-	Id       uuid.UUID          `json:"id" validate:"required"`
+	ID       uuid.UUID          `json:"id" validate:"required"`
 	Email    htypes.Email       `json:"email" validate:"required"`
 	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
-	Username string             `json:"username,omitempty" validate:"wordId"`
+	Username string             `json:"username,omitempty"`
 	Document htypes.Document    `json:"document,omitempty"`
 	Name     string             `json:"name,omitempty"`
 	Surname  string             `json:"surname,omitempty"`
@@ -814,13 +814,13 @@ type AccountPrivateView struct {
 }
 
 func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
-	if !(a.Id == actor.Id || actor.HasRoleOnAuth(RoleAdmin)) {
+	if !(a.ID == actor.ID || actor.HasRoleOnAuth(RoleAdmin)) {
 		return nil, normalizederr.NewForbiddenError("Does not have permission to view this user information.")
 	}
 
 	link := actor.authedLink()
-	if a.Id != actor.Id {
-		link = a.link(link.Application.Id)
+	if a.ID != actor.ID {
+		link = a.link(link.Application.ID)
 	}
 
 	var address *htypes.Address
@@ -829,7 +829,7 @@ func (a Account) PrivateView(actor Account) (*AccountPrivateView, error) {
 	}
 
 	return &AccountPrivateView{
-		a.Id,
+		a.ID,
 		a.Email,
 		a.Phone,
 		a.Username,

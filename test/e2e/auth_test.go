@@ -34,7 +34,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 		assert.NotEmpty(t, respData.Data.AccessToken)
 		assert.NotEmpty(t, respData.Data.RefreshToken)
-		assert.NotEmpty(t, respData.Data.AccountId)
+		assert.NotEmpty(t, respData.Data.AccountID)
 
 		// Test 2: Get Account Info with Token
 		t.Run("should get account info with valid token", func(t *testing.T) {

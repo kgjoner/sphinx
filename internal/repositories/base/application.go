@@ -15,13 +15,13 @@ func (q DAO) InsertApplication(app *auth.Application) error {
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw,
-		app.Id,
+		app.ID,
 		app.Name,
 		pq.Array(app.PossibleRoles),
 		app.Secret,
 		pq.Array(app.AllowedRedirectUris),
 	)
-	err := row.Scan(&app.InternalId)
+	err := row.Scan(&app.InternalID)
 	return err
 }
 
@@ -32,7 +32,7 @@ func (q DAO) UpdateApplication(app auth.Application) error {
 	}
 
 	_, err := q.db.ExecContext(q.ctx, raw,
-		app.Id,
+		app.ID,
 		app.Name,
 		pq.Array(app.PossibleRoles),
 		pq.Array(app.AllowedRedirectUris),
@@ -40,8 +40,8 @@ func (q DAO) UpdateApplication(app auth.Application) error {
 	return err
 }
 
-func (q DAO) GetApplicationById(id uuid.UUID) (*auth.Application, error) {
-	raw, exists := rawQueries["GetApplicationById"]
+func (q DAO) GetApplicationByID(id uuid.UUID) (*auth.Application, error) {
+	raw, exists := rawQueries["GetApplicationByID"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
@@ -49,8 +49,8 @@ func (q DAO) GetApplicationById(id uuid.UUID) (*auth.Application, error) {
 	row := q.db.QueryRowContext(q.ctx, raw, id)
 	var item auth.Application
 	err := row.Scan(
-		&item.InternalId,
-		&item.Id,
+		&item.InternalID,
+		&item.ID,
 		&item.Name,
 		pq.Array(&item.PossibleRoles),
 		&item.Secret,

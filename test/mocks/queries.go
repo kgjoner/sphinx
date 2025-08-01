@@ -37,9 +37,9 @@ func NewMockQueries() *MockQueries {
 	q.InsertApplication(CommonApplication)
 
 	q.InsertAccount(AdminAccount)
-	AdminRootLink.AccountId = AdminAccount.InternalId
+	AdminRootLink.AccountID = AdminAccount.InternalID
 	q.InsertAccount(SimpleUserAccount)
-	SimpleUserRootLink.AccountId = SimpleUserAccount.InternalId
+	SimpleUserRootLink.AccountID = SimpleUserAccount.InternalID
 
 	q.UpsertLinks(*AdminRootLink, *SimpleUserRootLink)
 	return q
@@ -59,11 +59,11 @@ func (m *MockQueries) InsertAccount(acc *auth.Account) error {
 		return err
 	}
 
-	if acc.Id == uuid.Nil {
-		acc.Id = uuid.New()
+	if acc.ID == uuid.Nil {
+		acc.ID = uuid.New()
 	}
-	acc.InternalId = len(m.accounts) + 1
-	m.accounts[acc.Id] = acc
+	acc.InternalID = len(m.accounts) + 1
+	m.accounts[acc.ID] = acc
 	return nil
 }
 
@@ -75,16 +75,16 @@ func (m *MockQueries) UpdateAccount(acc auth.Account) error {
 		return m.errorToReturn
 	}
 
-	if _, exists := m.accounts[acc.Id]; !exists {
+	if _, exists := m.accounts[acc.ID]; !exists {
 		return sql.ErrNoRows
 	}
 
 	// Check for unique field violations (exclude the account being updated)
-	if err := m.checkAccountUniqueConstraints(&acc, &acc.Id); err != nil {
+	if err := m.checkAccountUniqueConstraints(&acc, &acc.ID); err != nil {
 		return err
 	}
 
-	m.accounts[acc.Id] = &acc
+	m.accounts[acc.ID] = &acc
 	return nil
 }
 
@@ -99,11 +99,11 @@ func (e *DuplicateKeyError) Error() string {
 }
 
 // checkAccountUniqueConstraints validates that the account doesn't violate unique field constraints
-// excludeId allows skipping a specific account ID (useful for updates)
-func (m *MockQueries) checkAccountUniqueConstraints(acc *auth.Account, excludeId *uuid.UUID) error {
+// excludeID allows skipping a specific account ID (useful for updates)
+func (m *MockQueries) checkAccountUniqueConstraints(acc *auth.Account, excludeID *uuid.UUID) error {
 	for _, existing := range m.accounts {
 		// Skip the account being updated
-		if excludeId != nil && existing.Id == *excludeId {
+		if excludeID != nil && existing.ID == *excludeID {
 			continue
 		}
 
@@ -127,7 +127,7 @@ func (m *MockQueries) checkAccountUniqueConstraints(acc *auth.Account, excludeId
 	return nil
 }
 
-func (m *MockQueries) GetAccountById(id uuid.UUID) (*auth.Account, error) {
+func (m *MockQueries) GetAccountByID(id uuid.UUID) (*auth.Account, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -140,10 +140,10 @@ func (m *MockQueries) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 		accountCopy := *acc
 
 		// Populate Links for this account
-		accountCopy.Links = m.getLinksForAccount(acc.InternalId)
+		accountCopy.Links = m.getLinksForAccount(acc.InternalID)
 
 		// Populate ActiveSessions for this account (only active ones)
-		accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalId)
+		accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalID)
 
 		return &accountCopy, nil
 	}
@@ -164,10 +164,10 @@ func (m *MockQueries) GetAccountByEntry(entry auth.Entry) (*auth.Account, error)
 			accountCopy := *acc
 
 			// Populate Links for this account
-			accountCopy.Links = m.getLinksForAccount(acc.InternalId)
+			accountCopy.Links = m.getLinksForAccount(acc.InternalID)
 
 			// Populate ActiveSessions for this account (only active ones)
-			accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalId)
+			accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalID)
 
 			return &accountCopy, nil
 		}
@@ -175,7 +175,7 @@ func (m *MockQueries) GetAccountByEntry(entry auth.Entry) (*auth.Account, error)
 	return nil, nil
 }
 
-func (m *MockQueries) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) {
+func (m *MockQueries) GetAccountByLink(linkID uuid.UUID) (*auth.Account, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -183,22 +183,22 @@ func (m *MockQueries) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) 
 		return nil, m.errorToReturn
 	}
 
-	link, exists := m.links[linkId]
+	link, exists := m.links[linkID]
 	if !exists {
 		return nil, nil
 	}
 
 	for _, acc := range m.accounts {
-		if acc.InternalId == link.AccountId {
+		if acc.InternalID == link.AccountID {
 			// Create a copy of the account to avoid modifying the original
 			accountCopy := *acc
-	
+
 			// Populate Links for this account
-			accountCopy.Links = m.getLinksForAccount(acc.InternalId)
-	
+			accountCopy.Links = m.getLinksForAccount(acc.InternalID)
+
 			// Populate ActiveSessions for this account (only active ones)
-			accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalId)
-	
+			accountCopy.ActiveSessions = m.getActiveSessionsForAccount(acc.InternalID)
+
 			return &accountCopy, nil
 		}
 	}
@@ -214,11 +214,11 @@ func (m *MockQueries) InsertApplication(app *auth.Application) error {
 		return m.errorToReturn
 	}
 
-	if app.Id == uuid.Nil {
-		app.Id = uuid.New()
+	if app.ID == uuid.Nil {
+		app.ID = uuid.New()
 	}
-	app.InternalId = len(m.applications) + 1
-	m.applications[app.Id] = app
+	app.InternalID = len(m.applications) + 1
+	m.applications[app.ID] = app
 	return nil
 }
 
@@ -230,15 +230,15 @@ func (m *MockQueries) UpdateApplication(app auth.Application) error {
 		return m.errorToReturn
 	}
 
-	if _, exists := m.applications[app.Id]; !exists {
+	if _, exists := m.applications[app.ID]; !exists {
 		return sql.ErrNoRows
 	}
 
-	m.applications[app.Id] = &app
+	m.applications[app.ID] = &app
 	return nil
 }
 
-func (m *MockQueries) GetApplicationById(id uuid.UUID) (*auth.Application, error) {
+func (m *MockQueries) GetApplicationByID(id uuid.UUID) (*auth.Application, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -262,10 +262,10 @@ func (m *MockQueries) UpsertSessions(sessions ...auth.Session) error {
 	}
 
 	for _, session := range sessions {
-		if session.Id == uuid.Nil {
-			session.Id = uuid.New()
+		if session.ID == uuid.Nil {
+			session.ID = uuid.New()
 		}
-		m.sessions[session.Id] = &session
+		m.sessions[session.ID] = &session
 	}
 	return nil
 }
@@ -280,10 +280,10 @@ func (m *MockQueries) UpsertLinks(links ...auth.Link) error {
 	}
 
 	for _, link := range links {
-		if link.Id == uuid.Nil {
-			link.Id = uuid.New()
+		if link.ID == uuid.Nil {
+			link.ID = uuid.New()
 		}
-		m.links[link.Id] = &link
+		m.links[link.ID] = &link
 	}
 	return nil
 }
@@ -306,19 +306,19 @@ func (m *MockQueries) ClearError() {
 func (m *MockQueries) AddAccount(acc *auth.Account) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if acc.Id == uuid.Nil {
-		acc.Id = uuid.New()
+	if acc.ID == uuid.Nil {
+		acc.ID = uuid.New()
 	}
-	m.accounts[acc.Id] = acc
+	m.accounts[acc.ID] = acc
 }
 
 func (m *MockQueries) AddApplication(app *auth.Application) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if app.Id == uuid.Nil {
-		app.Id = uuid.New()
+	if app.ID == uuid.Nil {
+		app.ID = uuid.New()
 	}
-	m.applications[app.Id] = app
+	m.applications[app.ID] = app
 }
 
 func (m *MockQueries) Clear() {
@@ -344,20 +344,20 @@ func (m *MockQueries) GetAllAccounts() []*auth.Account {
 }
 
 // Helper methods to populate Links and ActiveSessions
-func (m *MockQueries) getLinksForAccount(accountInternalId int) []auth.Link {
+func (m *MockQueries) getLinksForAccount(accountInternalID int) []auth.Link {
 	var links []auth.Link
 	for _, link := range m.links {
-		if link.AccountId == accountInternalId {
+		if link.AccountID == accountInternalID {
 			links = append(links, *link)
 		}
 	}
 	return links
 }
 
-func (m *MockQueries) getActiveSessionsForAccount(accountInternalId int) []auth.Session {
+func (m *MockQueries) getActiveSessionsForAccount(accountInternalID int) []auth.Session {
 	var activeSessions []auth.Session
 	for _, session := range m.sessions {
-		if session.AccountId == accountInternalId && session.IsActive {
+		if session.AccountID == accountInternalID && session.IsActive {
 			activeSessions = append(activeSessions, *session)
 		}
 	}

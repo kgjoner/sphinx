@@ -39,7 +39,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 	t.Run("should issue authorization grant successfully", func(t *testing.T) {
 		grantData := map[string]interface{}{
 			"grant_type":      "authorization_code",
-			"client_id":       mocks.CommonApplication.Id.String(),
+			"client_id":       mocks.CommonApplication.ID.String(),
 			"redirect_uri":    mocks.CommonRedirectUri,
 			"consent_granted": true,
 		}
@@ -64,7 +64,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 				"grant_type":    "authorization_code",
 				"code":          grantResp.Data.Code,
 				"redirect_uri":  mocks.CommonRedirectUri,
-				"client_id":     mocks.CommonApplication.Id.String(),
+				"client_id":     mocks.CommonApplication.ID.String(),
 				"client_secret": mocks.CommonAppSecret,
 			}
 
@@ -80,7 +80,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 
 			assert.NotEmpty(t, tokenResp.Data.AccessToken)
 			assert.NotEmpty(t, tokenResp.Data.RefreshToken)
-			assert.Equal(t, mocks.SimpleUserAccount.Id, tokenResp.Data.AccountId)
+			assert.Equal(t, mocks.SimpleUserAccount.ID, tokenResp.Data.AccountID)
 			assert.Equal(t, config.Env.JWT.ACCESS_LIFETIME_IN_SEC, tokenResp.Data.ExpiresIn)
 		})
 
@@ -92,7 +92,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 			// First issue a new grant
 			grantData := map[string]interface{}{
 				"grant_type":            "authorization_code",
-				"client_id":             mocks.CommonApplication.Id.String(),
+				"client_id":             mocks.CommonApplication.ID.String(),
 				"redirect_uri":          mocks.CommonRedirectUri,
 				"code_challenge":        codeChallenge,
 				"code_challenge_method": "S256",
@@ -111,7 +111,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 				"grant_type":    "authorization_code",
 				"code":          newGrant.Data.Code,
 				"redirect_uri":  mocks.CommonRedirectUri,
-				"client_id":     mocks.CommonApplication.Id.String(),
+				"client_id":     mocks.CommonApplication.ID.String(),
 				"code_verifier": codeVerifier,
 			}
 
@@ -152,7 +152,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 	t.Run("should reject issueGrant without authentication", func(t *testing.T) {
 		grantData := map[string]interface{}{
 			"grant_type":      "authorization_code",
-			"client_id":       mocks.CommonApplication.Id.String(),
+			"client_id":       mocks.CommonApplication.ID.String(),
 			"redirect_uri":    mocks.CommonRedirectUri,
 			"consent_granted": true,
 		}
@@ -168,7 +168,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 	t.Run("should reject issueGrant with no consent provided", func(t *testing.T) {
 		grantData := map[string]interface{}{
 			"grant_type":   "authorization_code",
-			"client_id":    mocks.CommonApplication.Id.String(),
+			"client_id":    mocks.CommonApplication.ID.String(),
 			"redirect_uri": mocks.CommonRedirectUri,
 		}
 
@@ -183,7 +183,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 	t.Run("should reject issueGrant with invalid grant_type", func(t *testing.T) {
 		grantData := map[string]interface{}{
 			"grant_type":      "invalid_grant_type",
-			"client_id":       mocks.CommonApplication.Id.String(),
+			"client_id":       mocks.CommonApplication.ID.String(),
 			"redirect_uri":    mocks.CommonRedirectUri,
 			"consent_granted": true,
 		}
@@ -198,7 +198,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 	t.Run("should reject issueGrant with invalid redirect_uri", func(t *testing.T) {
 		grantData := map[string]interface{}{
 			"grant_type":      "authorization_code",
-			"client_id":       mocks.CommonApplication.Id.String(),
+			"client_id":       mocks.CommonApplication.ID.String(),
 			"redirect_uri":    "invalid-uri",
 			"consent_granted": true,
 		}
@@ -229,7 +229,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 	t.Run("should reject issueGrant with not registered redirect_uri", func(t *testing.T) {
 		grantData := map[string]interface{}{
 			"grant_type":      "authorization_code",
-			"client_id":       mocks.CommonApplication.Id.String(),
+			"client_id":       mocks.CommonApplication.ID.String(),
 			"redirect_uri":    "https://unregistered-uri.com/callback",
 			"consent_granted": true,
 		}
@@ -244,13 +244,13 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 	t.Run("should reject invalid exchangeGrant requests", func(t *testing.T) {
 		// Grant must be issued for each individual test because once it has been tried to exchange,
 		// it cannot be reused
-		
+
 		// Unprocessable Entity Errors
 		t.Run("should reject exchangeGrant with invalid grant_type", func(t *testing.T) {
 			// First issue a new grant
 			grantData := map[string]interface{}{
 				"grant_type":      "authorization_code",
-				"client_id":       mocks.CommonApplication.Id.String(),
+				"client_id":       mocks.CommonApplication.ID.String(),
 				"redirect_uri":    mocks.CommonRedirectUri,
 				"consent_granted": true,
 			}
@@ -269,7 +269,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			exchangeData := map[string]interface{}{
 				"grant_type":    "invalid_grant_type",
 				"code":          grant.Data.Code,
-				"client_id":     mocks.CommonApplication.Id.String(),
+				"client_id":     mocks.CommonApplication.ID.String(),
 				"client_secret": mocks.CommonAppSecret,
 				"redirect_uri":  mocks.CommonRedirectUri,
 			}
@@ -285,7 +285,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			// First issue a new grant
 			grantData := map[string]interface{}{
 				"grant_type":      "authorization_code",
-				"client_id":       mocks.CommonApplication.Id.String(),
+				"client_id":       mocks.CommonApplication.ID.String(),
 				"redirect_uri":    mocks.CommonRedirectUri,
 				"consent_granted": true,
 			}
@@ -304,7 +304,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			exchangeData := map[string]interface{}{
 				"grant_type":   "authorization_code",
 				"code":         grant.Data.Code,
-				"client_id":    mocks.CommonApplication.Id.String(),
+				"client_id":    mocks.CommonApplication.ID.String(),
 				"redirect_uri": mocks.CommonRedirectUri,
 			}
 
@@ -320,7 +320,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			exchangeData := map[string]interface{}{
 				"grant_type":    "authorization_code",
 				"code":          "invalid_code",
-				"client_id":     mocks.CommonApplication.Id.String(),
+				"client_id":     mocks.CommonApplication.ID.String(),
 				"client_secret": mocks.CommonAppSecret,
 				"redirect_uri":  mocks.CommonRedirectUri,
 			}
@@ -336,7 +336,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			// First issue a new grant
 			grantData := map[string]interface{}{
 				"grant_type":      "authorization_code",
-				"client_id":       mocks.CommonApplication.Id.String(),
+				"client_id":       mocks.CommonApplication.ID.String(),
 				"redirect_uri":    mocks.CommonRedirectUri,
 				"consent_granted": true,
 			}
@@ -351,11 +351,11 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			err = json.NewDecoder(grantResp.Body).Decode(&grant)
 			require.NoError(t, err)
 
-			// Try to exchange with wrong client_secret	
+			// Try to exchange with wrong client_secret
 			exchangeData := map[string]interface{}{
 				"grant_type":    "authorization_code",
 				"code":          grant.Data.Code,
-				"client_id":     mocks.CommonApplication.Id.String(),
+				"client_id":     mocks.CommonApplication.ID.String(),
 				"client_secret": "wrong_secret",
 				"redirect_uri":  mocks.CommonRedirectUri,
 			}
@@ -371,7 +371,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			// First issue a new grant
 			grantData := map[string]interface{}{
 				"grant_type":      "authorization_code",
-				"client_id":       mocks.CommonApplication.Id.String(),
+				"client_id":       mocks.CommonApplication.ID.String(),
 				"redirect_uri":    mocks.CommonRedirectUri,
 				"consent_granted": true,
 			}
@@ -390,7 +390,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			exchangeData := map[string]interface{}{
 				"grant_type":    "authorization_code",
 				"code":          grant.Data.Code,
-				"client_id":     mocks.CommonApplication.Id.String(),
+				"client_id":     mocks.CommonApplication.ID.String(),
 				"client_secret": mocks.CommonAppSecret,
 				"redirect_uri":  "https://different.com/callback",
 			}
@@ -406,7 +406,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			// First issue a new grant
 			grantData := map[string]interface{}{
 				"grant_type":      "authorization_code",
-				"client_id":       mocks.CommonApplication.Id.String(),
+				"client_id":       mocks.CommonApplication.ID.String(),
 				"redirect_uri":    mocks.CommonRedirectUri,
 				"consent_granted": true,
 			}
@@ -425,7 +425,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 			exchangeData := map[string]interface{}{
 				"grant_type":    "authorization_code",
 				"code":          grant.Data.Code,
-				"client_id":     mocks.RootApplication.Id.String(),
+				"client_id":     mocks.RootApplication.ID.String(),
 				"client_secret": mocks.RootAppSecret,
 				"redirect_uri":  mocks.CommonRedirectUri,
 			}
@@ -460,7 +460,7 @@ func TestOAuthGrantExpiration(t *testing.T) {
 		// Issue grant
 		grantData := map[string]interface{}{
 			"grant_type":      "authorization_code",
-			"client_id":       mocks.CommonApplication.Id.String(),
+			"client_id":       mocks.CommonApplication.ID.String(),
 			"redirect_uri":    mocks.CommonRedirectUri,
 			"consent_granted": true,
 		}
@@ -478,7 +478,7 @@ func TestOAuthGrantExpiration(t *testing.T) {
 			"grant_type":    "authorization_code",
 			"code":          grant.Data.Code,
 			"redirect_uri":  mocks.CommonRedirectUri,
-			"client_id":     mocks.CommonApplication.Id.String(),
+			"client_id":     mocks.CommonApplication.ID.String(),
 			"client_secret": mocks.CommonAppSecret,
 		}
 

@@ -45,7 +45,7 @@ func TestAccountCreation(t *testing.T) {
 		assert.Empty(t, respData.Data.Password)
 		assert.Zero(t, respData.Data.ExtraData.Address)
 
-		acc, err := ts.server.GetMockQueries().GetAccountById(respData.Data.Id)
+		acc, err := ts.server.GetMockQueries().GetAccountByID(respData.Data.ID)
 		require.NoError(t, err)
 		require.NotNil(t, acc)
 
@@ -63,16 +63,16 @@ func TestAccountCreation(t *testing.T) {
 		assert.False(t, acc.HasEmailBeenVerified)
 
 		t.Run("should verify email", func(t *testing.T) {
-			resp, err := ts.Request("PATCH", "/account/"+respData.Data.Id.String()+"/verification", map[string]string{
-				"code":     acc.VerificationCodes[auth.VerificationEmail],
-				"codeKind": string(auth.VerificationEmail),
+			resp, err := ts.Request("PATCH", "/account/"+respData.Data.ID.String()+"/verification", map[string]string{
+				"code": acc.VerificationCodes[auth.VerificationEmail],
+				"kind": string(auth.VerificationEmail),
 			}, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
 			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-			acc, err := ts.server.GetMockQueries().GetAccountById(respData.Data.Id)
+			acc, err := ts.server.GetMockQueries().GetAccountByID(respData.Data.ID)
 			require.NoError(t, err)
 			require.NotNil(t, acc)
 			assert.True(t, acc.HasEmailBeenVerified)
@@ -95,7 +95,7 @@ func TestAccountCreation(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
-		acc, err := ts.server.GetMockQueries().GetAccountById(respData.Data.Id)
+		acc, err := ts.server.GetMockQueries().GetAccountByID(respData.Data.ID)
 		require.NoError(t, err)
 		require.NotNil(t, acc)
 
@@ -336,7 +336,7 @@ func TestPasswordReset(t *testing.T) {
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 		t.Run("should reset password", func(t *testing.T) {
-			acc, err := ts.server.GetMockQueries().GetAccountById(accData.Data.Id)
+			acc, err := ts.server.GetMockQueries().GetAccountByID(accData.Data.ID)
 			require.NoError(t, err)
 			require.NotNil(t, acc)
 
@@ -345,7 +345,7 @@ func TestPasswordReset(t *testing.T) {
 				"newPassword": newPassword,
 			}
 
-			resp, err := ts.Request("PATCH", "/account/"+acc.Id.String()+"/password", resetData, nil)
+			resp, err := ts.Request("PATCH", "/account/"+acc.ID.String()+"/password", resetData, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 

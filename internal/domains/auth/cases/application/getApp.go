@@ -13,11 +13,11 @@ type GetApp struct {
 }
 
 type GetAppInput struct {
-	ApplicationId uuid.UUID
+	ApplicationID uuid.UUID
 }
 
 func (i GetApp) Execute(input GetAppInput) (*auth.Application, error) {
-	app, err := i.AuthRepo.GetApplicationById(input.ApplicationId)
+	app, err := i.AuthRepo.GetApplicationByID(input.ApplicationID)
 	if err != nil {
 		return nil, err
 	} else if app == nil {

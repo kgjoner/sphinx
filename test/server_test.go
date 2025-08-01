@@ -66,7 +66,7 @@ func TestAccount(t *testing.T) {
 		assert.Equal(t, 200, resp.StatusCode)
 		assert.NotZero(t, respData.Data.RefreshToken)
 		assert.NotZero(t, respData.Data.AccessToken)
-		assert.NotZero(t, respData.Data.AccountId)
+		assert.NotZero(t, respData.Data.AccountID)
 
 		t.Run("it should retrieve user info", func(t *testing.T) {
 			var respData presenter.Success[auth.AccountPrivateView]

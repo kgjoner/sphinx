@@ -21,7 +21,7 @@ type ExchangeGrantInput struct {
 
 func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput, error) {
 	var grant *auth.AuthorizationGrant
-	err := i.CacheRepo.GetJson("grant:"+input.Code, &grant)
+	err := i.CacheRepo.GetJSON("grant:"+input.Code, &grant)
 	if err != nil {
 		if err == cache.ErrNil {
 			return nil, normalizederr.NewUnauthorizedError("Invalid code", errcode.InvalidCredentials)
@@ -30,10 +30,10 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	}
 
 	// Clear grant from cache independent of outcome
-	defer func() { i.CacheRepo.Clear("grant:"+grant.Code) }()
+	defer func() { i.CacheRepo.Clear("grant:" + grant.Code) }()
 
 	// Get account by link ID
-	acc, err := i.AuthRepo.GetAccountByLink(grant.LinkId)
+	acc, err := i.AuthRepo.GetAccountByLink(grant.LinkID)
 	if err != nil {
 		return nil, err
 	} else if acc == nil {
@@ -47,7 +47,7 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	}
 
 	// Create session
-	input.SessionCreationFields.Application.Id = input.ClientId
+	input.SessionCreationFields.Application.ID = input.ClientID
 	access, refresh, err := acc.InitSession(&input.SessionCreationFields)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	}
 
 	return &authcase.LoginOutput{
-		AccountId:    acc.Id,
+		AccountID:    acc.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
 		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,

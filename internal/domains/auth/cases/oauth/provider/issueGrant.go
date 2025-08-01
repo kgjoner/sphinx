@@ -30,14 +30,14 @@ func (i IssueGrant) Execute(input IssueGrantInput) (*IssueGrantOutput, error) {
 	}
 
 	// Create authorization grant
-	grant, err := input.Actor.IssueAuthorizationGrant(&input.AuthorizationGrantCreationFields, input.ClientId)
+	grant, err := input.Actor.IssueAuthorizationGrant(&input.AuthorizationGrantCreationFields, input.ClientID)
 	if err != nil {
 		if normerr, ok := err.(normalizederr.NormalizedError); ok && normerr.Code == errcode.NoConsent {
 			actorWithConsent, err := i.CreateConsentIfGranted(input)
 			if err != nil {
 				return nil, err
 			}
-			grant, err = actorWithConsent.IssueAuthorizationGrant(&input.AuthorizationGrantCreationFields, input.ClientId)
+			grant, err = actorWithConsent.IssueAuthorizationGrant(&input.AuthorizationGrantCreationFields, input.ClientID)
 			if err != nil {
 				return nil, err
 			}
@@ -47,7 +47,7 @@ func (i IssueGrant) Execute(input IssueGrantInput) (*IssueGrantOutput, error) {
 	}
 
 	// Cache the grant with TTL
-	err = i.CacheRepo.CacheJson("grant:"+grant.Code, grant, time.Duration(config.Env.AUTH_GRANT_LIFETIME_IN_SEC)*time.Second)
+	err = i.CacheRepo.CacheJSON("grant:"+grant.Code, grant, time.Duration(config.Env.AUTH_GRANT_LIFETIME_IN_SEC)*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (i IssueGrant) CreateConsentIfGranted(input IssueGrantInput) (*auth.Account
 		return nil, normalizederr.NewForbiddenError("User has not consented to this application.", errcode.NoConsent)
 	}
 
-	app, err := i.AuthRepo.GetApplicationById(input.ClientId)
+	app, err := i.AuthRepo.GetApplicationByID(input.ClientID)
 	if err != nil {
 		return nil, err
 	} else if app == nil {

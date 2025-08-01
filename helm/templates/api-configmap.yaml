@@ -11,7 +11,7 @@ data:
   FALLBACK_LANGUAGE: {{ .Values.configMap.fallbackLanguage }}
   JWT_ACCESS_LIFETIME_IN_SEC: {{ .Values.configMap.jwtAccessLifetimeInSec | quote }}
   JWT_REFRESH_LIFETIME_IN_SEC: {{ .Values.configMap.jwtRefreshLifetimeInSec | quote }}
-  HERMES_BASE_URL: {{ .Values.configMap.hermesBaseUrl }}
-  CLIENT_BASE_URL: {{ .Values.configMap.clientBaseUrl }}
+  HERMES_BASE_URL: {{ .Values.configMap.hermesBaseURL }}
+  CLIENT_BASE_URL: {{ .Values.configMap.clientBaseURL }}
   CLIENT_DATA_VERIFICATION: {{ .Values.configMap.clientDataVerification }}
   CLIENT_PASSWORD_RESET: {{ .Values.configMap.clientPasswordReset }}

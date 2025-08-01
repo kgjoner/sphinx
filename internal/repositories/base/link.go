@@ -14,9 +14,9 @@ func (q DAO) UpsertLinks(links ...auth.Link) error {
 	}
 
 	type formattedLink struct {
-		Id            uuid.UUID   `json:"id" validate:"required"`
-		AccountId     int         `json:"account_id" validate:"required"`
-		ApplicationId int         `json:"application_id"`
+		ID            uuid.UUID   `json:"id" validate:"required"`
+		AccountID     int         `json:"account_id" validate:"required"`
+		ApplicationID int         `json:"application_id"`
 		Roles         []auth.Role `json:"roles"`
 		HasConsent    bool        `json:"has_consent"`
 
@@ -28,7 +28,7 @@ func (q DAO) UpsertLinks(links ...auth.Link) error {
 	for _, l := range links {
 		isDuplicated := false
 		for _, f := range formattedLinks {
-			if f.Id == l.Id {
+			if f.ID == l.ID {
 				isDuplicated = true
 				break
 			}
@@ -38,9 +38,9 @@ func (q DAO) UpsertLinks(links ...auth.Link) error {
 		}
 
 		formattedLink := formattedLink{
-			l.Id,
-			l.AccountId,
-			l.Application.InternalId,
+			l.ID,
+			l.AccountID,
+			l.Application.InternalID,
 			l.Roles,
 			l.HasConsent,
 			l.CreatedAt,

@@ -31,7 +31,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 		return nil, err
 	}
 
-	app, err := i.AuthRepo.GetApplicationById(uuid.MustParse(config.Env.ROOT_APP_ID))
+	app, err := i.AuthRepo.GetApplicationByID(uuid.MustParse(config.Env.ROOT_APP_ID))
 	if err != nil {
 		return nil, err
 	} else if app == nil {
@@ -50,7 +50,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 	}
 
 	return &LoginOutput{
-		AccountId:    acc.Id,
+		AccountID:    acc.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
 		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
@@ -58,7 +58,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 }
 
 type LoginOutput struct {
-	AccountId    uuid.UUID `json:"accountId"`
+	AccountID    uuid.UUID `json:"accountID"`
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken"`
 	ExpiresIn    int       `json:"expiresIn"`

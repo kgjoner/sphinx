@@ -15,14 +15,14 @@ type ResetPassword struct {
 }
 
 type ResetPasswordInput struct {
-	AccountId   uuid.UUID `json:"-"`
+	AccountID   uuid.UUID `json:"-"`
 	Code        string
 	NewPassword string
-	Languages   []string         `json:"-"`
+	Languages   []string `json:"-"`
 }
 
 func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
-	acc, err := i.AuthRepo.GetAccountById(input.AccountId)
+	acc, err := i.AuthRepo.GetAccountByID(input.AccountID)
 	if err != nil {
 		return false, err
 	} else if acc == nil {

@@ -25,7 +25,7 @@ func (i Refresh) Execute(input RefreshInput) (*LoginOutput, error) {
 	}
 
 	return &LoginOutput{
-		AccountId:    input.Actor.Id,
+		AccountID:    input.Actor.ID,
 		AccessToken:  accessToken.String(),
 		RefreshToken: refreshToken.String(),
 		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,

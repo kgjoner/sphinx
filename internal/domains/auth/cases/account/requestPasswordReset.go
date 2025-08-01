@@ -19,8 +19,8 @@ type RequestPasswordReset struct {
 }
 
 type RequestPasswordResetInput struct {
-	Entry       auth.Entry
-	Languages   []string         `json:"-"`
+	Entry     auth.Entry
+	Languages []string `json:"-"`
 }
 
 func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, error) {
@@ -54,7 +54,7 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 				Link: fmt.Sprintf(
 					"%v?id=%v&code=%v",
 					config.Env.CLIENT.PASSWORD_RESET,
-					acc.Id,
+					acc.ID,
 					code,
 				),
 			},

@@ -14,8 +14,8 @@ import (
 )
 
 type Application struct {
-	InternalId    int       `json:"-"`
-	Id            uuid.UUID `json:"id" validate:"required"`
+	InternalID    int       `json:"-"`
+	ID            uuid.UUID `json:"id" validate:"required"`
 	Name          string    `json:"name" validate:"required"`
 	PossibleRoles []Role    `json:"possibleRoles"`
 
@@ -47,7 +47,7 @@ func NewApplication(f *ApplicationCreationFields, actor Account) (app *Applicati
 	secret = generateAppSecret()
 	now := time.Now()
 	created := &Application{
-		Id:            uuid.New(),
+		ID:            uuid.New(),
 		Name:          f.Name,
 		PossibleRoles: f.PossibleRoles,
 
@@ -77,7 +77,7 @@ type ApplicationEditableFields struct {
 
 func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 	actorApp := actor.AuthedSession.Application
-	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(RoleAdmin) {
+	if actorApp.ID != a.ID || !actor.HasRoleOnAuth(RoleAdmin) {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
@@ -88,7 +88,7 @@ func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 
 func (a *Application) GenerateNewSecret(actor Account) (secret string, err error) {
 	actorApp := actor.AuthedSession.Application
-	if actorApp.Id != a.Id || !actor.HasRoleOnAuth(RoleAdmin) {
+	if actorApp.ID != a.ID || !actor.HasRoleOnAuth(RoleAdmin) {
 		return "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
@@ -99,7 +99,7 @@ func (a *Application) GenerateNewSecret(actor Account) (secret string, err error
 }
 
 func (a Application) isRoot() bool {
-	return a.Id.String() == config.Env.ROOT_APP_ID
+	return a.ID.String() == config.Env.ROOT_APP_ID
 }
 
 func (a *Application) DoesSecretMatch(secret string) bool {

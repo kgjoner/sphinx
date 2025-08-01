@@ -15,9 +15,9 @@ func (q DAO) UpsertSessions(sessions ...auth.Session) error {
 	}
 
 	type formattedSession struct {
-		Id                             uuid.UUID       `json:"id" validate:"required"`
-		AccountId                      int             `json:"account_id" validate:"required"`
-		ApplicationId                  int             `json:"application_id"`
+		ID                             uuid.UUID       `json:"id" validate:"required"`
+		AccountID                      int             `json:"account_id" validate:"required"`
+		ApplicationID                  int             `json:"application_id"`
 		RefreshToken                   string          `json:"refresh_token" validate:"required"`
 		RefreshedAt                    htypes.NullTime `json:"refreshed_at"`
 		ElapsedMinutesBetweenRefreshes []int           `json:"elapsed_minutes_between_refreshes"`
@@ -34,7 +34,7 @@ func (q DAO) UpsertSessions(sessions ...auth.Session) error {
 	for _, s := range sessions {
 		isDuplicated := false
 		for _, f := range formattedSessions {
-			if f.Id == s.Id {
+			if f.ID == s.ID {
 				isDuplicated = true
 				break
 			}
@@ -44,9 +44,9 @@ func (q DAO) UpsertSessions(sessions ...auth.Session) error {
 		}
 
 		formattedSession := formattedSession{
-			s.Id,
-			s.AccountId,
-			s.Application.InternalId,
+			s.ID,
+			s.AccountID,
+			s.Application.InternalID,
 			s.RefreshToken,
 			s.RefreshedAt,
 			s.ElapsedMinutesBetweenRefreshes,

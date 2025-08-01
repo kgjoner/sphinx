@@ -19,7 +19,7 @@ import (
 // to facilitate caching as JSON; be careful when sending them out.
 type AuthorizationGrant struct {
 	Type        string    `json:"grantType" validate:"required,oneof=authorization_code"`
-	LinkId      uuid.UUID `json:"linkId" validate:"required"`
+	LinkID      uuid.UUID `json:"linkID" validate:"required"`
 	ExpiresAt   time.Time `json:"expiresAt" validate:"required"`
 	RedirectUri string    `json:"redirectUri" validate:"required,uri"`
 	IsUsed      bool      `json:"isUsed"`
@@ -36,14 +36,14 @@ type AuthorizationGrant struct {
 
 type AuthorizationGrantCreationFields struct {
 	Type                string    `json:"grant_type" validate:"required,oneof=authorization_code"`
-	ClientId            uuid.UUID `json:"client_id" validate:"required"` // Application ID
+	ClientID            uuid.UUID `json:"client_id" validate:"required"` // Application ID
 	RedirectUri         string    `json:"redirect_uri" validate:"required,uri"`
 	CodeChallenge       string    `json:"code_challenge"`
 	CodeChallengeMethod string    `json:"code_challenge_method" validate:"oneof=S256 plain"`
 }
 
 func newAuthorizationGrant(acc Account, g *AuthorizationGrantCreationFields) (*AuthorizationGrant, error) {
-	link := acc.link(g.ClientId)
+	link := acc.link(g.ClientID)
 	if link == nil || !link.HasConsent {
 		return nil, normalizederr.NewForbiddenError("user has not consented to this application", errcode.NoConsent)
 	}
@@ -73,7 +73,7 @@ func newAuthorizationGrant(acc Account, g *AuthorizationGrantCreationFields) (*A
 	grant := &AuthorizationGrant{
 		Type:                g.Type,
 		Code:                code,
-		LinkId:              link.Id,
+		LinkID:              link.ID,
 		ExpiresAt:           now.Add(time.Second * time.Duration(config.Env.AUTH_GRANT_LIFETIME_IN_SEC)),
 		RedirectUri:         g.RedirectUri,
 		CodeChallenge:       g.CodeChallenge,
@@ -115,7 +115,7 @@ type GrantCredentials struct {
 	GrantType   string    `json:"grant_type" validate:"required,oneof=authorization_code"`
 	Code        string    `json:"code" validate:"required"`
 	RedirectUri string    `json:"redirect_uri" validate:"required,uri"`
-	ClientId    uuid.UUID `json:"client_id" validate:"required"` // Application ID
+	ClientID    uuid.UUID `json:"client_id" validate:"required"` // Application ID
 
 	AppSecret    string `json:"client_secret"` // For confidential clients
 	CodeVerifier string `json:"code_verifier"` // For PKCE (public clients)
@@ -145,8 +145,8 @@ func (g *AuthorizationGrant) use(acc Account, credentials *GrantCredentials) err
 	}
 
 	// Check link mataches
-	link := acc.link(credentials.ClientId)
-	if link == nil || link.Id != g.LinkId {
+	link := acc.link(credentials.ClientID)
+	if link == nil || link.ID != g.LinkID {
 		return normalizederr.NewUnauthorizedError("Invalid consent", errcode.InvalidCredentials)
 	}
 
@@ -159,7 +159,7 @@ func (g *AuthorizationGrant) use(acc Account, credentials *GrantCredentials) err
 	}
 
 	// Check simple credentials matches
-	if credentials.GrantType != g.Type || credentials.Code != g.Code || credentials.RedirectUri != g.RedirectUri || credentials.ClientId != link.Application.Id {
+	if credentials.GrantType != g.Type || credentials.Code != g.Code || credentials.RedirectUri != g.RedirectUri || credentials.ClientID != link.Application.ID {
 		return normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 

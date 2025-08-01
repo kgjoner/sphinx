@@ -69,7 +69,7 @@ func New() *TestServer {
 			w.Write(img.Logo)
 		})
 		r.Get("/style", func(w http.ResponseWriter, r *http.Request) {
-			presenter.HttpSuccess(style.Root, w, r)
+			presenter.HTTPSuccess(style.Root, w, r)
 		})
 	})
 

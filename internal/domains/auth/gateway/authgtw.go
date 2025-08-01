@@ -54,14 +54,14 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		JsonBody().
+		JSONBody().
 		AddIp().
 		AddHeader("user-agent", "device")
 
 	var input authcase.LoginInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
@@ -72,11 +72,11 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HTTPSuccess(output, w, r)
 }
 
 // Logout godoc
@@ -99,7 +99,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	var input authcase.LogoutInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
@@ -110,11 +110,11 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r, http.StatusNoContent)
+	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
 // Init OAuth godoc
@@ -132,29 +132,29 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		JsonBody().
+		JSONBody().
 		AddActor()
 
 	var input oauthcase.IssueGrantInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
 	i := oauthcase.IssueGrant{
-		AuthRepo: queries,
+		AuthRepo:  queries,
 		CacheRepo: g.CachePool.NewDAO(r.Context()),
 	}
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HTTPSuccess(output, w, r)
 }
 
 // Login via OAuth godoc
@@ -172,30 +172,30 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		JsonBody().
+		JSONBody().
 		AddIp().
 		AddHeader("user-agent", "device")
 
 	var input oauthcase.ExchangeGrantInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
 	i := oauthcase.ExchangeGrant{
-		AuthRepo: queries,
+		AuthRepo:  queries,
 		CacheRepo: g.CachePool.NewDAO(r.Context()),
 	}
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HTTPSuccess(output, w, r)
 }
 
 // Refresh godoc
@@ -218,7 +218,7 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 	var input authcase.RefreshInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
@@ -229,9 +229,9 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HTTPSuccess(output, w, r)
 }

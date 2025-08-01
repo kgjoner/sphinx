@@ -9,9 +9,9 @@ import (
 )
 
 type Session struct {
-	InternalId                     int             `json:"-"`
-	Id                             uuid.UUID       `json:"id" validate:"required"`
-	AccountId                      int             `json:"accountId" validate:"required"`
+	InternalID                     int             `json:"-"`
+	ID                             uuid.UUID       `json:"id" validate:"required"`
+	AccountID                      int             `json:"accountID" validate:"required"`
 	Application                    Application     `json:"application" validate:"required"`
 	RefreshToken                   string          `json:"refreshToken" validate:"required"`
 	RefreshedAt                    htypes.NullTime `json:"refreshedAt"`
@@ -38,8 +38,8 @@ type SessionCreationFields struct {
 func newSession(acc Account, f *SessionCreationFields) *Session {
 	now := time.Now()
 	s := &Session{
-		Id:                             uuid.New(),
-		AccountId:                      acc.InternalId,
+		ID:                             uuid.New(),
+		AccountID:                      acc.InternalID,
 		Application:                    f.Application,
 		Device:                         f.Device,
 		Ip:                             f.Ip,

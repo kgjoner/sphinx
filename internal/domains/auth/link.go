@@ -11,9 +11,9 @@ import (
 )
 
 type Link struct {
-	InternalId  int         `json:"-"`
-	Id          uuid.UUID   `json:"id" validate:"required"`
-	AccountId   int         `json:"-" validate:"required"`
+	InternalID  int         `json:"-"`
+	ID          uuid.UUID   `json:"id" validate:"required"`
+	AccountID   int         `json:"-" validate:"required"`
 	Application Application `json:"application" validate:"required"`
 	Roles       []Role      `json:"roles"`
 	HasConsent  bool        `json:"hasConsent"`
@@ -29,8 +29,8 @@ type Link struct {
 func newLink(acc *Account, app Application) *Link {
 	now := time.Now()
 	consent := &Link{
-		Id:          uuid.New(),
-		AccountId:   acc.InternalId,
+		ID:          uuid.New(),
+		AccountID:   acc.InternalID,
 		Application: app,
 		HasConsent:  true,
 

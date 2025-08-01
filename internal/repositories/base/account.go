@@ -16,7 +16,7 @@ func (q DAO) InsertAccount(acc *auth.Account) error {
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw,
-		acc.Id,
+		acc.ID,
 		acc.Email.String(),
 		acc.Password,
 		datatransform.ToNullString(acc.Phone.String()),
@@ -30,7 +30,7 @@ func (q DAO) InsertAccount(acc *auth.Account) error {
 		acc.HasPhoneBeenVerified,
 		datatransform.ToRawMessage(acc.VerificationCodes),
 	)
-	err := row.Scan(&acc.InternalId)
+	err := row.Scan(&acc.InternalID)
 	return err
 }
 
@@ -41,7 +41,7 @@ func (q DAO) UpdateAccount(acc auth.Account) error {
 	}
 
 	_, err := q.db.ExecContext(q.ctx, raw,
-		acc.Id,
+		acc.ID,
 		acc.Email.String(),
 		acc.Password,
 		datatransform.ToNullString(acc.Phone.String()),
@@ -60,8 +60,8 @@ func (q DAO) UpdateAccount(acc auth.Account) error {
 	return err
 }
 
-func (q DAO) GetAccountById(id uuid.UUID) (*auth.Account, error) {
-	raw, exists := rawQueries["GetAccountById"]
+func (q DAO) GetAccountByID(id uuid.UUID) (*auth.Account, error) {
+	raw, exists := rawQueries["GetAccountByID"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
@@ -69,8 +69,8 @@ func (q DAO) GetAccountById(id uuid.UUID) (*auth.Account, error) {
 	row := q.db.QueryRowContext(q.ctx, raw, id)
 	var item auth.Account
 	err := row.Scan(
-		&item.InternalId,
-		&item.Id,
+		&item.InternalID,
+		&item.ID,
 		&item.Email,
 		&item.Phone,
 		&item.Password,
@@ -107,8 +107,8 @@ func (q DAO) GetAccountByEntry(entry auth.Entry) (*auth.Account, error) {
 	row := q.db.QueryRowContext(q.ctx, raw, entry.String())
 	var item auth.Account
 	err := row.Scan(
-		&item.InternalId,
-		&item.Id,
+		&item.InternalID,
+		&item.ID,
 		&item.Email,
 		&item.Phone,
 		&item.Password,
@@ -136,17 +136,17 @@ func (q DAO) GetAccountByEntry(entry auth.Entry) (*auth.Account, error) {
 	return &item, nil
 }
 
-func (q DAO) GetAccountByLink(linkId uuid.UUID) (*auth.Account, error) {
+func (q DAO) GetAccountByLink(linkID uuid.UUID) (*auth.Account, error) {
 	raw, exists := rawQueries["GetAccountByLink"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, linkId)
+	row := q.db.QueryRowContext(q.ctx, raw, linkID)
 	var item auth.Account
 	err := row.Scan(
-		&item.InternalId,
-		&item.Id,
+		&item.InternalID,
+		&item.ID,
 		&item.Email,
 		&item.Phone,
 		&item.Password,

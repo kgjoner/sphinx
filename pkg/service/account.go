@@ -50,7 +50,7 @@ func (s Service) EmailOf(target string) (htypes.Email, error) {
 	_, err := s.httpApi.Get("/account/email", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
-			"X-Target": target,
+			"X-Target":      target,
 		},
 	})(&respData)
 
@@ -62,16 +62,16 @@ func (s Service) EmailOf(target string) (htypes.Email, error) {
 }
 
 // Create a simple account for the informed email.
-func (s Service) NewAccount(email htypes.Email, password string) (accountId uuid.UUID, err error) {
+func (s Service) NewAccount(email htypes.Email, password string) (accountID uuid.UUID, err error) {
 	body := map[string]any{
-		"email": email,
+		"email":    email,
 		"password": password,
 	}
 
 	var respData presenter.Success[Account]
 	_, err = s.httpApi.Post("/account", body, &httputil.Options{
 		Headers: map[string]string{
-			"X-App": s.appId,
+			"X-App": s.appID,
 		},
 	})(&respData)
 
@@ -79,7 +79,7 @@ func (s Service) NewAccount(email htypes.Email, password string) (accountId uuid
 		return uuid.Nil, err
 	}
 
-	return respData.Data.Id, nil
+	return respData.Data.ID, nil
 }
 
 // Check whether entry exists.
@@ -99,12 +99,12 @@ func (s Service) DoesEntryExist(entry string) (bool, error) {
 }
 
 // Get account id by their entry. Return nil if entry is not found.
-func (s Service) AccountIdByEntry(entry string) (*uuid.UUID, error) {
+func (s Service) AccountIDByEntry(entry string) (*uuid.UUID, error) {
 	var respData presenter.Success[*uuid.UUID]
 	_, err := s.httpApi.Get("/account/id", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
-			"X-Entry": entry,
+			"X-Entry":       entry,
 		},
 	})(&respData)
 

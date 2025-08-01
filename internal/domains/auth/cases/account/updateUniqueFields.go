@@ -72,7 +72,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 					Link: fmt.Sprintf(
 						"%v?kind=email&action=cancel&id=%v",
 						config.Env.CLIENT.DATA_VERIFICATION,
-						targetAcc.Id,
+						targetAcc.ID,
 					),
 				},
 			},
@@ -95,7 +95,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 					Link: fmt.Sprintf(
 						"%v?kind=email&id=%v&code=%v",
 						config.Env.CLIENT.DATA_VERIFICATION,
-						targetAcc.Id,
+						targetAcc.ID,
 						targetAcc.VerificationCodes[auth.VerificationEmail],
 					),
 				},
@@ -114,6 +114,6 @@ func (i UpdateUniqueFields) handleError(err error, target auth.Account, scope st
 	logrus.WithFields(logrus.Fields{
 		"Kind":  "Mail Failed",
 		"Path":  "UpdateUniqueFields:" + scope,
-		"Actor": target.Id,
+		"Actor": target.ID,
 	}).Log(logrus.ErrorLevel, err.Error())
 }

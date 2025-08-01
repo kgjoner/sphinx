@@ -27,7 +27,7 @@ SET
 WHERE
   id = $1;
 
--- name: GetApplicationById :one
+-- name: GetApplicationByID :one
 SELECT
   internal_id,
   id,

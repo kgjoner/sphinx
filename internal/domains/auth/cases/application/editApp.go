@@ -13,13 +13,13 @@ type EditApp struct {
 }
 
 type EditAppInput struct {
-	ApplicationId uuid.UUID
+	ApplicationID uuid.UUID
 	auth.ApplicationEditableFields
 	Actor auth.Account `json:"-"`
 }
 
 func (i EditApp) Execute(input EditAppInput) (*auth.Application, error) {
-	app, err := i.AuthRepo.GetApplicationById(input.ApplicationId)
+	app, err := i.AuthRepo.GetApplicationByID(input.ApplicationID)
 	if err != nil {
 		return nil, err
 	} else if app == nil {

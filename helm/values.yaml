@@ -22,9 +22,9 @@ ingress:
 secret:
   # existentName:
   # If existentName is set, below configurations will not be used 
-  databaseUrl: postgres://postgres:postgres@sphinx-db:5432/sphinx
-  redisUrl: redis://redis:redis@rdb:6379/0
-  rootAppId: 80cadd74-5ccd-41c4-9938-3c8961be04db
+  databaseURL: postgres://postgres:postgres@sphinx-db:5432/sphinx
+  redisURL: redis://redis:redis@rdb:6379/0
+  rootAppID: 80cadd74-5ccd-41c4-9938-3c8961be04db
   jwtSecret: mysecret
   hermesApiKey: mysecret
 
@@ -35,8 +35,8 @@ configMap:
   fallbackLanguage: pt-br
   jwtAccessLifetimeInSec: "300"
   jwtRefreshLifetimeInSec: "15552000"
-  hermesBaseUrl: hermes/v1
-  clientBaseUrl: sphinx.com.br
+  hermesBaseURL: hermes/v1
+  clientBaseURL: sphinx.com.br
   clientDataVerification: /verification
   clientPasswordReset: /password/reset
 

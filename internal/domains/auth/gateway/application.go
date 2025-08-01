@@ -33,13 +33,13 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		JsonBody().
+		JSONBody().
 		AddActor()
 
 	var input appcase.CreateApplicationInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
@@ -50,11 +50,11 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HTTPSuccess(output, w, r)
 }
 
 // EditApplication godoc
@@ -66,7 +66,7 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string							true	"Id of target application"
+//	@Param			id		path		string							true	"ID of target application"
 //	@Param			payload	body		auth.ApplicationEditableFields	true	"If grantings are passed, the new ones (even if empty array) will overwrite old ones."
 //	@Success		200		{object}	presenter.Success[auth.Application]
 //	@Failure		400		{object}	normalizederr.NormalizedError
@@ -75,14 +75,14 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		JsonBody().
-		ParseUrlParam("id", "applicationId").
+		JSONBody().
+		ParseURLParam("id", "applicationID").
 		AddActor()
 
 	var input appcase.EditAppInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
@@ -93,11 +93,11 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HTTPSuccess(output, w, r)
 }
 
 // GetApplication godoc
@@ -107,18 +107,18 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 //	@Router			/application/{id} [get]
 //	@Tags			Application
 //	@Produce		json
-//	@Param			id	path		string	true	"Id of target application"
+//	@Param			id	path		string	true	"ID of target application"
 //	@Success		200	{object}	presenter.Success[auth.Application]
 //	@Failure		400	{object}	normalizederr.NormalizedError
 //	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseUrlParam("id", "applicationId")
+		ParseURLParam("id", "applicationID")
 
 	var input appcase.GetAppInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
@@ -129,9 +129,9 @@ func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HttpError(err, w, r)
+		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HttpSuccess(output, w, r)
+	presenter.HTTPSuccess(output, w, r)
 }

@@ -68,8 +68,8 @@ func (ts *TestSuite) AuthenticatedRequest(method, endpoint string, body interfac
 }
 
 // Helper method to make app-authenticated requests
-func (ts *TestSuite) AuthenticatedAppRequest(method, endpoint string, body interface{}, appId string, appSecret string) (*http.Response, error) {
-	token := appId + ":" + appSecret
+func (ts *TestSuite) AuthenticatedAppRequest(method, endpoint string, body interface{}, appID string, appSecret string) (*http.Response, error) {
+	token := appID + ":" + appSecret
 	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
 	headers := map[string]string{
 		"Authorization": "Basic " + encodedToken,
@@ -78,9 +78,9 @@ func (ts *TestSuite) AuthenticatedAppRequest(method, endpoint string, body inter
 }
 
 // Deprecated: There is no need of x-app anymore. Helper method to make app-authenticated requests
-func (ts *TestSuite) AppRequest(method, endpoint string, body interface{}, appId string) (*http.Response, error) {
+func (ts *TestSuite) AppRequest(method, endpoint string, body interface{}, appID string) (*http.Response, error) {
 	headers := map[string]string{
-		"x-app": appId,
+		"x-app": appID,
 	}
 	return ts.Request(method, endpoint, body, headers)
 }
