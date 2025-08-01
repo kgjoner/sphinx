@@ -20,12 +20,14 @@ func New(baseURL, appID, appSecret string) *Service {
 	httpApi := httputil.New(baseURL)
 	appToken := base64.StdEncoding.EncodeToString([]byte(appID + ":" + appSecret))
 
-	return &Service{
+	svc := &Service{
 		httpApi:   httpApi,
 		appID:     appID,
 		appSecret: appSecret,
 		appToken:  appToken,
 	}
+
+	return svc
 }
 
 type Account struct {

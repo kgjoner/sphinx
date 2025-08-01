@@ -1,4 +1,4 @@
-package sphinxup
+package sphinx
 
 import (
 	"context"
@@ -9,16 +9,15 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
-	sphinx "github.com/kgjoner/sphinx/pkg/service"
 )
 
 type Middlewares struct {
-	sphinx sphinx.Service
+	sphinx *Service
 }
 
-func NewMiddlewares(svc sphinx.Service) *Middlewares {
+func (s *Service) Middlewares() *Middlewares {
 	return &Middlewares{
-		svc,
+		sphinx: s,
 	}
 }
 
@@ -77,7 +76,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 				return
 			}
 
-			actor := actorValue.(sphinx.Account)
+			actor := actorValue.(Account)
 			if actor.IsAdmin() {
 				next.ServeHTTP(w, r)
 				return
