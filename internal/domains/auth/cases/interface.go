@@ -6,11 +6,11 @@ import (
 )
 
 type AuthRepo interface {
-	InsertAccount(*auth.Account) error
-	UpdateAccount(auth.Account) error
-	GetAccountByID(uuid.UUID) (*auth.Account, error)
-	GetAccountByEntry(auth.Entry) (*auth.Account, error)
-	GetAccountByLink(uuid.UUID) (*auth.Account, error)
+	InsertUser(*auth.User) error
+	UpdateUser(auth.User) error
+	GetUserByID(uuid.UUID) (*auth.User, error)
+	GetUserByEntry(auth.Entry) (*auth.User, error)
+	GetUserByLink(uuid.UUID) (*auth.User, error)
 
 	InsertApplication(*auth.Application) error
 	UpdateApplication(auth.Application) error

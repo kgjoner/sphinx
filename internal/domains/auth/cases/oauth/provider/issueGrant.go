@@ -19,8 +19,8 @@ type IssueGrant struct {
 
 type IssueGrantInput struct {
 	auth.AuthorizationGrantCreationFields
-	ConsentGranted bool         `json:"consent_granted"`
-	Actor          auth.Account `json:"-"`
+	ConsentGranted bool      `json:"consent_granted"`
+	Actor          auth.User `json:"-"`
 }
 
 func (i IssueGrant) Execute(input IssueGrantInput) (*IssueGrantOutput, error) {
@@ -65,7 +65,7 @@ type IssueGrantOutput struct {
 	ExpiresAt   time.Time `json:"expires_at"`
 }
 
-func (i IssueGrant) CreateConsentIfGranted(input IssueGrantInput) (*auth.Account, error) {
+func (i IssueGrant) CreateConsentIfGranted(input IssueGrantInput) (*auth.User, error) {
 	if !input.ConsentGranted {
 		return nil, normalizederr.NewForbiddenError("User has not consented to this application.", errcode.NoConsent)
 	}

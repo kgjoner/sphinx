@@ -1,35 +1,27 @@
-package accountcase
+package usercase
 
 import (
-	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common"
-	"github.com/kgjoner/sphinx/internal/common/errcode"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type ResetPassword struct {
+type ChangePassword struct {
 	AuthRepo    authcase.AuthRepo
 	MailService hermes.MailService
 }
 
-type ResetPasswordInput struct {
-	AccountID   uuid.UUID `json:"-"`
-	Code        string
+type ChangePasswordInput struct {
+	OldPassword string
 	NewPassword string
-	Languages   []string `json:"-"`
+	Languages   []string  `json:"-"`
+	Actor       auth.User `json:"-"`
 }
 
-func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
-	acc, err := i.AuthRepo.GetAccountByID(input.AccountID)
-	if err != nil {
-		return false, err
-	} else if acc == nil {
-		return false, normalizederr.NewRequestError("Account does not exist", errcode.AccountNotFound)
-	}
-
-	err = acc.ResetPassword(input.NewPassword, input.Code)
+func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
+	acc := input.Actor
+	err := acc.ChangePassword(input.OldPassword, input.NewPassword)
 	if err != nil {
 		return false, err
 	}
@@ -40,7 +32,7 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordChange",
-		Target:      *acc,
+		Target:      acc,
 		Languages:   input.Languages,
 	})
 	if err != nil {
@@ -48,7 +40,7 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	}
 
 	// Save only after assuring notification email was sent
-	err = i.AuthRepo.UpdateAccount(*acc)
+	err = i.AuthRepo.UpdateUser(acc)
 	if err != nil {
 		return false, err
 	}

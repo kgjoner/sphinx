@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"github.com/kgjoner/cornucopia/helpers/htypes"
@@ -6,14 +6,14 @@ import (
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type GetAccountEmail struct {
+type GetUserEmail struct {
 	AuthRepo authcase.AuthRepo
 }
 
-type GetAccountEmailInput struct {
-	Target auth.Account `json:"-"`
+type GetUserEmailInput struct {
+	Target auth.User `json:"-"`
 }
 
-func (i GetAccountEmail) Execute(input GetAccountEmailInput) (htypes.Email, error) {
+func (i GetUserEmail) Execute(input GetUserEmailInput) (htypes.Email, error) {
 	return input.Target.Email, nil
 }

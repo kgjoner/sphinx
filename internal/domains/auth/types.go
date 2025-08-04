@@ -52,7 +52,7 @@ const (
 	Entry
 ============================================================================== */
 
-// Represents any entry of an account: email, phone, username or document.
+// Represents any entry of an user: email, phone, username or document.
 type Entry string
 
 func ParseEntry(str string) (Entry, error) {
@@ -142,15 +142,15 @@ type authToken struct {
 }
 
 type authTokenCreationFields struct {
-	Account   Account
+	User      User
 	SessionID uuid.UUID
 	IsRefresh bool
 }
 
 func newAuthToken(f authTokenCreationFields) (*authToken, error) {
-	s := f.Account.session(f.SessionID)
+	s := f.User.session(f.SessionID)
 	if s == nil {
-		return nil, normalizederr.NewRequestError("Account and session do not match.")
+		return nil, normalizederr.NewRequestError("User and session do not match.")
 	}
 
 	now := time.Now()
@@ -165,7 +165,7 @@ func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	}
 
 	claims := jwtClaims{
-		f.Account.ID,
+		f.User.ID,
 		s.Application.ID,
 		now.Unix(),
 		now.Add(duration).Unix(),

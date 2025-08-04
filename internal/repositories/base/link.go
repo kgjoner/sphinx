@@ -15,7 +15,7 @@ func (q DAO) UpsertLinks(links ...auth.Link) error {
 
 	type formattedLink struct {
 		ID            uuid.UUID   `json:"id" validate:"required"`
-		AccountID     int         `json:"account_id" validate:"required"`
+		UserID        int         `json:"user_id" validate:"required"`
 		ApplicationID int         `json:"application_id"`
 		Roles         []auth.Role `json:"roles"`
 		HasConsent    bool        `json:"has_consent"`
@@ -39,7 +39,7 @@ func (q DAO) UpsertLinks(links ...auth.Link) error {
 
 		formattedLink := formattedLink{
 			l.ID,
-			l.AccountID,
+			l.UserID,
 			l.Application.InternalID,
 			l.Roles,
 			l.HasConsent,

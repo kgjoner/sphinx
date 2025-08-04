@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"github.com/google/uuid"
@@ -8,30 +8,30 @@ import (
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type VerifyAccount struct {
+type VerifyUser struct {
 	AuthRepo authcase.AuthRepo
 }
 
-type VerifyAccountInput struct {
-	AccountID        uuid.UUID             `json:"-"`
+type VerifyUserInput struct {
+	UserID           uuid.UUID             `json:"-"`
 	VerificationKind auth.VerificationKind `json:"kind" validate:"required,oneof=email phone"`
 	VerificationCode string                `json:"code" validate:"required"`
 }
 
-func (i VerifyAccount) Execute(input VerifyAccountInput) (bool, error) {
-	acc, err := i.AuthRepo.GetAccountByID(input.AccountID)
+func (i VerifyUser) Execute(input VerifyUserInput) (bool, error) {
+	acc, err := i.AuthRepo.GetUserByID(input.UserID)
 	if err != nil {
 		return false, err
 	} else if acc == nil {
-		return false, normalizederr.NewRequestError("Account does not exit", errcode.AccountNotFound)
+		return false, normalizederr.NewRequestError("User does not exit", errcode.UserNotFound)
 	}
 
-	err = acc.VerifyAccount(input.VerificationKind, input.VerificationCode)
+	err = acc.VerifyUser(input.VerificationKind, input.VerificationCode)
 	if err != nil {
 		return false, err
 	}
 
-	err = i.AuthRepo.UpdateAccount(*acc)
+	err = i.AuthRepo.UpdateUser(*acc)
 	if err != nil {
 		return false, err
 	}

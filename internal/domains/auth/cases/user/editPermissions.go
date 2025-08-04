@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"database/sql"
@@ -8,18 +8,18 @@ import (
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type EditAccountPermissions struct {
+type EditUserPermissions struct {
 	AuthRepo authcase.AuthRepo
 }
 
-type EditAccountPermissionsInput struct {
+type EditUserPermissionsInput struct {
 	Roles        []auth.Role
 	ShouldRemove sql.NullBool     `validate:"required"`
-	Target       auth.Account     `json:"-"`
+	Target       auth.User        `json:"-"`
 	Application  auth.Application `json:"-"`
 }
 
-func (i EditAccountPermissions) Execute(input EditAccountPermissionsInput) (bool, error) {
+func (i EditUserPermissions) Execute(input EditUserPermissionsInput) (bool, error) {
 	if !input.ShouldRemove.Valid {
 		return false, normalizederr.NewRequestError("Must inform whether permissions should be added or removed.")
 	}

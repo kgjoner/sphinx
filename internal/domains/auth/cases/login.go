@@ -19,7 +19,7 @@ type LoginInput struct {
 }
 
 func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
-	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry)
+	acc, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return nil, err
 	} else if acc == nil {
@@ -50,7 +50,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 	}
 
 	return &LoginOutput{
-		AccountID:    acc.ID,
+		UserID:       acc.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
 		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
@@ -58,7 +58,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 }
 
 type LoginOutput struct {
-	AccountID    uuid.UUID `json:"accountID"`
+	UserID       uuid.UUID `json:"userID"`
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken"`
 	ExpiresIn    int       `json:"expiresIn"`

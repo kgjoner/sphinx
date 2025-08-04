@@ -80,7 +80,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 
 			assert.NotEmpty(t, tokenResp.Data.AccessToken)
 			assert.NotEmpty(t, tokenResp.Data.RefreshToken)
-			assert.Equal(t, mocks.SimpleUserAccount.ID, tokenResp.Data.AccountID)
+			assert.Equal(t, mocks.SimpleUserUser.ID, tokenResp.Data.UserID)
 			assert.Equal(t, config.Env.JWT.ACCESS_LIFETIME_IN_SEC, tokenResp.Data.ExpiresIn)
 		})
 

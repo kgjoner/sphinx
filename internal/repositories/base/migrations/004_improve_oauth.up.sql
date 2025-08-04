@@ -1,3 +1,6 @@
+ALTER TABLE account
+  RENAME TO user;
+
 ALTER TABLE application
   RENAME COLUMN IF EXISTS grantings TO possible_roles,
   DROP COLUMN IF EXISTS brand;
@@ -11,4 +14,8 @@ ALTER TABLE link
   DROP COLUMN IF EXISTS grantings,
   DROP COLUMN IF EXISTS oauth_code,
   DROP COLUMN IF EXISTS oauth_expires_at,
-  ADD CONSTRAINT app_acc_unique UNIQUE (application_id, account_id);
+  RENAME COLUMN IF EXISTS account_id TO user_id,
+  ADD CONSTRAINT app_user_unique UNIQUE (application_id, user_id);
+
+ALTER TABLE session
+  RENAME COLUMN IF EXISTS account_id TO user_id;

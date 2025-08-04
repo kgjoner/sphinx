@@ -42,7 +42,7 @@ type AuthorizationGrantCreationFields struct {
 	CodeChallengeMethod string    `json:"code_challenge_method" validate:"oneof=S256 plain"`
 }
 
-func newAuthorizationGrant(acc Account, g *AuthorizationGrantCreationFields) (*AuthorizationGrant, error) {
+func newAuthorizationGrant(acc User, g *AuthorizationGrantCreationFields) (*AuthorizationGrant, error) {
 	link := acc.link(g.ClientID)
 	if link == nil || !link.HasConsent {
 		return nil, normalizederr.NewForbiddenError("user has not consented to this application", errcode.NoConsent)
@@ -136,7 +136,7 @@ func (c GrantCredentials) IsValid() error {
 }
 
 // Checks if grant credentials are valid, returning an error otherwise. Either way consumes the grant marking it as used.
-func (g *AuthorizationGrant) use(acc Account, credentials *GrantCredentials) error {
+func (g *AuthorizationGrant) use(acc User, credentials *GrantCredentials) error {
 	defer func() { g.IsUsed = true }()
 
 	err := validator.Validate(credentials)

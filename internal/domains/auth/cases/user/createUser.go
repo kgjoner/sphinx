@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"fmt"
@@ -17,18 +17,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type CreateAccount struct {
+type CreateUser struct {
 	AuthRepo    authcase.AuthRepo
 	MailService hermes.MailService
 }
 
-type CreateAccountInput struct {
-	auth.AccountCreationFields
+type CreateUserInput struct {
+	auth.UserCreationFields
 	Languages []string `json:"-"`
 }
 
-func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) {
-	acc, err := auth.NewAccount(&input.AccountCreationFields)
+func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
+	acc, err := auth.NewUser(&input.UserCreationFields)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +40,10 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 		return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
 	}
 
-	err = i.AuthRepo.InsertAccount(acc)
+	err = i.AuthRepo.InsertUser(acc)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
-			pattern := regexp.MustCompile("account_(.+)_key")
+			pattern := regexp.MustCompile("user_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
 			return nil, normalizederr.NewConflictError(msg, errcode.DuplicateKey)
@@ -88,10 +88,10 @@ func (i CreateAccount) Execute(input CreateAccountInput) (*auth.Account, error) 
 	return acc, nil
 }
 
-func (i CreateAccount) handleError(err error, target auth.Account) {
+func (i CreateUser) handleError(err error, target auth.User) {
 	logrus.WithFields(logrus.Fields{
 		"Kind":  "Mail Failed",
-		"Path":  "AccountCreation",
+		"Path":  "UserCreation",
 		"Actor": target.ID,
 	}).Log(logrus.ErrorLevel, err.Error())
 }

@@ -38,7 +38,7 @@ type ApplicationCreationFields struct {
 	AllowedRedirectUris []string `json:"allowedRedirectUris"`
 }
 
-func NewApplication(f *ApplicationCreationFields, actor Account) (app *Application, secret string, err error) {
+func NewApplication(f *ApplicationCreationFields, actor User) (app *Application, secret string, err error) {
 	actorApp := actor.AuthedSession.Application
 	if !actorApp.isRoot() || !(actor.HasRole(actorApp, RoleAdmin) || actor.HasRole(actorApp, RoleDev)) {
 		return nil, "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
@@ -75,7 +75,7 @@ type ApplicationEditableFields struct {
 	AllowedRedirectUris []string `json:"allowedRedirectUris"`
 }
 
-func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
+func (a *Application) Edit(f *ApplicationEditableFields, actor User) error {
 	actorApp := actor.AuthedSession.Application
 	if actorApp.ID != a.ID || !actor.HasRoleOnAuth(RoleAdmin) {
 		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
@@ -86,7 +86,7 @@ func (a *Application) Edit(f *ApplicationEditableFields, actor Account) error {
 	return validator.Validate(a)
 }
 
-func (a *Application) GenerateNewSecret(actor Account) (secret string, err error) {
+func (a *Application) GenerateNewSecret(actor User) (secret string, err error) {
 	actorApp := actor.AuthedSession.Application
 	if actorApp.ID != a.ID || !actor.HasRoleOnAuth(RoleAdmin) {
 		return "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")

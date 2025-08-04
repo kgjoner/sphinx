@@ -9,8 +9,8 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
-func (q DAO) InsertAccount(acc *auth.Account) error {
-	raw, exists := rawQueries["CreateAccount"]
+func (q DAO) InsertUser(acc *auth.User) error {
+	raw, exists := rawQueries["CreateUser"]
 	if !exists {
 		return ErrNoQuery
 	}
@@ -34,8 +34,8 @@ func (q DAO) InsertAccount(acc *auth.Account) error {
 	return err
 }
 
-func (q DAO) UpdateAccount(acc auth.Account) error {
-	raw, exists := rawQueries["UpdateAccount"]
+func (q DAO) UpdateUser(acc auth.User) error {
+	raw, exists := rawQueries["UpdateUser"]
 	if !exists {
 		return ErrNoQuery
 	}
@@ -60,14 +60,14 @@ func (q DAO) UpdateAccount(acc auth.Account) error {
 	return err
 }
 
-func (q DAO) GetAccountByID(id uuid.UUID) (*auth.Account, error) {
-	raw, exists := rawQueries["GetAccountByID"]
+func (q DAO) GetUserByID(id uuid.UUID) (*auth.User, error) {
+	raw, exists := rawQueries["GetUserByID"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw, id)
-	var item auth.Account
+	var item auth.User
 	err := row.Scan(
 		&item.InternalID,
 		&item.ID,
@@ -98,14 +98,14 @@ func (q DAO) GetAccountByID(id uuid.UUID) (*auth.Account, error) {
 	return &item, nil
 }
 
-func (q DAO) GetAccountByEntry(entry auth.Entry) (*auth.Account, error) {
-	raw, exists := rawQueries["GetAccountByEntry"]
+func (q DAO) GetUserByEntry(entry auth.Entry) (*auth.User, error) {
+	raw, exists := rawQueries["GetUserByEntry"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw, entry.String())
-	var item auth.Account
+	var item auth.User
 	err := row.Scan(
 		&item.InternalID,
 		&item.ID,
@@ -136,14 +136,14 @@ func (q DAO) GetAccountByEntry(entry auth.Entry) (*auth.Account, error) {
 	return &item, nil
 }
 
-func (q DAO) GetAccountByLink(linkID uuid.UUID) (*auth.Account, error) {
-	raw, exists := rawQueries["GetAccountByLink"]
+func (q DAO) GetUserByLink(linkID uuid.UUID) (*auth.User, error) {
+	raw, exists := rawQueries["GetUserByLink"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw, linkID)
-	var item auth.Account
+	var item auth.User
 	err := row.Scan(
 		&item.InternalID,
 		&item.ID,

@@ -34,24 +34,24 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 		assert.NotEmpty(t, respData.Data.AccessToken)
 		assert.NotEmpty(t, respData.Data.RefreshToken)
-		assert.NotEmpty(t, respData.Data.AccountID)
+		assert.NotEmpty(t, respData.Data.UserID)
 
-		// Test 2: Get Account Info with Token
-		t.Run("should get account info with valid token", func(t *testing.T) {
-			resp, err := ts.AuthenticatedRequest("GET", "/account", nil, respData.Data.AccessToken)
+		// Test 2: Get User Info with Token
+		t.Run("should get user info with valid token", func(t *testing.T) {
+			resp, err := ts.AuthenticatedRequest("GET", "/user", nil, respData.Data.AccessToken)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var accountInfo presenter.Success[auth.AccountPrivateView]
-			err = json.NewDecoder(resp.Body).Decode(&accountInfo)
+			var userInfo presenter.Success[auth.UserPrivateView]
+			err = json.NewDecoder(resp.Body).Decode(&userInfo)
 			require.NoError(t, err)
 
-			assert.Equal(t, mocks.SimpleUserAccount.Email.String(), accountInfo.Data.Email.String())
-			assert.Equal(t, mocks.SimpleUserAccount.Username, accountInfo.Data.Username)
-			assert.Equal(t, mocks.SimpleUserAccount.Phone.String(), accountInfo.Data.Phone.String())
-			assert.Equal(t, mocks.SimpleUserAccount.Document.String(), accountInfo.Data.Document.String())
+			assert.Equal(t, mocks.SimpleUserUser.Email.String(), userInfo.Data.Email.String())
+			assert.Equal(t, mocks.SimpleUserUser.Username, userInfo.Data.Username)
+			assert.Equal(t, mocks.SimpleUserUser.Phone.String(), userInfo.Data.Phone.String())
+			assert.Equal(t, mocks.SimpleUserUser.Document.String(), userInfo.Data.Document.String())
 		})
 
 		// Test 3: Logout
@@ -62,7 +62,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-			resp2, err := ts.AuthenticatedRequest("GET", "/account", nil, respData.Data.AccessToken)
+			resp2, err := ts.AuthenticatedRequest("GET", "/user", nil, respData.Data.AccessToken)
 			require.NoError(t, err)
 			defer resp2.Body.Close()
 
@@ -102,7 +102,7 @@ func TestAuthenticationErrors(t *testing.T) {
 	})
 
 	t.Run("should reject requests with invalid token", func(t *testing.T) {
-		resp, err := ts.AuthenticatedRequest("GET", "/account", nil, "invalid-token")
+		resp, err := ts.AuthenticatedRequest("GET", "/user", nil, "invalid-token")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -115,15 +115,15 @@ func TestRefreshToken(t *testing.T) {
 	defer ts.Close()
 
 	factory := NewTestDataFactory()
-	accountData := factory.RandomAccount()
+	userData := factory.RandomUser()
 
-	// Create account
-	resp1, err := ts.Request("POST", "/account", accountData, nil)
+	// Create user
+	resp1, err := ts.Request("POST", "/user", userData, nil)
 	require.NoError(t, err)
 	resp1.Body.Close()
 
 	// Login to get tokens
-	loginData := factory.CreateLoginData(accountData["email"].(string), accountData["password"].(string))
+	loginData := factory.CreateLoginData(userData["email"].(string), userData["password"].(string))
 	loginResp, err := ts.Request("POST", "/auth/login", loginData, nil)
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
@@ -182,12 +182,12 @@ func TestSessionManagement(t *testing.T) {
 		assert.NotEqual(t, token1, token2)
 
 		// Both tokens should work
-		resp1, err := ts.AuthenticatedRequest("GET", "/account", nil, token1)
+		resp1, err := ts.AuthenticatedRequest("GET", "/user", nil, token1)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
 		assert.Equal(t, http.StatusOK, resp1.StatusCode)
 
-		resp2, err := ts.AuthenticatedRequest("GET", "/account", nil, token2)
+		resp2, err := ts.AuthenticatedRequest("GET", "/user", nil, token2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		assert.Equal(t, http.StatusOK, resp2.StatusCode)

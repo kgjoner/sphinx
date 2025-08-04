@@ -7,48 +7,48 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/controller"
 	"github.com/kgjoner/cornucopia/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common"
-	accountcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/account"
+	usercase "github.com/kgjoner/sphinx/internal/domains/auth/cases/user"
 )
 
-func (g AuthGateway) accountHandler(r chi.Router) {
-	r.Post("/", g.createAccount)
+func (g AuthGateway) userHandler(r chi.Router) {
+	r.Post("/", g.createUser)
 	r.Post("/password/request", g.requestPasswordReset)
 	r.Patch("/{id}/password", g.resetPassword)
 
-	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateAccount)
+	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateUser)
 	r.With(g.mid.Authenticate, g.mid.Target).Patch("/", g.updateExtraData)
 	r.With(g.mid.Authenticate, g.mid.Target).Patch("/unique", g.updateUniqueFields)
 	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
 
-	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editAccountPermissions)
-	r.With(g.mid.AuthenticateApp, g.mid.Target).Get("/email", g.getAccountEmail)
-	r.With(g.mid.AuthenticateApp).Get("/id", g.getAccountID)
+	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editUserPermissions)
+	r.With(g.mid.AuthenticateApp, g.mid.Target).Get("/email", g.getUserEmail)
+	r.With(g.mid.AuthenticateApp).Get("/id", g.getUserID)
 
 	r.Get("/existence", g.checkEntryExistence)
-	r.Patch("/{id}/verification", g.verifyAccount)
+	r.Patch("/{id}/verification", g.verifyUser)
 	r.Delete("/{id}/pending/{field}", g.cancelPendingField)
 }
 
-// CreateAccount godoc
+// CreateUser godoc
 //
-//	@Summary		Create an account
-//	@Description	Register a new account linked to root app, and send email validation code.
-//	@Router			/account [post]
-//	@Tags			Account
+//	@Summary		Create an user
+//	@Description	Register a new user linked to root app, and send email validation code.
+//	@Router			/user [post]
+//	@Tags			User
 //	@Accept			json
 //	@Produce		json
 //	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		auth.AccountCreationFields	true	"Email and password are mandatory."
-//	@Success		200				{object}	presenter.Success[auth.Account]
+//	@Param			payload			body		auth.UserCreationFields	true	"Email and password are mandatory."
+//	@Success		200				{object}	presenter.Success[auth.User]
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		401				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
-func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) createUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		AddLanguages()
 
-	var input accountcase.CreateAccountInput
+	var input usercase.CreateUserInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -56,7 +56,7 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
-		i := accountcase.CreateAccount{
+		i := usercase.CreateUser{
 			AuthRepo:    tx,
 			MailService: g.MailService,
 		}
@@ -76,8 +76,8 @@ func (g AuthGateway) createAccount(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Check whether an entry already is registered
 //	@Description	Check whether email, username, phone or document has already been registered.
-//	@Router			/account/existence [get]
-//	@Tags			Account
+//	@Router			/user/existence [get]
+//	@Tags			User
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-entry	header		string	true	"Email, username, phone or document."
@@ -88,7 +88,7 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 	c := controller.New(r).
 		AddHeader("X-Entry", "entry")
 
-	var input accountcase.CheckEntryExistenceInput
+	var input usercase.CheckEntryExistenceInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -96,7 +96,7 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.CheckEntryExistence{
+	i := usercase.CheckEntryExistence{
 		AuthRepo: queries,
 	}
 
@@ -111,25 +111,25 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 
 // GetPrivateAccounnt godoc
 //
-//	@Summary		Get account private data
-//	@Description	Retrieve private data associated with logged account or target one, if x-target header is informed. The latter require special permission.
-//	@Router			/account [get]
-//	@Tags			Account
+//	@Summary		Get user private data
+//	@Description	Retrieve private data associated with logged user or target one, if x-target header is informed. The latter require special permission.
+//	@Router			/user [get]
+//	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
-//	@Success		200			{object}	presenter.Success[auth.AccountPrivateView]
+//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
+//	@Success		200			{object}	presenter.Success[auth.UserPrivateView]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
 //	@Failure		500			{object}	normalizederr.NormalizedError
-func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddActor().
 		AddTarget()
 
-	var input accountcase.GetPrivateAccountInput
+	var input usercase.GetPrivateUserInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -137,7 +137,7 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.GetPrivateAccount{
+	i := usercase.GetPrivateUser{
 		AuthRepo: queries,
 	}
 
@@ -152,23 +152,23 @@ func (g AuthGateway) getPrivateAccount(w http.ResponseWriter, r *http.Request) {
 
 // VerifyAccounnt godoc
 //
-//	@Summary		Verify account data
-//	@Description	Verify email or phone of target account
-//	@Router			/account/{id}/verification [patch]
-//	@Tags			Account
+//	@Summary		Verify user data
+//	@Description	Verify email or phone of target user
+//	@Router			/user/{id}/verification [patch]
+//	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string							true	"Account ID"
-//	@Param			payload	body		accountcase.VerifyAccountInput	true	"Verification kind must be email or phone."
+//	@Param			id		path		string							true	"User ID"
+//	@Param			payload	body		usercase.VerifyUserInput	true	"Verification kind must be email or phone."
 //	@Success		204
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
-func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		ParseURLParam("id", "accountID")
+		ParseURLParam("id", "userID")
 
-	var input accountcase.VerifyAccountInput
+	var input usercase.VerifyUserInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -176,7 +176,7 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.VerifyAccount{
+	i := usercase.VerifyUser{
 		AuthRepo: queries,
 	}
 
@@ -191,15 +191,15 @@ func (g AuthGateway) verifyAccount(w http.ResponseWriter, r *http.Request) {
 
 // ChangePassword godoc
 //
-//	@Summary		Update password of logged account.
-//	@Description	Update password of logged account. It must provide the current password.
-//	@Router			/account/password [patch]
-//	@Tags			Account
+//	@Summary		Update password of logged user.
+//	@Description	Update password of logged user. It must provide the current password.
+//	@Router			/user/password [patch]
+//	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
 //	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		accountcase.ChangePasswordInput	true	"Old password and new one."
+//	@Param			payload			body		usercase.ChangePasswordInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		401				{object}	normalizederr.NormalizedError
@@ -210,7 +210,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 		AddActor().
 		AddLanguages()
 
-	var input accountcase.ChangePasswordInput
+	var input usercase.ChangePasswordInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -218,7 +218,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
-		i := accountcase.ChangePassword{
+		i := usercase.ChangePassword{
 			AuthRepo:    tx,
 			MailService: g.MailService,
 		}
@@ -237,12 +237,12 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Request for a password reset.
 //	@Description	Request for a password reset. An email is sent with instructions.
-//	@Router			/account/password/request [post]
-//	@Tags			Account
+//	@Router			/user/password/request [post]
+//	@Tags			User
 //	@Accept			json
 //	@Produce		json
 //	@Param			accept-language	header		string									false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		accountcase.RequestPasswordResetInput	true	"Old password and new one."
+//	@Param			payload			body		usercase.RequestPasswordResetInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
@@ -251,7 +251,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 		JSONBody().
 		AddLanguages()
 
-	var input accountcase.RequestPasswordResetInput
+	var input usercase.RequestPasswordResetInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -259,7 +259,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.RequestPasswordReset{
+	i := usercase.RequestPasswordReset{
 		AuthRepo:    queries,
 		MailService: g.MailService,
 	}
@@ -277,23 +277,23 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //
 //	@Summary		Update password with a reset code.
 //	@Description	Update password with a reset code.
-//	@Router			/account/{id}/password [post]
-//	@Tags			Account
+//	@Router			/user/{id}/password [post]
+//	@Tags			User
 //	@Accept			json
 //	@Produce		json
 //	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			id				path		string							true	"Account ID"
-//	@Param			payload			body		accountcase.ResetPasswordInput	true	"Old password and new one."
+//	@Param			id				path		string							true	"User ID"
+//	@Param			payload			body		usercase.ResetPasswordInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		500				{object}	normalizederr.NormalizedError
 func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		ParseURLParam("id", "accountID").
+		ParseURLParam("id", "userID").
 		AddLanguages()
 
-	var input accountcase.ResetPasswordInput
+	var input usercase.ResetPasswordInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -301,7 +301,7 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
-		i := accountcase.ResetPassword{
+		i := usercase.ResetPassword{
 			AuthRepo:    tx,
 			MailService: g.MailService,
 		}
@@ -316,29 +316,29 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
-// EditAccountPermissions godoc
+// EditUserPermissions godoc
 //
 //	@Summary		Add or remove roles and grantings
-//	@Description	Add or remove roles and/or grantings of the target account.
-//	@Router			/account/permission [patch]
-//	@Tags			Account
+//	@Description	Add or remove roles and/or grantings of the target user.
+//	@Router			/user/permission [patch]
+//	@Tags			User
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string									false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
-//	@Param			payload		body		accountcase.EditAccountPermissionsInput	true	"At least one of roles and grantings must be defined"
+//	@Param			x-target	header		string									false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
+//	@Param			payload		body		usercase.EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		204
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
 //	@Failure		500			{object}	normalizederr.NormalizedError
-func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		AddApplication().
 		AddTarget()
 
-	var input accountcase.EditAccountPermissionsInput
+	var input usercase.EditUserPermissionsInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -346,7 +346,7 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.EditAccountPermissions{
+	i := usercase.EditUserPermissions{
 		AuthRepo: queries,
 	}
 
@@ -361,16 +361,16 @@ func (g AuthGateway) editAccountPermissions(w http.ResponseWriter, r *http.Reque
 
 // UpdateExtraData godoc
 //
-//	@Summary		Update extra data of target account
-//	@Description	Update non unique data like name, surname and address of target account
-//	@Router			/account [patch]
-//	@Tags			Account
+//	@Summary		Update extra data of target user
+//	@Description	Update non unique data like name, surname and address of target user
+//	@Router			/user [patch]
+//	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string			false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
+//	@Param			x-target	header		string			false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
 //	@Param			payload		body		auth.ExtraData	true	"At least one data must be defined.""
-//	@Success		200			{object}	presenter.Success[auth.AccountPrivateView]
+//	@Success		200			{object}	presenter.Success[auth.UserPrivateView]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
@@ -381,7 +381,7 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 		AddTarget().
 		AddActor()
 
-	var input accountcase.UpdateExtraDataInput
+	var input usercase.UpdateExtraDataInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -389,7 +389,7 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.UpdateExtraData{
+	i := usercase.UpdateExtraData{
 		AuthRepo: queries,
 	}
 
@@ -404,17 +404,17 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 
 // UpdateUniqueFields godoc
 //
-//	@Summary		Update unique fields of target account
-//	@Description	Update unique data like email, phone, username and document of target account. Email and phone updates require verification.
-//	@Router			/account/unique [patch]
-//	@Tags			Account
+//	@Summary		Update unique fields of target user
+//	@Description	Update unique data like email, phone, username and document of target user. Email and phone updates require verification.
+//	@Router			/user/unique [patch]
+//	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target		header		string						false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
+//	@Param			x-target		header		string						false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
 //	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		auth.AccountUniqueFields	true	"At least one field must be defined."
-//	@Success		200				{object}	presenter.Success[auth.AccountPrivateView]
+//	@Param			payload			body		auth.UserUniqueFields	true	"At least one field must be defined."
+//	@Success		200				{object}	presenter.Success[auth.UserPrivateView]
 //	@Failure		400				{object}	normalizederr.NormalizedError
 //	@Failure		401				{object}	normalizederr.NormalizedError
 //	@Failure		403				{object}	normalizederr.NormalizedError
@@ -426,7 +426,7 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 		AddActor().
 		AddLanguages()
 
-	var input accountcase.UpdateUniqueFieldsInput
+	var input usercase.UpdateUniqueFieldsInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -434,7 +434,7 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.UpdateUniqueFields{
+	i := usercase.UpdateUniqueFields{
 		AuthRepo:    queries,
 		MailService: g.MailService,
 	}
@@ -451,12 +451,12 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 // CancelPendingField godoc
 //
 //	@Summary		Cancel pending unique field update
-//	@Description	Cancel a pending email or phone update for the target account
-//	@Router			/account/{id}/pending/{field} [delete]
-//	@Tags			Account
+//	@Description	Cancel a pending email or phone update for the target user
+//	@Router			/user/{id}/pending/{field} [delete]
+//	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string	true	"Account ID"
+//	@Param			id		path		string	true	"User ID"
 //	@Param			field	path		string	true	"Field must be 'email' or 'phone'."
 //	@Success		204
 //	@Failure		400		{object}	normalizederr.NormalizedError
@@ -465,10 +465,10 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //	@Failure		500		{object}	normalizederr.NormalizedError
 func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseURLParam("id", "accountID").
+		ParseURLParam("id", "userID").
 		ParseURLParam("field")
 
-	var input accountcase.CancelPendingFieldInput
+	var input usercase.CancelPendingFieldInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -476,7 +476,7 @@ func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) 
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.CancelPendingField{
+	i := usercase.CancelPendingField{
 		AuthRepo: queries,
 	}
 
@@ -491,10 +491,10 @@ func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) 
 
 // GetAccounntID godoc
 //
-//	@Summary		Get account id
-//	@Description	Retrieve account id by its entry. Return nil if entry does not exist.
-//	@Router			/account/id [get]
-//	@Tags			Account
+//	@Summary		Get user id
+//	@Description	Retrieve user id by its entry. Return nil if entry does not exist.
+//	@Router			/user/id [get]
+//	@Tags			User
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
@@ -504,11 +504,11 @@ func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) 
 //	@Failure		401		{object}	normalizederr.NormalizedError
 //	@Failure		403		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
-func (g AuthGateway) getAccountID(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) getUserID(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddHeader("X-Entry", "entry")
 
-	var input accountcase.GetAccountIDInput
+	var input usercase.GetUserIDInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -516,7 +516,7 @@ func (g AuthGateway) getAccountID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.GetAccountID{
+	i := usercase.GetUserID{
 		AuthRepo: queries,
 	}
 
@@ -529,26 +529,26 @@ func (g AuthGateway) getAccountID(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r)
 }
 
-// GetAccountEmail godoc
+// GetUserEmail godoc
 //
-//	@Summary		Get target account email
-//	@Description	Retrieve email of the target account.
-//	@Router			/account/email [get]
-//	@Tags			Account
+//	@Summary		Get target user email
+//	@Description	Retrieve email of the target user.
+//	@Router			/user/email [get]
+//	@Tags			User
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged account."
+//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
 //	@Success		200			{object}	presenter.Success[string]
 //	@Failure		400			{object}	normalizederr.NormalizedError
 //	@Failure		401			{object}	normalizederr.NormalizedError
 //	@Failure		403			{object}	normalizederr.NormalizedError
 //	@Failure		500			{object}	normalizederr.NormalizedError
-func (g AuthGateway) getAccountEmail(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddTarget()
 
-	var input accountcase.GetAccountEmailInput
+	var input usercase.GetUserEmailInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -556,7 +556,7 @@ func (g AuthGateway) getAccountEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := g.BasePool.NewDAO(r.Context())
-	i := accountcase.GetAccountEmail{
+	i := usercase.GetUserEmail{
 		AuthRepo: queries,
 	}
 

@@ -1,5 +1,9 @@
+ALTER TABLE session
+  RENAME COLUMN IF EXISTS user_id TO account_id;
+
 ALTER TABLE link
-  DROP CONSTRAINT IF EXISTS app_acc_unique,
+  DROP CONSTRAINT IF EXISTS app_user_unique,
+  RENAME COLUMN IF EXISTS user_id TO account_id,
   ADD COLUMN IF NOT EXISTS grantings text[] NOT NULL,
   ADD COLUMN IF NOT EXISTS oauth_code text,
   ADD COLUMN IF NOT EXISTS oauth_expires_at timestamp,
@@ -13,3 +17,6 @@ UPDATE link
 ALTER TABLE application
   ADD COLUMN IF NOT EXISTS brand jsonb,
   RENAME COLUMN IF EXISTS possible_roles TO grantings;
+
+ALTER TABLE user
+  RENAME TO account;

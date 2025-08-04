@@ -24,7 +24,7 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 		common.Middlewares{Pools: pools},
 	}
 
-	router.Route("/account", authgtw.accountHandler)
+	router.Route("/user", authgtw.userHandler)
 	router.Route("/application", authgtw.applicationHandler)
 
 	router.Route("/auth", func(r chi.Router) {

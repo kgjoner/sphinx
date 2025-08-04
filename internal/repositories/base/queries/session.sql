@@ -2,7 +2,7 @@
 INSERT INTO
   session(
     id,
-    account_id,
+    user_id,
     application_id,
     refresh_token,
     refreshed_at,
@@ -17,7 +17,7 @@ INSERT INTO
   )
   SELECT 
     l.id,
-    l.account_id,
+    l.user_id,
     l.application_id,
     l.refresh_token,
     l.refreshed_at,

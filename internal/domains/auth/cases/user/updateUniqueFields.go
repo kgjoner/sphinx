@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"fmt"
@@ -22,13 +22,13 @@ type UpdateUniqueFields struct {
 }
 
 type UpdateUniqueFieldsInput struct {
-	auth.AccountUniqueFields
-	Target    auth.Account `json:"-"`
-	Actor     auth.Account `json:"-"`
-	Languages []string     `json:"-"`
+	auth.UserUniqueFields
+	Target    auth.User `json:"-"`
+	Actor     auth.User `json:"-"`
+	Languages []string  `json:"-"`
 }
 
-func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.AccountPrivateView, error) {
+func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.UserPrivateView, error) {
 	targetAcc := &input.Target
 
 	if !input.Email.IsZero() && input.Email == targetAcc.Email {
@@ -39,15 +39,15 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 		return nil, normalizederr.NewRequestError("phone is already set to the same value")
 	}
 
-	err := targetAcc.UpdateUniqueFields(input.AccountUniqueFields)
+	err := targetAcc.UpdateUniqueFields(input.UserUniqueFields)
 	if err != nil {
 		return nil, err
 	}
 
-	err = i.AuthRepo.UpdateAccount(*targetAcc)
+	err = i.AuthRepo.UpdateUser(*targetAcc)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
-			pattern := regexp.MustCompile("account_(.+)_key")
+			pattern := regexp.MustCompile("user_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
 			return nil, normalizederr.NewRequestError(msg, errcode.DuplicateKey)
@@ -56,7 +56,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 	}
 
 	// Check if email is being updated
-	emailBeingUpdated := !input.AccountUniqueFields.Email.IsZero()
+	emailBeingUpdated := !input.UserUniqueFields.Email.IsZero()
 
 	// Send email notice and confirmation if email was updated
 	if emailBeingUpdated {
@@ -110,7 +110,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.Accoun
 	return targetAcc.PrivateView(input.Actor)
 }
 
-func (i UpdateUniqueFields) handleError(err error, target auth.Account, scope string) {
+func (i UpdateUniqueFields) handleError(err error, target auth.User, scope string) {
 	logrus.WithFields(logrus.Fields{
 		"Kind":  "Mail Failed",
 		"Path":  "UpdateUniqueFields:" + scope,

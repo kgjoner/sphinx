@@ -33,7 +33,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		tokenStr := authHeaderParts[1]
-		acc, err := m.sphinx.Account(tokenStr)
+		acc, err := m.sphinx.User(tokenStr)
 		if err != nil {
 			if nerr, ok := err.(normalizederr.NormalizedError); ok {
 				presenter.HTTPError(nerr.MakeItInternal(), w, r)
@@ -65,7 +65,7 @@ func (m Middlewares) TryAuthenticate(next http.Handler) http.Handler {
 	})
 }
 
-// Ensure authenticated account has at least one of listed roles. Admin accounts are always allowed.
+// Ensure authenticated user has at least one of listed roles. Admin users are always allowed.
 func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +76,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 				return
 			}
 
-			actor := actorValue.(Account)
+			actor := actorValue.(User)
 			if actor.IsAdmin() {
 				next.ServeHTTP(w, r)
 				return

@@ -41,7 +41,7 @@ var CommonApplication = &auth.Application{
 
 const AdminPassword = "AdminPassword123!"
 
-var AdminAccount = &auth.Account{
+var AdminUser = &auth.User{
 	ID:                   uuid.New(),
 	Email:                "admin@example.com",
 	Password:             hashPassword(AdminPassword),
@@ -54,7 +54,7 @@ var AdminAccount = &auth.Account{
 
 var AdminRootLink = &auth.Link{
 	ID:          uuid.New(),
-	AccountID:   AdminAccount.InternalID,
+	UserID:      AdminUser.InternalID,
 	Application: *RootApplication,
 	HasConsent:  true,
 	CreatedAt:   time.Now(),
@@ -64,7 +64,7 @@ var AdminRootLink = &auth.Link{
 
 const SimpleUserPassword = "SimpleUserPassword123!"
 
-var SimpleUserAccount = &auth.Account{
+var SimpleUserUser = &auth.User{
 	ID:                   uuid.New(),
 	Email:                "user@example.com",
 	Password:             hashPassword(SimpleUserPassword),
@@ -77,7 +77,7 @@ var SimpleUserAccount = &auth.Account{
 
 var SimpleUserRootLink = &auth.Link{
 	ID:          uuid.New(),
-	AccountID:   SimpleUserAccount.InternalID,
+	UserID:      SimpleUserUser.InternalID,
 	Application: *RootApplication,
 	HasConsent:  true,
 	CreatedAt:   time.Now(),

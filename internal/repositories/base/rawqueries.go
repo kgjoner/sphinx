@@ -14,7 +14,7 @@ var rawQueries = map[string]string{}
 var ErrNoQuery = fmt.Errorf("baserepo: raw query not found")
 
 func init() {
-	readAndParse("account.sql")
+	readAndParse("user.sql")
 	readAndParse("application.sql")
 	readAndParse("link.sql")
 	readAndParse("session.sql")

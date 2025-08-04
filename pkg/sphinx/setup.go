@@ -30,7 +30,7 @@ func New(baseURL, appID, appSecret string) *Service {
 	return svc
 }
 
-type Account struct {
+type User struct {
 	ID       uuid.UUID          `json:"id" validate:"required"`
 	Email    htypes.Email       `json:"email" validate:"required"`
 	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
@@ -46,7 +46,7 @@ type Account struct {
 	Link                 *auth.Link `json:"link"`
 }
 
-func (a Account) IsAdmin() bool {
+func (a User) IsAdmin() bool {
 	for _, r := range a.Link.Roles {
 		if r == auth.RoleAdmin {
 			return true
@@ -56,7 +56,7 @@ func (a Account) IsAdmin() bool {
 	return false
 }
 
-func (a Account) IsDev() bool {
+func (a User) IsDev() bool {
 	for _, r := range a.Link.Roles {
 		if r == auth.RoleDev {
 			return true
@@ -66,7 +66,7 @@ func (a Account) IsDev() bool {
 	return false
 }
 
-func (a Account) HasRole(role string) bool {
+func (a User) HasRole(role string) bool {
 	for _, r := range a.Link.Roles {
 		if string(r) == role {
 			return true

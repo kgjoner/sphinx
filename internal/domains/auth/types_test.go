@@ -15,7 +15,7 @@ import (
 func TestToken(t *testing.T) {
 	config.Must()
 
-	acc := &Account{
+	acc := &User{
 		ID: uuid.New(),
 	}
 	sID := uuid.New()
@@ -53,7 +53,7 @@ func TestToken(t *testing.T) {
 func TestRefreshToken(t *testing.T) {
 	config.Must()
 
-	acc := &Account{
+	acc := &User{
 		ID: uuid.New(),
 	}
 	sID := uuid.New()

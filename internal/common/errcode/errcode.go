@@ -5,11 +5,11 @@ const (
 	InvalidAccess      = "INVALID_ACCESS"
 	ExpiredAccess      = "EXPIRED_ACCESS"
 	ExpiredSession     = "EXPIRED_SESSION"
-	DeactivatedAccount = "DEACTIVATED_ACCOUNT"
+	DeactivatedUser    = "DEACTIVATED_USER"
 	NoConsent          = "NO_CONSENT"
 	RevokedConsent     = "REVOKED_CONSENT"
 
-	AccountNotFound     = "ACCOUNT_NOT_FOUND"
+	UserNotFound        = "USER_NOT_FOUND"
 	ApplicationNotFound = "APPLICATION_NOT_FOUND"
 	SessionNotFound     = "SESSION_NOT_FOUND"
 

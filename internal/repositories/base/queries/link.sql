@@ -2,7 +2,7 @@
 INSERT INTO
   link(
     id,
-    account_id,
+    user_id,
     application_id,
     roles,
     has_consent,
@@ -11,7 +11,7 @@ INSERT INTO
   )
   SELECT 
     l.id,
-    l.account_id,
+    l.user_id,
     l.application_id,
     l.roles,
     l.has_consent,

@@ -16,8 +16,8 @@ func NewTestDataFactory() *TestDataFactory {
 	return &TestDataFactory{}
 }
 
-// Return a prefilled account with all fields
-func (f *TestDataFactory) FullAccount() map[string]interface{} {
+// Return a prefilled user with all fields
+func (f *TestDataFactory) FullUser() map[string]interface{} {
 	return map[string]interface{}{
 		"email":    "test@example.com",
 		"password": "TestPassword123!",
@@ -37,7 +37,7 @@ func (f *TestDataFactory) FullAccount() map[string]interface{} {
 	}
 }
 
-func (f *TestDataFactory) RandomAccount() map[string]interface{} {
+func (f *TestDataFactory) RandomUser() map[string]interface{} {
 	return map[string]interface{}{
 		"email":    GenerateEmail(),
 		"password": GenerateStrongPassword(),
@@ -53,7 +53,7 @@ func (f *TestDataFactory) CreateLoginData(email, password string) map[string]int
 
 func (f *TestDataFactory) SimpleUserLoginData() map[string]interface{} {
 	return map[string]interface{}{
-		"entry":    mocks.SimpleUserAccount.Email.String(),
+		"entry":    mocks.SimpleUserUser.Email.String(),
 		"password": mocks.SimpleUserPassword,
 	}
 }
@@ -89,7 +89,7 @@ func GeneratePhone(format ...string) string {
 			result := strings.Replace(format[0], "X", "55", 1)
 			result = strings.Replace(result, "X", "11", 1)
 			result = strings.ReplaceAll(result, "X", fmt.Sprintf("%d", rand.Intn(10)))
-			return result	
+			return result
 		}
 	}
 

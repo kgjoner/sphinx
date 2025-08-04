@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"github.com/google/uuid"
@@ -6,16 +6,16 @@ import (
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
-type GetAccountID struct {
+type GetUserID struct {
 	AuthRepo authcase.AuthRepo
 }
 
-type GetAccountIDInput struct {
+type GetUserIDInput struct {
 	Entry auth.Entry
 }
 
-func (i GetAccountID) Execute(input GetAccountIDInput) (*uuid.UUID, error) {
-	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry)
+func (i GetUserID) Execute(input GetUserIDInput) (*uuid.UUID, error) {
+	acc, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return nil, err
 	}

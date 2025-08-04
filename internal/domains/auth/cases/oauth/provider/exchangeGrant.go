@@ -32,8 +32,8 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	// Clear grant from cache independent of outcome
 	defer func() { i.CacheRepo.Clear("grant:" + grant.Code) }()
 
-	// Get account by link ID
-	acc, err := i.AuthRepo.GetAccountByLink(grant.LinkID)
+	// Get user by link ID
+	acc, err := i.AuthRepo.GetUserByLink(grant.LinkID)
 	if err != nil {
 		return nil, err
 	} else if acc == nil {
@@ -60,7 +60,7 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	}
 
 	return &authcase.LoginOutput{
-		AccountID:    acc.ID,
+		UserID:       acc.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
 		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,

@@ -21,7 +21,7 @@ func startTestServer() *httptest.Server {
 
 var (
 	unhashedPassword = "test123!"
-	mockedAccount    = &auth.Account{
+	mockedUser       = &auth.User{
 		Email:    "test@test.com",
 		Username: "test",
 		Phone:    "+5511999999999",
@@ -31,32 +31,32 @@ var (
 	}
 )
 
-func TestAccount(t *testing.T) {
+func TestUser(t *testing.T) {
 	s := startTestServer()
 	defer s.Close()
 
 	api := httputil.New(s.URL + "/v1")
 
-	t.Run("it should create an account", func(t *testing.T) {
-		var respData presenter.Success[auth.Account]
-		resp, err := api.Post("/account", map[string]any{
-			"email":    mockedAccount.Email.String(),
+	t.Run("it should create an user", func(t *testing.T) {
+		var respData presenter.Success[auth.User]
+		resp, err := api.Post("/user", map[string]any{
+			"email":    mockedUser.Email.String(),
 			"password": unhashedPassword,
-			"username": mockedAccount.Username,
-			"phone":    mockedAccount.Phone,
-			"document": mockedAccount.Document,
+			"username": mockedUser.Username,
+			"phone":    mockedUser.Phone,
+			"document": mockedUser.Document,
 		}, nil)(&respData)
 
 		assert.Nil(t, err)
 		assert.Equal(t, 201, resp.StatusCode)
-		assert.Equal(t, mockedAccount.Username, respData.Data.Username)
-		assert.Equal(t, mockedAccount.IsActive, respData.Data.IsActive)
+		assert.Equal(t, mockedUser.Username, respData.Data.Username)
+		assert.Equal(t, mockedUser.IsActive, respData.Data.IsActive)
 	})
 
 	t.Run("it should log in", func(t *testing.T) {
 		var respData presenter.Success[authcase.LoginOutput]
 		resp, err := api.Post("/auth/login", map[string]any{
-			"entry":    mockedAccount.Email.String(),
+			"entry":    mockedUser.Email.String(),
 			"password": unhashedPassword,
 		}, nil)(&respData)
 
@@ -66,11 +66,11 @@ func TestAccount(t *testing.T) {
 		assert.Equal(t, 200, resp.StatusCode)
 		assert.NotZero(t, respData.Data.RefreshToken)
 		assert.NotZero(t, respData.Data.AccessToken)
-		assert.NotZero(t, respData.Data.AccountID)
+		assert.NotZero(t, respData.Data.UserID)
 
 		t.Run("it should retrieve user info", func(t *testing.T) {
-			var respData presenter.Success[auth.AccountPrivateView]
-			resp, err := api.Get("/account", &httputil.Options{
+			var respData presenter.Success[auth.UserPrivateView]
+			resp, err := api.Get("/user", &httputil.Options{
 				Headers: map[string]string{
 					"authorization": "Bearer " + currentToken,
 				},
@@ -78,10 +78,10 @@ func TestAccount(t *testing.T) {
 
 			assert.Nil(t, err)
 			assert.Equal(t, 200, resp.StatusCode)
-			assert.Equal(t, mockedAccount.Email, respData.Data.Email)
-			assert.Equal(t, mockedAccount.Phone, respData.Data.Phone)
-			assert.Equal(t, mockedAccount.Username, respData.Data.Username)
-			assert.Equal(t, mockedAccount.Document, respData.Data.Document)
+			assert.Equal(t, mockedUser.Email, respData.Data.Email)
+			assert.Equal(t, mockedUser.Phone, respData.Data.Phone)
+			assert.Equal(t, mockedUser.Username, respData.Data.Username)
+			assert.Equal(t, mockedUser.Document, respData.Data.Document)
 		})
 	})
 }

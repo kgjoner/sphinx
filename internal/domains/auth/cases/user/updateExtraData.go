@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -10,21 +10,21 @@ type UpdateExtraData struct {
 }
 
 type UpdateExtraDataInput struct {
-	auth.AccountExtraFields
-	Target    auth.Account `json:"-"`
-	Actor     auth.Account `json:"-"`
+	auth.UserExtraFields
+	Target auth.User `json:"-"`
+	Actor  auth.User `json:"-"`
 }
 
-func (i UpdateExtraData) Execute(input UpdateExtraDataInput) (*auth.AccountPrivateView, error) {
+func (i UpdateExtraData) Execute(input UpdateExtraDataInput) (*auth.UserPrivateView, error) {
 	targetAcc := &input.Target
-	err := targetAcc.UpdateExtraData(input.AccountExtraFields)
+	err := targetAcc.UpdateExtraData(input.UserExtraFields)
 	if err != nil {
 		return nil, err
 	}
 
-	err = i.AuthRepo.UpdateAccount(*targetAcc)
+	err = i.AuthRepo.UpdateUser(*targetAcc)
 	if err != nil {
-	 return nil, err
+		return nil, err
 	}
 
 	return targetAcc.PrivateView(input.Actor)

@@ -1,4 +1,4 @@
-package accountcase
+package usercase
 
 import (
 	"fmt"
@@ -24,11 +24,11 @@ type RequestPasswordResetInput struct {
 }
 
 func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, error) {
-	acc, err := i.AuthRepo.GetAccountByEntry(input.Entry)
+	acc, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return false, err
 	} else if acc == nil {
-		return false, normalizederr.NewRequestError("Account does not exist", errcode.AccountNotFound)
+		return false, normalizederr.NewRequestError("User does not exist", errcode.UserNotFound)
 	}
 
 	code, err := acc.RequestPasswordReset()
@@ -36,7 +36,7 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 		return false, err
 	}
 
-	err = i.AuthRepo.UpdateAccount(*acc)
+	err = i.AuthRepo.UpdateUser(*acc)
 	if err != nil {
 		return false, err
 	}

@@ -42,28 +42,28 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		authRepo := m.BasePool.NewDAO(r.Context())
-		account, err := authRepo.GetAccountByID(token.Claims.Sub)
+		user, err := authRepo.GetUserByID(token.Claims.Sub)
 		if err != nil {
 			presenter.HTTPError(err, w, r)
 			return
-		} else if account == nil {
+		} else if user == nil {
 			err := normalizederr.NewFatalUnauthorizedError("not existing user", errcode.InvalidAccess)
 			presenter.HTTPError(err, w, r)
 			return
 		}
 
-		err = account.Authenticate(token)
-		authRepo.UpsertSessions(account.SessionsToPersist()...)
+		err = user.Authenticate(token)
+		authRepo.UpsertSessions(user.SessionsToPersist()...)
 		if err != nil {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, controller.ActorKey, *account)
+			ctx = context.WithValue(ctx, controller.ActorKey, *user)
 			r = r.WithContext(ctx)
 			presenter.HTTPError(err, w, r)
 			return
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, controller.ActorKey, *account)
+		ctx = context.WithValue(ctx, controller.ActorKey, *user)
 		ctx = context.WithValue(ctx, controller.TokenKey, tokenStr)
 		r = r.WithContext(ctx)
 
@@ -142,7 +142,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		}
 
 		app := ctx.Value(controller.ApplicationKey)
-		isAdmin := actor != nil && actor.(auth.Account).HasRoleOnAuth(auth.RoleAdmin)
+		isAdmin := actor != nil && actor.(auth.User).HasRoleOnAuth(auth.RoleAdmin)
 		isAuthedApp := app != nil && app.(auth.Application).IsAuthenticated()
 		if !isAdmin && !isAuthedApp {
 			err := normalizederr.NewForbiddenError("does not have permission to execute this action")
@@ -152,14 +152,14 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 
 		authRepo := m.BasePool.NewDAO(r.Context())
 		var err error
-		var target *auth.Account
+		var target *auth.User
 		var entry auth.Entry
 		if id, errif := uuid.Parse(targetEntry); errif == nil {
-			target, err = authRepo.GetAccountByID(id)
+			target, err = authRepo.GetUserByID(id)
 		} else {
 			entry, err = auth.ParseEntry(targetEntry)
 			if err == nil {
-				target, err = authRepo.GetAccountByEntry(entry)
+				target, err = authRepo.GetUserByEntry(entry)
 			}
 		}
 
@@ -167,7 +167,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 			presenter.HTTPError(err, w, r)
 			return
 		} else if target == nil {
-			err := normalizederr.NewRequestError("target account does not exist", errcode.AccountNotFound)
+			err := normalizederr.NewRequestError("target user does not exist", errcode.UserNotFound)
 			presenter.HTTPError(err, w, r)
 			return
 		}

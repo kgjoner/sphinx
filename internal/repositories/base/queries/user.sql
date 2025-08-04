@@ -1,6 +1,6 @@
--- name: CreateAccount :one
+-- name: CreateUser :one
 INSERT INTO
-  account (
+  user (
     id,
     email,
     password,
@@ -33,9 +33,9 @@ VALUES
   )
 RETURNING internal_id;
 
--- name: UpdateAccount :exec
+-- name: UpdateUser :exec
 UPDATE
-  account
+  user
 SET
   email = $2,
   password = $3,
@@ -54,7 +54,7 @@ SET
 WHERE
   id = $1;
 
--- name: GetAccountByID :one
+-- name: GetUserByID :one
 WITH la AS (
   SELECT
     l.*,
@@ -101,15 +101,15 @@ SELECT
   a.created_at,
   a.updated_at
 FROM
-  account a
-  LEFT JOIN la ON la.account_id = a.internal_id
-  LEFT JOIN sa ON sa.account_id = a.internal_id
+  user a
+  LEFT JOIN la ON la.user_id = a.internal_id
+  LEFT JOIN sa ON sa.user_id = a.internal_id
 WHERE
   a.id = $1
 GROUP BY
   a.internal_id;
 
--- name: GetAccountByEntry :one
+-- name: GetUserByEntry :one
 WITH la AS (
   SELECT
     l.*,
@@ -156,9 +156,9 @@ SELECT
   a.created_at,
   a.updated_at
 FROM
-  account a
-  LEFT JOIN la ON la.account_id = a.internal_id
-  LEFT JOIN sa ON sa.account_id = a.internal_id 
+  user a
+  LEFT JOIN la ON la.user_id = a.internal_id
+  LEFT JOIN sa ON sa.user_id = a.internal_id 
 WHERE
   a.email = $1 OR
   a.phone = $1 OR
@@ -167,7 +167,7 @@ WHERE
 GROUP BY
   a.internal_id;
 
--- name: GetAccountByLink :one
+-- name: GetUserByLink :one
 WITH la AS (
   SELECT
     l.*,
@@ -216,8 +216,8 @@ SELECT
   a.created_at,
   a.updated_at
 FROM
-  account a
-  RIGHT JOIN la ON la.account_id = a.internal_id
-  LEFT JOIN sa ON sa.account_id = a.internal_id
+  user a
+  RIGHT JOIN la ON la.user_id = a.internal_id
+  LEFT JOIN sa ON sa.user_id = a.internal_id
 GROUP BY
   a.internal_id;

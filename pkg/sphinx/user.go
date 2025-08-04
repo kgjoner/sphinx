@@ -10,9 +10,9 @@ import (
 )
 
 // Get token owner's data.
-func (s Service) Account(token string) (*Account, error) {
-	var respData presenter.Success[Account]
-	_, err := s.httpApi.Get("/account", &httputil.Options{
+func (s Service) User(token string) (*User, error) {
+	var respData presenter.Success[User]
+	_, err := s.httpApi.Get("/user", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
 		},
@@ -25,12 +25,12 @@ func (s Service) Account(token string) (*Account, error) {
 	return &respData.Data, nil
 }
 
-// Get target account's data. Target value can be any account entry, including ID. Return error if target account does not exist.
+// Get target user's data. Target value can be any user entry, including ID. Return error if target user does not exist.
 //
 // Token owner must be an admin.
-func (s Service) AccountOf(target string, token string) (*Account, error) {
-	var respData presenter.Success[Account]
-	_, err := s.httpApi.Get("/account", &httputil.Options{
+func (s Service) UserOf(target string, token string) (*User, error) {
+	var respData presenter.Success[User]
+	_, err := s.httpApi.Get("/user", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
 			"X-Target":      target,
@@ -44,10 +44,10 @@ func (s Service) AccountOf(target string, token string) (*Account, error) {
 	return &respData.Data, nil
 }
 
-// Get target account's email. Target value can be their ID or other entry. Return error if target account does not exist.
+// Get target user's email. Target value can be their ID or other entry. Return error if target user does not exist.
 func (s Service) EmailOf(target string) (htypes.Email, error) {
 	var respData presenter.Success[htypes.Email]
-	_, err := s.httpApi.Get("/account/email", &httputil.Options{
+	_, err := s.httpApi.Get("/user/email", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 			"X-Target":      target,
@@ -61,15 +61,15 @@ func (s Service) EmailOf(target string) (htypes.Email, error) {
 	return respData.Data, nil
 }
 
-// Create a simple account for the informed email.
-func (s Service) NewAccount(email htypes.Email, password string) (accountID uuid.UUID, err error) {
+// Create a simple user for the informed email.
+func (s Service) NewUser(email htypes.Email, password string) (userID uuid.UUID, err error) {
 	body := map[string]any{
 		"email":    email,
 		"password": password,
 	}
 
-	var respData presenter.Success[Account]
-	_, err = s.httpApi.Post("/account", body, &httputil.Options{
+	var respData presenter.Success[User]
+	_, err = s.httpApi.Post("/user", body, &httputil.Options{
 		Headers: map[string]string{
 			"X-App": s.appID,
 		},
@@ -85,7 +85,7 @@ func (s Service) NewAccount(email htypes.Email, password string) (accountID uuid
 // Check whether entry exists.
 func (s Service) DoesEntryExist(entry string) (bool, error) {
 	var respData presenter.Success[bool]
-	_, err := s.httpApi.Get("/account/existence", &httputil.Options{
+	_, err := s.httpApi.Get("/user/existence", &httputil.Options{
 		Headers: map[string]string{
 			"X-Entry": entry,
 		},
@@ -98,10 +98,10 @@ func (s Service) DoesEntryExist(entry string) (bool, error) {
 	return respData.Data, nil
 }
 
-// Get account id by their entry. Return nil if entry is not found.
-func (s Service) AccountIDByEntry(entry string) (*uuid.UUID, error) {
+// Get user id by their entry. Return nil if entry is not found.
+func (s Service) UserIDByEntry(entry string) (*uuid.UUID, error) {
 	var respData presenter.Success[*uuid.UUID]
-	_, err := s.httpApi.Get("/account/id", &httputil.Options{
+	_, err := s.httpApi.Get("/user/id", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 			"X-Entry":       entry,
@@ -115,7 +115,7 @@ func (s Service) AccountIDByEntry(entry string) (*uuid.UUID, error) {
 	return respData.Data, nil
 }
 
-// Add roles and/or grantings to target account.
+// Add roles and/or grantings to target user.
 func (s Service) GrantPermissions(target string, roles []string, grantings []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
@@ -133,7 +133,7 @@ func (s Service) GrantPermissions(target string, roles []string, grantings []str
 	}
 
 	var respData presenter.Success[bool]
-	_, err := s.httpApi.Patch("/account/permission", body, &httputil.Options{
+	_, err := s.httpApi.Patch("/user/permission", body, &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 			"X-Target":      target,
@@ -147,7 +147,7 @@ func (s Service) GrantPermissions(target string, roles []string, grantings []str
 	return respData.Data, nil
 }
 
-// Remove roles and/or grantings from target account.
+// Remove roles and/or grantings from target user.
 func (s Service) RevokePermissions(target string, roles []string, grantings []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
@@ -165,7 +165,7 @@ func (s Service) RevokePermissions(target string, roles []string, grantings []st
 	}
 
 	var respData presenter.Success[bool]
-	_, err := s.httpApi.Patch("/account/permission", body, &httputil.Options{
+	_, err := s.httpApi.Patch("/user/permission", body, &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 			"X-Target":      target,

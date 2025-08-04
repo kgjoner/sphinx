@@ -16,7 +16,7 @@ type Mail struct {
 
 type MailInput struct {
 	TemplateKey string
-	Target      auth.Account
+	Target      auth.User
 	Links       []i18n.CustomLink
 	Languages   []string
 	// Indicates if the email is being sent to the pending email

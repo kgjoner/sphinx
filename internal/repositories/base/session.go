@@ -16,7 +16,7 @@ func (q DAO) UpsertSessions(sessions ...auth.Session) error {
 
 	type formattedSession struct {
 		ID                             uuid.UUID       `json:"id" validate:"required"`
-		AccountID                      int             `json:"account_id" validate:"required"`
+		UserID                         int             `json:"user_id" validate:"required"`
 		ApplicationID                  int             `json:"application_id"`
 		RefreshToken                   string          `json:"refresh_token" validate:"required"`
 		RefreshedAt                    htypes.NullTime `json:"refreshed_at"`
@@ -45,7 +45,7 @@ func (q DAO) UpsertSessions(sessions ...auth.Session) error {
 
 		formattedSession := formattedSession{
 			s.ID,
-			s.AccountID,
+			s.UserID,
 			s.Application.InternalID,
 			s.RefreshToken,
 			s.RefreshedAt,

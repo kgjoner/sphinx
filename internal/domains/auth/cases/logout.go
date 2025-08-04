@@ -9,7 +9,7 @@ type Logout struct {
 }
 
 type LogoutInput struct {
-	Actor auth.Account `json:"-"`
+	Actor auth.User `json:"-"`
 }
 
 func (i Logout) Execute(input LogoutInput) (bool, error) {
