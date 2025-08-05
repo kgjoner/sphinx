@@ -13,7 +13,8 @@ INSERT INTO
     pending_phone,
     has_email_been_verified,
     has_phone_been_verified,
-    codes
+    codes,
+    external_auth_ids
   )
 VALUES
   (
@@ -29,7 +30,8 @@ VALUES
     $10,
     $11,
     $12,
-    $13
+    $13,
+    $14
   )
 RETURNING internal_id;
 
@@ -49,8 +51,9 @@ SET
   has_email_been_verified = $11,
   has_phone_been_verified = $12,
   codes = $13,
-  password_updated_at = $14,
-  updated_at = $15
+  external_auth_ids = $14,
+  password_updated_at = $15,
+  updated_at = $16
 WHERE
   id = $1;
 
@@ -91,6 +94,7 @@ SELECT
   a.has_email_been_verified,
   a.has_phone_been_verified,
   a.codes,
+  a.external_auth_ids,
   json_agg(la.*) links,
   CASE 
     WHEN json_agg(sa.*)::text <> '[null]' 
@@ -146,6 +150,7 @@ SELECT
   a.has_email_been_verified,
   a.has_phone_been_verified,
   a.codes,
+  a.external_auth_ids,
   json_agg(la.*) links,
   CASE 
     WHEN json_agg(sa.*)::text <> '[null]' 
@@ -206,6 +211,7 @@ SELECT
   a.has_email_been_verified,
   a.has_phone_been_verified,
   a.codes,
+  a.external_auth_ids,
   json_agg(la.*) links,
   CASE 
     WHEN json_agg(sa.*)::text <> '[null]' 
@@ -219,5 +225,61 @@ FROM
   user a
   RIGHT JOIN la ON la.user_id = a.internal_id
   LEFT JOIN sa ON sa.user_id = a.internal_id
+GROUP BY
+  a.internal_id;
+
+-- name: GetUserByExternalAuthID :one
+WITH la AS (
+  SELECT
+    l.*,
+    json_agg(app.*)->0 application
+  FROM
+    link l
+    JOIN application app ON app.internal_id = l.application_id
+  GROUP BY
+    l.internal_id
+), sa AS (
+  SELECT
+    s.*,
+    json_agg(app.*)->0 application
+  FROM
+    session s
+    JOIN application app ON app.internal_id = s.application_id
+  WHERE
+    s.is_active IS TRUE
+  GROUP BY
+    s.internal_id
+)
+SELECT
+  a.internal_id,
+  a.id,
+  a.email,
+  COALESCE(a.phone, ''),
+  a.password,
+  COALESCE(a.username, ''),
+  COALESCE(a.document, ''),
+  a.extra_data,
+  a.is_active,
+  COALESCE(a.pending_email, ''),
+  COALESCE(a.pending_phone, ''),
+  a.has_email_been_verified,
+  a.has_phone_been_verified,
+  a.codes,
+  a.external_auth_ids,
+  json_agg(la.*) links,
+  CASE 
+    WHEN json_agg(sa.*)::text <> '[null]' 
+      THEN json_agg(sa.*)
+    ELSE NULL
+  END AS active_sessions,
+  a.password_updated_at,
+  a.created_at,
+  a.updated_at
+FROM
+  user a
+  LEFT JOIN la ON la.user_id = a.internal_id
+  LEFT JOIN sa ON sa.user_id = a.internal_id 
+WHERE
+  a.external_auth_ids->>$1 = $2 
 GROUP BY
   a.internal_id;

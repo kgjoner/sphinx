@@ -1,5 +1,6 @@
 ALTER TABLE account
-  RENAME TO user;
+  RENAME TO user
+  ADD column IF NOT EXISTS external_auth_ids jsonb;
 
 ALTER TABLE application
   RENAME COLUMN IF EXISTS grantings TO possible_roles,

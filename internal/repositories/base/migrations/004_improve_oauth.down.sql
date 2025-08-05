@@ -19,4 +19,5 @@ ALTER TABLE application
   RENAME COLUMN IF EXISTS possible_roles TO grantings;
 
 ALTER TABLE user
+  DROP COLUMN IF EXISTS external_auth_ids,
   RENAME TO account;

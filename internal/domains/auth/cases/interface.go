@@ -11,6 +11,7 @@ type AuthRepo interface {
 	GetUserByID(uuid.UUID) (*auth.User, error)
 	GetUserByEntry(auth.Entry) (*auth.User, error)
 	GetUserByLink(uuid.UUID) (*auth.User, error)
+	GetUserByExternalAuthID(provider string, id string) (*auth.User, error)
 
 	InsertApplication(*auth.Application) error
 	UpdateApplication(auth.Application) error

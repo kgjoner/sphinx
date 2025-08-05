@@ -29,6 +29,7 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 
 	router.Route("/auth", func(r chi.Router) {
 		r.Post("/login", authgtw.login)
+		r.Post("/external", authgtw.externalAuth)
 		r.With(authgtw.mid.Authenticate).Post("/logout", authgtw.logout)
 		r.With(authgtw.mid.Authenticate).Post("/refresh", authgtw.refresh)
 	})
@@ -117,16 +118,17 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
-// Init OAuth godoc
+// Issue Grant godoc
 //
-//	@Summary		Request an oauth code
-//	@Description	Exchange user credentials for oauth code
-//	@Router			/auth/open/init [post]
+//	@Summary		Request an authentication grant
+//	@Description	Issue a new authentication grant for a third party application (OAuth 2.0)
+//	@Router			/oauth/authorize [post]
 //	@Tags			Auth
+//	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		oauthcase.IssueGrantInput	true	"Credentials. Entry can be: email, phone, username or document"
-//	@Success		200		{object}	presenter.Success[string]
+//	@Param			payload	body		oauthcase.IssueGrantInput	true
+//	@Success		200		{object}	presenter.Success[oauthcase.IssueGrantOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError
 //	@Failure		500		{object}	normalizederr.NormalizedError
@@ -157,11 +159,11 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r)
 }
 
-// Login via OAuth godoc
+// Exchange Grant godoc
 //
-//	@Summary		Request an oauth code
-//	@Description	Exchange user credentials for oauth code
-//	@Router			/auth/open/login [post]
+//	@Summary		Exchange grant for tokens
+//	@Description	Exchange authentication grant for third party application auth tokens
+//	@Router			/oauth/token [post]
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
@@ -228,6 +230,50 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HTTPError(err, w, r)
+		return
+	}
+
+	presenter.HTTPSuccess(output, w, r)
+}
+
+// External Auth godoc
+//
+//	@Summary		Log user in via external provider
+//	@Description	Use an external provider to authenticate user and generate root app auth tokens. It may create a new user or relate an existing one to the external provider if user had consented.
+//	@Router			/auth/external [post]
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		authcase.ExternalAuthInput	true	"You may inform email if creation is expected and provider does not provide it."
+//	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
+//	@Failure		400		{object}	normalizederr.NormalizedError
+//	@Failure		401		{object}	normalizederr.NormalizedError
+//	@Failure		403		{object}	normalizederr.NormalizedError
+//	@Failure		500		{object}	normalizederr.NormalizedError
+func (g AuthGateway) externalAuth(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		JSONBody().
+		AddIp().
+		AddHeader("user-agent", "device").
+		AddHeader("authorization", "authorizationHeader")
+
+	var input authcase.ExternalAuthInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HTTPError(err, w, r)
+		return
+	}
+
+	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
+		i := authcase.ExternalAuth{
+			AuthRepo:    tx,
+		}
+
+		return i.Execute(input)
+	})
+
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return

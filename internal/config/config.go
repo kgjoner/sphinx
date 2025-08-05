@@ -37,6 +37,15 @@ var Env struct {
 		BASE_URL string `envconfig:"default=https://hermes.example.com"`
 		API_KEY  string `envconfig:"default=topsecret"`
 	}
+
+	// Used for integrating with third-party identity providers.
+	// It is OPTIONAL, so if not provided, no external auth will be possible.
+	// Each provider must have a unique name.
+	//
+	// Use with caution, only with trusted providers, as this may open security vulnerabilities.
+	//
+	// See documentation for more details.
+	EXTERNAL_AUTH_PROVIDERS []ExternalAuthProvider `envconfig:"optional" json:",omitempty"`
 }
 
 var BASE_PATH string

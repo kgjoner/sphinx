@@ -38,6 +38,8 @@ type User struct {
 	VerificationCodes    map[VerificationKind]string `json:"-"`
 	Links                []Link                      `json:"-"`
 	ActiveSessions       []Session                   `json:"-"`
+	// Maps provider name to subject ID. Used only if external auth is enabled.
+	ExternalAuthIDs map[string]string `json:"-"`
 
 	justTerminatedSessions []Session  `json:"-"`
 	hasValidCredentials    bool       `json:"-"`
@@ -77,13 +79,17 @@ func NewUser(a *UserCreationFields) (*User, error) {
 
 	now := time.Now()
 	acc := &User{
-		ID:        uuid.New(),
-		Email:     a.Email,
-		Phone:     a.Phone,
-		Password:  hashPassword(a.Password),
-		Username:  strings.ToLower(a.Username),
-		Document:  a.Document,
-		ExtraData: ExtraData(a.UserExtraFields),
+		ID:       uuid.New(),
+		Email:    a.Email,
+		Phone:    a.Phone,
+		Password: hashPassword(a.Password),
+		Username: strings.ToLower(a.Username),
+		Document: a.Document,
+		ExtraData: ExtraData{
+			Name:    a.Name,
+			Surname: a.Surname,
+			Address: a.Address,
+		},
 
 		IsActive:          true,
 		VerificationCodes: map[VerificationKind]string{},
@@ -384,6 +390,27 @@ func (a *User) clearCodeFor(kind VerificationKind) {
 	delete(a.VerificationCodes, kind)
 }
 
+func (a *User) RelateToExternalProvider(providerName string, externalAuthID string) error {
+	doesProviderExist := false
+	for _, p := range config.Env.EXTERNAL_AUTH_PROVIDERS {
+		if p.Name == providerName {
+			doesProviderExist = true
+			break
+		}
+	}
+	if !doesProviderExist {
+		return normalizederr.NewRequestError("invalid provider", errcode.InvalidProvider)
+	}
+
+	if a.ExternalAuthIDs == nil {
+		a.ExternalAuthIDs = make(map[string]string)
+	}
+
+	a.ExternalAuthIDs[providerName] = externalAuthID
+	a.UpdatedAt = time.Now()
+	return nil
+}
+
 /* ==============================================================================
 	LINK RELATED METHODS
 ============================================================================== */
@@ -562,6 +589,23 @@ func (a *User) AuthenticateViaGrant(grant *AuthorizationGrant, credentials *Gran
 
 	if !a.IsActive {
 		return normalizederr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
+	}
+
+	a.hasValidCredentials = true
+	return nil
+}
+
+func (a *User) AuthenticateViaExternalProvider(subject config.ExternalSubject) error {
+	if !subject.IsAuthenticated() {
+		return normalizederr.NewUnauthorizedError("subject is not authenticated in external provider.", errcode.InvalidCredentials)
+	}
+
+	if !a.IsActive {
+		return normalizederr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
+	}
+
+	if subjectID, exists := a.ExternalAuthIDs[subject.ProviderName]; !exists || subjectID != subject.ID {
+		return normalizederr.NewForbiddenError("user is not related to the external provider.", errcode.NoRelatedProvider)
 	}
 
 	a.hasValidCredentials = true
