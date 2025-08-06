@@ -5,13 +5,16 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/cornucopia/utils/pwdgen"
+	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
+	usercase "github.com/kgjoner/sphinx/internal/domains/auth/cases/user"
 )
 
 type ExternalAuth struct {
-	AuthRepo AuthRepo
+	AuthRepo    auth.Repo
+	MailService hermes.MailService
 }
 
 type ExternalAuthInput struct {
@@ -30,6 +33,7 @@ type ExternalAuthInput struct {
 	// Not required if ExternalAuthProvider already provides an email.
 	Email htypes.Email
 
+	Languages                  []string `json:"-"`
 	auth.SessionCreationFields `json:"-"`
 }
 
@@ -52,7 +56,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 	}
 
 	// Handle user-provider relation
-	user, err := i.AuthRepo.GetUserByExternalAuthID(provider.Name, subject.ID)
+	user, err := i.AuthRepo.GetUserByExternalAuthID(subject.ProviderName, subject.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -94,9 +98,16 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 			return nil, normalizederr.NewRequestError("there is no provided email for creating a new user", errcode.UserNotFound)
 		}
 
-		user, err = auth.NewUser(&auth.UserCreationFields{
-			Email:    subject.Email,
-			Password: pwdgen.Generate(16),
+		userCreationCase := usercase.CreateUser{
+			AuthRepo:    i.AuthRepo,
+			MailService: i.MailService,
+		}
+		user, err = userCreationCase.Execute(usercase.CreateUserInput{
+			UserCreationFields: auth.UserCreationFields{
+				Email:    subject.Email,
+				Password: pwdgen.Generate(16), // Generate a random password
+			},
+			Languages: input.Languages,
 		})
 		if err != nil {
 			return nil, err
@@ -107,7 +118,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 			return nil, err
 		}
 
-		err := i.AuthRepo.InsertUser(user)
+		err = i.AuthRepo.UpdateUser(*user)
 		if err != nil {
 			return nil, err
 		}

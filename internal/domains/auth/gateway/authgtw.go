@@ -257,7 +257,8 @@ func (g AuthGateway) externalAuth(w http.ResponseWriter, r *http.Request) {
 		JSONBody().
 		AddIp().
 		AddHeader("user-agent", "device").
-		AddHeader("authorization", "authorizationHeader")
+		AddHeader("authorization", "authorizationHeader").
+		AddLanguages()
 
 	var input authcase.ExternalAuthInput
 	err := c.Write(&input)
@@ -269,6 +270,7 @@ func (g AuthGateway) externalAuth(w http.ResponseWriter, r *http.Request) {
 	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx common.BaseRepo) (any, error) {
 		i := authcase.ExternalAuth{
 			AuthRepo:    tx,
+			MailService: g.MailService,
 		}
 
 		return i.Execute(input)
