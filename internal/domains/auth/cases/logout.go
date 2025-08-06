@@ -5,7 +5,7 @@ import (
 )
 
 type Logout struct {
-	AuthRepo AuthRepo
+	AuthRepo auth.Repo
 }
 
 type LogoutInput struct {

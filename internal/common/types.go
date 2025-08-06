@@ -6,7 +6,7 @@ import (
 
 	"github.com/kgjoner/cornucopia/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
 type RepoPool[T any] interface {
@@ -17,7 +17,7 @@ type RepoPool[T any] interface {
 }
 
 type BaseRepo interface {
-	authcase.AuthRepo
+	auth.Repo
 }
 
 type Pools struct {

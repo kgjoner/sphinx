@@ -3,11 +3,10 @@ package usercase
 import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type GetUserID struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo auth.Repo
 }
 
 type GetUserIDInput struct {

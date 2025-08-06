@@ -6,7 +6,7 @@ import (
 )
 
 type Refresh struct {
-	AuthRepo AuthRepo
+	AuthRepo auth.Repo
 }
 
 type RefreshInput struct {

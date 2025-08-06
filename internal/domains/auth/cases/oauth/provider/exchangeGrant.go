@@ -10,7 +10,7 @@ import (
 )
 
 type ExchangeGrant struct {
-	AuthRepo  authcase.AuthRepo
+	AuthRepo  auth.Repo
 	CacheRepo cache.DAO
 }
 

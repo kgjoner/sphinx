@@ -12,12 +12,11 @@ import (
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	"github.com/sirupsen/logrus"
 )
 
 type UpdateUniqueFields struct {
-	AuthRepo    authcase.AuthRepo
+	AuthRepo    auth.Repo
 	MailService hermes.MailService
 }
 

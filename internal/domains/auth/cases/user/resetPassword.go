@@ -6,11 +6,11 @@ import (
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
 type ResetPassword struct {
-	AuthRepo    authcase.AuthRepo
+	AuthRepo    auth.Repo
 	MailService hermes.MailService
 }
 

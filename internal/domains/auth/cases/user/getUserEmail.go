@@ -3,11 +3,10 @@ package usercase
 import (
 	"github.com/kgjoner/cornucopia/helpers/htypes"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type GetUserEmail struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo auth.Repo
 }
 
 type GetUserEmailInput struct {

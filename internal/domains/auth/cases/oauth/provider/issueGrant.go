@@ -9,11 +9,10 @@ import (
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type IssueGrant struct {
-	AuthRepo  authcase.AuthRepo
+	AuthRepo  auth.Repo
 	CacheRepo cache.DAO
 }
 

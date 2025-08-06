@@ -4,11 +4,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
 type CancelPendingField struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo auth.Repo
 }
 
 type CancelPendingFieldInput struct {

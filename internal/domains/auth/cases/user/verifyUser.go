@@ -5,11 +5,10 @@ import (
 	"github.com/kgjoner/cornucopia/helpers/normalizederr"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type VerifyUser struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo auth.Repo
 }
 
 type VerifyUserInput struct {

@@ -2,11 +2,10 @@ package appcase
 
 import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type CreateApplication struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo auth.Repo
 }
 
 type CreateApplicationInput struct {

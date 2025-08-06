@@ -4,11 +4,10 @@ import (
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type ChangePassword struct {
-	AuthRepo    authcase.AuthRepo
+	AuthRepo    auth.Repo
 	MailService hermes.MailService
 }
 

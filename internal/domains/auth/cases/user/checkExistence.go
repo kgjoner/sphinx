@@ -2,11 +2,10 @@ package usercase
 
 import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
-	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 )
 
 type CheckEntryExistence struct {
-	AuthRepo authcase.AuthRepo
+	AuthRepo auth.Repo
 }
 
 type CheckEntryExistenceInput struct {

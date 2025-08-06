@@ -9,7 +9,7 @@ import (
 )
 
 type Login struct {
-	AuthRepo AuthRepo
+	AuthRepo auth.Repo
 }
 
 type LoginInput struct {
