@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	"github.com/kgjoner/sphinx/test/mocks"
@@ -191,5 +192,233 @@ func TestSessionManagement(t *testing.T) {
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		assert.Equal(t, http.StatusOK, resp2.StatusCode)
+	})
+}
+
+func TestExternalAuthenticationWithMockProvider(t *testing.T) {
+	ts := NewTestSuite(t)
+	defer ts.Close()
+
+	factory := NewTestDataFactory()
+
+	// Setup mock external auth provider
+	mockAuthManager := mocks.NewMockExternalAuthManager()
+	defer mockAuthManager.Close()
+
+	// Create a test provider
+	testEmail := "external@example.com"
+	testProvider := mockAuthManager.SetupTestProvider(
+		"test-provider",
+		"valid-token-123",
+		"sub-123",
+		testEmail,
+	)
+
+	// Setup the configuration with the mock provider
+	originalProviders := config.Env.EXTERNAL_AUTH_PROVIDERS
+	defer func() {
+		config.Env.EXTERNAL_AUTH_PROVIDERS = originalProviders
+	}()
+	config.Env.EXTERNAL_AUTH_PROVIDERS = mockAuthManager.GetConfigs()
+	
+	t.Run("should reject creation without consent", func(t *testing.T) {
+		email := factory.RandomUser()["email"].(string)
+		token := "valid-creation-123"
+	
+		testProvider.AddValidToken(token, &mocks.MockAuthSubject{
+			ID:    "creation-123",
+			Email: email,
+		})
+
+		externalAuthData := map[string]interface{}{
+			"providerName":        testProvider.Name,
+			"authorizationHeader": "Bearer " + token,
+		}
+
+		resp, err := ts.Request("POST", "/auth/external", externalAuthData, nil)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Should return forbidden due to lack of consent
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should create user with consent", func(t *testing.T) {
+		externalAuthData := map[string]interface{}{
+			"providerName":        testProvider.Name,
+			"consentCreation":     true,
+		}
+
+		resp, err := ts.Request("POST", "/auth/external", externalAuthData, map[string]string{
+			"Authorization": "Bearer valid-token-123",
+		})
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Should successfully authenticate and create user
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[authcase.LoginOutput]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		assert.NotEmpty(t, respData.Data.AccessToken)
+		assert.NotEmpty(t, respData.Data.RefreshToken)
+		assert.NotEmpty(t, respData.Data.UserID)
+
+		// Verify user was created
+		user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.UserID)
+		require.NoError(t, err)
+		require.NotNil(t, user)
+
+		assert.Equal(t, testEmail, user.Email.String())
+
+		t.Run("should login an already consented user without pass consent again", func(t *testing.T) {
+			externalAuthData := map[string]interface{}{
+				"providerName":        testProvider.Name,
+			}
+
+			resp, err := ts.Request("POST", "/auth/external", externalAuthData, map[string]string{
+				"Authorization": "Bearer valid-token-123",
+			})
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			var loginResp presenter.Success[authcase.LoginOutput]
+			err = json.NewDecoder(resp.Body).Decode(&loginResp)
+			require.NoError(t, err)
+
+			assert.NotEmpty(t, loginResp.Data.AccessToken)
+			assert.NotEmpty(t, loginResp.Data.RefreshToken)
+			assert.NotEmpty(t, loginResp.Data.UserID)
+		})
+	})
+
+		t.Run("should reject relating existing user without consent", func(t *testing.T) {
+		// First create a user
+		userData := factory.RandomUser()
+		email := userData["email"].(string)
+
+		resp1, err := ts.Request("POST", "/user", userData, nil)
+		require.NoError(t, err)
+		resp1.Body.Close()
+
+		// Try to authenticate with external provider using same email but no consent
+		token := "valid-existing-123"
+		testProvider.AddValidToken(token, &mocks.MockAuthSubject{
+			ID:    "existing-123",
+			Email: email,
+		})
+
+		externalAuthData := map[string]interface{}{
+			"providerName":        testProvider.Name,
+			"authorizationHeader": "Bearer " + token,
+		}
+
+		resp, err := ts.Request("POST", "/auth/external", externalAuthData, nil)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Should return forbidden due to lack of consent
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should relate existing user with consent", func(t *testing.T) {
+		// First create a user
+		userData := factory.RandomUser()
+		email := userData["email"].(string)
+
+		resp1, err := ts.Request("POST", "/user", userData, nil)
+		require.NoError(t, err)
+		resp1.Body.Close()
+
+		// Try to authenticate with external provider using same email
+		token := "valid-existing-456"
+		testProvider.AddValidToken(token, &mocks.MockAuthSubject{
+			ID:    "sub-existing-123",
+			Email: email,
+		})
+		externalAuthData := map[string]interface{}{
+			"providerName":        testProvider.Name,
+			"consentRelation":     true,
+			"authorizationHeader": "Bearer " + token,
+		}
+
+		resp, err := ts.Request("POST", "/auth/external", externalAuthData, nil)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Should successfully relate existing user to external provider
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[authcase.LoginOutput]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		assert.NotEmpty(t, respData.Data.AccessToken)
+		assert.NotEmpty(t, respData.Data.RefreshToken)
+		assert.NotEmpty(t, respData.Data.UserID)
+
+		t.Run("should login a related existing user without pass consent again", func(t *testing.T) {
+			externalAuthData := map[string]interface{}{
+				"providerName":        testProvider.Name,
+			}
+
+			resp, err := ts.Request("POST", "/auth/external", externalAuthData, map[string]string{
+				"Authorization": "Bearer " + token,
+			})
+			require.NoError(t, err)
+			defer resp.Body.Close()
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+			var loginResp presenter.Success[authcase.LoginOutput]
+			err = json.NewDecoder(resp.Body).Decode(&loginResp)
+			require.NoError(t, err)
+
+			assert.NotEmpty(t, loginResp.Data.AccessToken)
+			assert.NotEmpty(t, loginResp.Data.RefreshToken)
+			assert.NotEmpty(t, loginResp.Data.UserID)
+		})
+	})
+
+	t.Run("should reject invalid token", func(t *testing.T) {
+		externalAuthData := map[string]interface{}{
+			"providerName":        "test-provider",
+			"consentCreation":     true,
+			"email":               "test@example.com",
+			"authorizationHeader": "Bearer invalid-token",
+		}
+
+		resp, err := ts.Request("POST", "/auth/external", externalAuthData, nil)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Should return unauthorized for invalid token
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("should handle provider error responses", func(t *testing.T) {
+		// Configure the provider to return an error
+		testProvider.SetError(http.StatusInternalServerError, "Provider temporarily unavailable")
+
+		externalAuthData := map[string]interface{}{
+			"providerName":        "test-provider",
+			"consentCreation":     true,
+			"email":               "test@example.com",
+			"authorizationHeader": "Bearer valid-token-123",
+		}
+
+		resp, err := ts.Request("POST", "/auth/external", externalAuthData, nil)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		// Should return error status
+		assert.True(t, resp.StatusCode >= 400)
+
+		// Reset the provider to normal operation
+		testProvider.ClearError()
 	})
 }

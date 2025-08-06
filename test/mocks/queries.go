@@ -175,6 +175,35 @@ func (m *MockQueries) GetUserByEntry(entry auth.Entry) (*auth.User, error) {
 	return nil, nil
 }
 
+func (m *MockQueries) GetUserByExternalAuthID(providerName string, subjectID string) (*auth.User, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.shouldError {
+		return nil, m.errorToReturn
+	}
+
+	for _, acc := range m.users {
+		if acc.ExternalAuthIDs == nil {
+			continue
+		}
+
+		if acc.ExternalAuthIDs[providerName] == subjectID {
+			// Create a copy of the user to avoid modifying the original
+			userCopy := *acc
+
+			// Populate Links for this user
+			userCopy.Links = m.getLinksForUser(acc.InternalID)
+
+			// Populate ActiveSessions for this user (only active ones)
+			userCopy.ActiveSessions = m.getActiveSessionsForUser(acc.InternalID)
+
+			return &userCopy, nil
+		}
+	}
+	return nil, nil
+}
+
 func (m *MockQueries) GetUserByLink(linkID uuid.UUID) (*auth.User, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
