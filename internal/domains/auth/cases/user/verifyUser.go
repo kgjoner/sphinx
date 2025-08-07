@@ -18,19 +18,19 @@ type VerifyUserInput struct {
 }
 
 func (i VerifyUser) Execute(input VerifyUserInput) (bool, error) {
-	acc, err := i.AuthRepo.GetUserByID(input.UserID)
+	user, err := i.AuthRepo.GetUserByID(input.UserID)
 	if err != nil {
 		return false, err
-	} else if acc == nil {
+	} else if user == nil {
 		return false, normalizederr.NewRequestError("User does not exit", errcode.UserNotFound)
 	}
 
-	err = acc.VerifyUser(input.VerificationKind, input.VerificationCode)
+	err = user.VerifyUser(input.VerificationKind, input.VerificationCode)
 	if err != nil {
 		return false, err
 	}
 
-	err = i.AuthRepo.UpdateUser(*acc)
+	err = i.AuthRepo.UpdateUser(*user)
 	if err != nil {
 		return false, err
 	}

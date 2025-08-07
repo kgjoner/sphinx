@@ -45,26 +45,26 @@ func TestUserCreation(t *testing.T) {
 		assert.Empty(t, respData.Data.Password)
 		assert.Zero(t, respData.Data.ExtraData.Address)
 
-		acc, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
+		user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
 		require.NoError(t, err)
-		require.NotNil(t, acc)
+		require.NotNil(t, user)
 
 		// Assert not returned data
-		assert.Equal(t, userData["email"], acc.Email.String())
-		assert.Equal(t, userData["phone"], acc.Phone.String())
-		assert.Equal(t, userData["document"], acc.Document.String())
+		assert.Equal(t, userData["email"], user.Email.String())
+		assert.Equal(t, userData["phone"], user.Phone.String())
+		assert.Equal(t, userData["document"], user.Document.String())
 		dataAddress := userData["address"].(map[string]interface{})
-		assert.Equal(t, dataAddress["line1"], acc.ExtraData.Address.Line1)
-		assert.Equal(t, dataAddress["number"], acc.ExtraData.Address.Number)
-		assert.Equal(t, dataAddress["city"], acc.ExtraData.Address.City)
-		assert.Equal(t, dataAddress["state"], acc.ExtraData.Address.State)
-		assert.Equal(t, dataAddress["country"], acc.ExtraData.Address.Country.Name())
-		assert.Equal(t, dataAddress["zipCode"], string(acc.ExtraData.Address.ZipCode))
-		assert.False(t, acc.HasEmailBeenVerified)
+		assert.Equal(t, dataAddress["line1"], user.ExtraData.Address.Line1)
+		assert.Equal(t, dataAddress["number"], user.ExtraData.Address.Number)
+		assert.Equal(t, dataAddress["city"], user.ExtraData.Address.City)
+		assert.Equal(t, dataAddress["state"], user.ExtraData.Address.State)
+		assert.Equal(t, dataAddress["country"], user.ExtraData.Address.Country.Name())
+		assert.Equal(t, dataAddress["zipCode"], string(user.ExtraData.Address.ZipCode))
+		assert.False(t, user.HasEmailBeenVerified)
 
 		t.Run("should verify email", func(t *testing.T) {
 			resp, err := ts.Request("PATCH", "/user/"+respData.Data.ID.String()+"/verification", map[string]string{
-				"code": acc.VerificationCodes[auth.VerificationEmail],
+				"code": user.VerificationCodes[auth.VerificationEmail],
 				"kind": string(auth.VerificationEmail),
 			}, nil)
 			require.NoError(t, err)
@@ -72,10 +72,10 @@ func TestUserCreation(t *testing.T) {
 
 			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-			acc, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
+			user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
 			require.NoError(t, err)
-			require.NotNil(t, acc)
-			assert.True(t, acc.HasEmailBeenVerified)
+			require.NotNil(t, user)
+			assert.True(t, user.HasEmailBeenVerified)
 		})
 	})
 
@@ -95,9 +95,9 @@ func TestUserCreation(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
-		acc, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
+		user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
 		require.NoError(t, err)
-		require.NotNil(t, acc)
+		require.NotNil(t, user)
 
 		// Assert not returned data
 		expectedData := map[string]interface{}{
@@ -105,9 +105,9 @@ func TestUserCreation(t *testing.T) {
 			"document": "cpf:" + sanitizer.Digit(userData["document"].(string)),
 			"phone":    "+" + sanitizer.Digit(userData["phone"].(string)),
 		}
-		assert.Equal(t, expectedData["email"], acc.Email.String())
-		assert.Equal(t, expectedData["phone"], acc.Phone.String())
-		assert.Equal(t, expectedData["document"], acc.Document.String())
+		assert.Equal(t, expectedData["email"], user.Email.String())
+		assert.Equal(t, expectedData["phone"], user.Phone.String())
+		assert.Equal(t, expectedData["document"], user.Document.String())
 	})
 
 	t.Run("should reject invalid email", func(t *testing.T) {
@@ -336,16 +336,16 @@ func TestPasswordReset(t *testing.T) {
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 		t.Run("should reset password", func(t *testing.T) {
-			acc, err := ts.server.GetMockQueries().GetUserByID(accData.Data.ID)
+			user, err := ts.server.GetMockQueries().GetUserByID(accData.Data.ID)
 			require.NoError(t, err)
-			require.NotNil(t, acc)
+			require.NotNil(t, user)
 
 			resetData := map[string]interface{}{
-				"code":        acc.VerificationCodes[auth.VerificationPasswordReset],
+				"code":        user.VerificationCodes[auth.VerificationPasswordReset],
 				"newPassword": newPassword,
 			}
 
-			resp, err := ts.Request("PATCH", "/user/"+acc.ID.String()+"/password", resetData, nil)
+			resp, err := ts.Request("PATCH", "/user/"+user.ID.String()+"/password", resetData, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 

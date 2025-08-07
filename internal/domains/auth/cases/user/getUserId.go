@@ -14,14 +14,14 @@ type GetUserIDInput struct {
 }
 
 func (i GetUserID) Execute(input GetUserIDInput) (*uuid.UUID, error) {
-	acc, err := i.AuthRepo.GetUserByEntry(input.Entry)
+	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return nil, err
 	}
 
-	if acc == nil {
+	if user == nil {
 		return nil, nil
 	}
 
-	return &acc.ID, nil
+	return &user.ID, nil
 }

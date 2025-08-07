@@ -78,7 +78,7 @@ func NewUser(a *UserCreationFields) (*User, error) {
 	}
 
 	now := time.Now()
-	acc := &User{
+	user := &User{
 		ID:       uuid.New(),
 		Email:    a.Email,
 		Phone:    a.Phone,
@@ -99,12 +99,12 @@ func NewUser(a *UserCreationFields) (*User, error) {
 
 	// TODO: Add link for root Application as default
 
-	acc.generateCodeFor(VerificationEmail)
-	if !acc.Phone.IsZero() {
-		acc.generateCodeFor(VerificationPhone)
+	user.generateCodeFor(VerificationEmail)
+	if !user.Phone.IsZero() {
+		user.generateCodeFor(VerificationPhone)
 	}
 
-	return acc, validator.Validate(acc)
+	return user, validator.Validate(user)
 }
 
 func hashPassword(str string) string {

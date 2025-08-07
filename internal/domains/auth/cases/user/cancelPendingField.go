@@ -17,19 +17,19 @@ type CancelPendingFieldInput struct {
 }
 
 func (i CancelPendingField) Execute(input CancelPendingFieldInput) (bool, error) {
-	acc, err := i.AuthRepo.GetUserByID(input.UserID)
+	user, err := i.AuthRepo.GetUserByID(input.UserID)
 	if err != nil {
 		return false, err
-	} else if acc == nil {
+	} else if user == nil {
 		return false, normalizederr.NewRequestError("User does not exit", errcode.UserNotFound)
 	}
 
-	err = acc.CancelPendingField(input.Field)
+	err = user.CancelPendingField(input.Field)
 	if err != nil {
 		return false, err
 	}
 
-	err = i.AuthRepo.UpdateUser(*acc)
+	err = i.AuthRepo.UpdateUser(*user)
 	if err != nil {
 		return false, err
 	}

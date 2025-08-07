@@ -23,19 +23,19 @@ type RequestPasswordResetInput struct {
 }
 
 func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, error) {
-	acc, err := i.AuthRepo.GetUserByEntry(input.Entry)
+	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return false, err
-	} else if acc == nil {
+	} else if user == nil {
 		return false, normalizederr.NewRequestError("User does not exist", errcode.UserNotFound)
 	}
 
-	code, err := acc.RequestPasswordReset()
+	code, err := user.RequestPasswordReset()
 	if err != nil {
 		return false, err
 	}
 
-	err = i.AuthRepo.UpdateUser(*acc)
+	err = i.AuthRepo.UpdateUser(*user)
 	if err != nil {
 		return false, err
 	}
@@ -46,14 +46,14 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordReset",
-		Target:      *acc,
+		Target:      *user,
 		Links: []i18n.CustomLink{
 			{
 				Key: "password-reset",
 				Link: fmt.Sprintf(
 					"%v?id=%v&code=%v",
 					config.Env.CLIENT.PASSWORD_RESET,
-					acc.ID,
+					user.ID,
 					code,
 				),
 			},

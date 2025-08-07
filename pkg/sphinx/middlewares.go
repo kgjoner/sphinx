@@ -33,7 +33,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		tokenStr := authHeaderParts[1]
-		acc, err := m.sphinx.User(tokenStr)
+		user, err := m.sphinx.User(tokenStr)
 		if err != nil {
 			if nerr, ok := err.(normalizederr.NormalizedError); ok {
 				presenter.HTTPError(nerr.MakeItInternal(), w, r)
@@ -44,7 +44,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, controller.ActorKey, *acc)
+		ctx = context.WithValue(ctx, controller.ActorKey, *user)
 		ctx = context.WithValue(ctx, controller.TokenKey, tokenStr)
 		r = r.WithContext(ctx)
 

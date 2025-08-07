@@ -22,14 +22,14 @@ type ResetPasswordInput struct {
 }
 
 func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
-	acc, err := i.AuthRepo.GetUserByID(input.UserID)
+	user, err := i.AuthRepo.GetUserByID(input.UserID)
 	if err != nil {
 		return false, err
-	} else if acc == nil {
+	} else if user == nil {
 		return false, normalizederr.NewRequestError("User does not exist", errcode.UserNotFound)
 	}
 
-	err = acc.ResetPassword(input.NewPassword, input.Code)
+	err = user.ResetPassword(input.NewPassword, input.Code)
 	if err != nil {
 		return false, err
 	}
@@ -40,7 +40,7 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordChange",
-		Target:      *acc,
+		Target:      *user,
 		Languages:   input.Languages,
 	})
 	if err != nil {
@@ -48,12 +48,12 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 	}
 
 	// Save only after assuring notification email was sent
-	err = i.AuthRepo.UpdateUser(*acc)
+	err = i.AuthRepo.UpdateUser(*user)
 	if err != nil {
 		return false, err
 	}
 
-	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
+	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
 		return false, err
 	}

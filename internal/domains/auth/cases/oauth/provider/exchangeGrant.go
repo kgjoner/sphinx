@@ -33,34 +33,34 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	defer func() { i.CacheRepo.Clear("grant:" + grant.Code) }()
 
 	// Get user by link ID
-	acc, err := i.AuthRepo.GetUserByLink(grant.LinkID)
+	user, err := i.AuthRepo.GetUserByLink(grant.LinkID)
 	if err != nil {
 		return nil, err
-	} else if acc == nil {
+	} else if user == nil {
 		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
 	// Authenticate via authorization grant
-	err = acc.AuthenticateViaGrant(grant, &input.GrantCredentials)
+	err = user.AuthenticateViaGrant(grant, &input.GrantCredentials)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create session
 	input.SessionCreationFields.Application.ID = input.ClientID
-	access, refresh, err := acc.InitSession(&input.SessionCreationFields)
+	access, refresh, err := user.InitSession(&input.SessionCreationFields)
 	if err != nil {
 		return nil, err
 	}
 
 	// Persist sessions
-	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
+	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
 		return nil, err
 	}
 
 	return &authcase.LoginOutput{
-		UserID:       acc.ID,
+		UserID:       user.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
 		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,

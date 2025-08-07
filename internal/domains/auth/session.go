@@ -35,11 +35,11 @@ type SessionCreationFields struct {
 	Ip          string      `json:"ip" validate:"required"`
 }
 
-func newSession(acc User, f *SessionCreationFields) *Session {
+func newSession(user User, f *SessionCreationFields) *Session {
 	now := time.Now()
 	s := &Session{
 		ID:                             uuid.New(),
-		UserID:                         acc.InternalID,
+		UserID:                         user.InternalID,
 		Application:                    f.Application,
 		Device:                         f.Device,
 		Ip:                             f.Ip,

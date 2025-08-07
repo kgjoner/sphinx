@@ -76,16 +76,16 @@ func (i IssueGrant) CreateConsentIfGranted(input IssueGrantInput) (*auth.User, e
 		return nil, normalizederr.NewRequestError("Application not found", errcode.ApplicationNotFound)
 	}
 
-	acc := &input.Actor
-	err = acc.GiveConsent(*app)
+	user := &input.Actor
+	err = user.GiveConsent(*app)
 	if err != nil {
 		return nil, err
 	}
 
-	err = i.AuthRepo.UpsertLinks(acc.LinksToPersist()...)
+	err = i.AuthRepo.UpsertLinks(user.LinksToPersist()...)
 	if err != nil {
 		return nil, err
 	}
 
-	return acc, nil
+	return user, nil
 }

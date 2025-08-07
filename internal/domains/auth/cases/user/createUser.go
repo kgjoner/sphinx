@@ -27,7 +27,7 @@ type CreateUserInput struct {
 }
 
 func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
-	acc, err := auth.NewUser(&input.UserCreationFields)
+	user, err := auth.NewUser(&input.UserCreationFields)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
 		return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
 	}
 
-	err = i.AuthRepo.InsertUser(acc)
+	err = i.AuthRepo.InsertUser(user)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			pattern := regexp.MustCompile("user_(.+)_key")
@@ -50,12 +50,12 @@ func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
 		return nil, err
 	}
 
-	err = acc.GiveConsent(*app)
+	err = user.GiveConsent(*app)
 	if err != nil {
 		return nil, err
 	}
 
-	err = i.AuthRepo.UpsertLinks(acc.LinksToPersist()...)
+	err = i.AuthRepo.UpsertLinks(user.LinksToPersist()...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,25 +66,25 @@ func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "welcome",
-		Target:      *acc,
+		Target:      *user,
 		Links: []i18n.CustomLink{
 			{
 				Key: "email-verification",
 				Link: fmt.Sprintf(
 					"%v?kind=email&id=%v&code=%v",
 					config.Env.CLIENT.DATA_VERIFICATION,
-					acc.ID,
-					acc.VerificationCodes[auth.VerificationEmail],
+					user.ID,
+					user.VerificationCodes[auth.VerificationEmail],
 				),
 			},
 		},
 		Languages: input.Languages,
 	})
 	if err != nil {
-		i.handleError(err, *acc)
+		i.handleError(err, *user)
 	}
 
-	return acc, nil
+	return user, nil
 }
 
 func (i CreateUser) handleError(err error, target auth.User) {

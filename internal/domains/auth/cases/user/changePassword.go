@@ -19,8 +19,8 @@ type ChangePasswordInput struct {
 }
 
 func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
-	acc := input.Actor
-	err := acc.ChangePassword(input.OldPassword, input.NewPassword)
+	user := input.Actor
+	err := user.ChangePassword(input.OldPassword, input.NewPassword)
 	if err != nil {
 		return false, err
 	}
@@ -31,7 +31,7 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
 	}
 	_, err = mail.Execute(common.MailInput{
 		TemplateKey: "passwordChange",
-		Target:      acc,
+		Target:      user,
 		Languages:   input.Languages,
 	})
 	if err != nil {
@@ -39,12 +39,12 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
 	}
 
 	// Save only after assuring notification email was sent
-	err = i.AuthRepo.UpdateUser(acc)
+	err = i.AuthRepo.UpdateUser(user)
 	if err != nil {
 		return false, err
 	}
 
-	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
+	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
 		return false, err
 	}

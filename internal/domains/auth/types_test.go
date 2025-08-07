@@ -15,11 +15,11 @@ import (
 func TestToken(t *testing.T) {
 	config.Must()
 
-	acc := &User{
+	user := &User{
 		ID: uuid.New(),
 	}
 	sID := uuid.New()
-	acc.ActiveSessions = []Session{
+	user.ActiveSessions = []Session{
 		{
 			ID:       sID,
 			IsActive: true,
@@ -30,7 +30,7 @@ func TestToken(t *testing.T) {
 	}
 
 	token, err := newAuthToken(authTokenCreationFields{
-		*acc,
+		*user,
 		sID,
 		false,
 	})
@@ -53,11 +53,11 @@ func TestToken(t *testing.T) {
 func TestRefreshToken(t *testing.T) {
 	config.Must()
 
-	acc := &User{
+	user := &User{
 		ID: uuid.New(),
 	}
 	sID := uuid.New()
-	acc.ActiveSessions = []Session{
+	user.ActiveSessions = []Session{
 		{
 			ID:       sID,
 			IsActive: true,
@@ -68,7 +68,7 @@ func TestRefreshToken(t *testing.T) {
 	}
 
 	token, err := newAuthToken(authTokenCreationFields{
-		*acc,
+		*user,
 		sID,
 		true,
 	})

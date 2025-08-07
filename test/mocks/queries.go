@@ -46,7 +46,7 @@ func NewMockQueries() *MockQueries {
 }
 
 // User mock methods
-func (m *MockQueries) InsertUser(acc *auth.User) error {
+func (m *MockQueries) InsertUser(user *auth.User) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -55,19 +55,19 @@ func (m *MockQueries) InsertUser(acc *auth.User) error {
 	}
 
 	// Check for unique field violations
-	if err := m.checkUserUniqueConstraints(acc, nil); err != nil {
+	if err := m.checkUserUniqueConstraints(user, nil); err != nil {
 		return err
 	}
 
-	if acc.ID == uuid.Nil {
-		acc.ID = uuid.New()
+	if user.ID == uuid.Nil {
+		user.ID = uuid.New()
 	}
-	acc.InternalID = len(m.users) + 1
-	m.users[acc.ID] = acc
+	user.InternalID = len(m.users) + 1
+	m.users[user.ID] = user
 	return nil
 }
 
-func (m *MockQueries) UpdateUser(acc auth.User) error {
+func (m *MockQueries) UpdateUser(user auth.User) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -75,16 +75,16 @@ func (m *MockQueries) UpdateUser(acc auth.User) error {
 		return m.errorToReturn
 	}
 
-	if _, exists := m.users[acc.ID]; !exists {
+	if _, exists := m.users[user.ID]; !exists {
 		return sql.ErrNoRows
 	}
 
 	// Check for unique field violations (exclude the user being updated)
-	if err := m.checkUserUniqueConstraints(&acc, &acc.ID); err != nil {
+	if err := m.checkUserUniqueConstraints(&user, &user.ID); err != nil {
 		return err
 	}
 
-	m.users[acc.ID] = &acc
+	m.users[user.ID] = &user
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (e *DuplicateKeyError) Error() string {
 
 // checkUserUniqueConstraints validates that the user doesn't violate unique field constraints
 // excludeID allows skipping a specific user ID (useful for updates)
-func (m *MockQueries) checkUserUniqueConstraints(acc *auth.User, excludeID *uuid.UUID) error {
+func (m *MockQueries) checkUserUniqueConstraints(user *auth.User, excludeID *uuid.UUID) error {
 	for _, existing := range m.users {
 		// Skip the user being updated
 		if excludeID != nil && existing.ID == *excludeID {
@@ -108,20 +108,20 @@ func (m *MockQueries) checkUserUniqueConstraints(acc *auth.User, excludeID *uuid
 		}
 
 		// Check email uniqueness
-		if acc.Email.String() != "" && existing.Email.String() == acc.Email.String() {
-			return &DuplicateKeyError{Field: "email", Value: acc.Email.String()}
+		if user.Email.String() != "" && existing.Email.String() == user.Email.String() {
+			return &DuplicateKeyError{Field: "email", Value: user.Email.String()}
 		}
 		// Check username uniqueness
-		if acc.Username != "" && existing.Username == acc.Username {
-			return &DuplicateKeyError{Field: "username", Value: acc.Username}
+		if user.Username != "" && existing.Username == user.Username {
+			return &DuplicateKeyError{Field: "username", Value: user.Username}
 		}
 		// Check phone uniqueness
-		if acc.Phone.String() != "" && existing.Phone.String() == acc.Phone.String() {
-			return &DuplicateKeyError{Field: "phone", Value: acc.Phone.String()}
+		if user.Phone.String() != "" && existing.Phone.String() == user.Phone.String() {
+			return &DuplicateKeyError{Field: "phone", Value: user.Phone.String()}
 		}
 		// Check document uniqueness
-		if acc.Document.String() != "" && existing.Document.String() == acc.Document.String() {
-			return &DuplicateKeyError{Field: "document", Value: acc.Document.String()}
+		if user.Document.String() != "" && existing.Document.String() == user.Document.String() {
+			return &DuplicateKeyError{Field: "document", Value: user.Document.String()}
 		}
 	}
 	return nil
@@ -135,15 +135,15 @@ func (m *MockQueries) GetUserByID(id uuid.UUID) (*auth.User, error) {
 		return nil, m.errorToReturn
 	}
 
-	if acc, exists := m.users[id]; exists {
+	if user, exists := m.users[id]; exists {
 		// Create a copy of the user to avoid modifying the original
-		userCopy := *acc
+		userCopy := *user
 
 		// Populate Links for this user
-		userCopy.Links = m.getLinksForUser(acc.InternalID)
+		userCopy.Links = m.getLinksForUser(user.InternalID)
 
 		// Populate ActiveSessions for this user (only active ones)
-		userCopy.ActiveSessions = m.getActiveSessionsForUser(acc.InternalID)
+		userCopy.ActiveSessions = m.getActiveSessionsForUser(user.InternalID)
 
 		return &userCopy, nil
 	}
@@ -158,16 +158,16 @@ func (m *MockQueries) GetUserByEntry(entry auth.Entry) (*auth.User, error) {
 		return nil, m.errorToReturn
 	}
 
-	for _, acc := range m.users {
-		if acc.Email.String() == entry.String() || acc.Username == entry.String() || acc.Document.String() == entry.String() || acc.Phone.String() == entry.String() {
+	for _, user := range m.users {
+		if user.Email.String() == entry.String() || user.Username == entry.String() || user.Document.String() == entry.String() || user.Phone.String() == entry.String() {
 			// Create a copy of the user to avoid modifying the original
-			userCopy := *acc
+			userCopy := *user
 
 			// Populate Links for this user
-			userCopy.Links = m.getLinksForUser(acc.InternalID)
+			userCopy.Links = m.getLinksForUser(user.InternalID)
 
 			// Populate ActiveSessions for this user (only active ones)
-			userCopy.ActiveSessions = m.getActiveSessionsForUser(acc.InternalID)
+			userCopy.ActiveSessions = m.getActiveSessionsForUser(user.InternalID)
 
 			return &userCopy, nil
 		}
@@ -183,20 +183,20 @@ func (m *MockQueries) GetUserByExternalAuthID(providerName string, subjectID str
 		return nil, m.errorToReturn
 	}
 
-	for _, acc := range m.users {
-		if acc.ExternalAuthIDs == nil {
+	for _, user := range m.users {
+		if user.ExternalAuthIDs == nil {
 			continue
 		}
 
-		if acc.ExternalAuthIDs[providerName] == subjectID {
+		if user.ExternalAuthIDs[providerName] == subjectID {
 			// Create a copy of the user to avoid modifying the original
-			userCopy := *acc
+			userCopy := *user
 
 			// Populate Links for this user
-			userCopy.Links = m.getLinksForUser(acc.InternalID)
+			userCopy.Links = m.getLinksForUser(user.InternalID)
 
 			// Populate ActiveSessions for this user (only active ones)
-			userCopy.ActiveSessions = m.getActiveSessionsForUser(acc.InternalID)
+			userCopy.ActiveSessions = m.getActiveSessionsForUser(user.InternalID)
 
 			return &userCopy, nil
 		}
@@ -217,16 +217,16 @@ func (m *MockQueries) GetUserByLink(linkID uuid.UUID) (*auth.User, error) {
 		return nil, nil
 	}
 
-	for _, acc := range m.users {
-		if acc.InternalID == link.UserID {
+	for _, user := range m.users {
+		if user.InternalID == link.UserID {
 			// Create a copy of the user to avoid modifying the original
-			userCopy := *acc
+			userCopy := *user
 
 			// Populate Links for this user
-			userCopy.Links = m.getLinksForUser(acc.InternalID)
+			userCopy.Links = m.getLinksForUser(user.InternalID)
 
 			// Populate ActiveSessions for this user (only active ones)
-			userCopy.ActiveSessions = m.getActiveSessionsForUser(acc.InternalID)
+			userCopy.ActiveSessions = m.getActiveSessionsForUser(user.InternalID)
 
 			return &userCopy, nil
 		}
@@ -332,13 +332,13 @@ func (m *MockQueries) ClearError() {
 	m.errorToReturn = nil
 }
 
-func (m *MockQueries) AddUser(acc *auth.User) {
+func (m *MockQueries) AddUser(user *auth.User) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if acc.ID == uuid.Nil {
-		acc.ID = uuid.New()
+	if user.ID == uuid.Nil {
+		user.ID = uuid.New()
 	}
-	m.users[acc.ID] = acc
+	m.users[user.ID] = user
 }
 
 func (m *MockQueries) AddApplication(app *auth.Application) {
@@ -366,8 +366,8 @@ func (m *MockQueries) GetAllUsers() []*auth.User {
 	defer m.mu.RUnlock()
 
 	users := make([]*auth.User, 0, len(m.users))
-	for _, acc := range m.users {
-		users = append(users, acc)
+	for _, user := range m.users {
+		users = append(users, user)
 	}
 	return users
 }

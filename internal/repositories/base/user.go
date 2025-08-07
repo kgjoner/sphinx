@@ -9,55 +9,55 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
-func (q DAO) InsertUser(acc *auth.User) error {
+func (q DAO) InsertUser(user *auth.User) error {
 	raw, exists := rawQueries["CreateUser"]
 	if !exists {
 		return ErrNoQuery
 	}
 
 	row := q.db.QueryRowContext(q.ctx, raw,
-		acc.ID,
-		acc.Email.String(),
-		acc.Password,
-		datatransform.ToNullString(acc.Phone.String()),
-		datatransform.ToNullString(acc.Username),
-		datatransform.ToNullString(acc.Document.String()),
-		datatransform.ToNullRawMessage(acc.ExtraData),
-		acc.IsActive,
-		datatransform.ToNullString(acc.PendingEmail.String()),
-		datatransform.ToNullString(acc.PendingPhone.String()),
-		acc.HasEmailBeenVerified,
-		acc.HasPhoneBeenVerified,
-		datatransform.ToRawMessage(acc.VerificationCodes),
-		datatransform.ToRawMessage(acc.ExternalAuthIDs),
+		user.ID,
+		user.Email.String(),
+		user.Password,
+		datatransform.ToNullString(user.Phone.String()),
+		datatransform.ToNullString(user.Username),
+		datatransform.ToNullString(user.Document.String()),
+		datatransform.ToNullRawMessage(user.ExtraData),
+		user.IsActive,
+		datatransform.ToNullString(user.PendingEmail.String()),
+		datatransform.ToNullString(user.PendingPhone.String()),
+		user.HasEmailBeenVerified,
+		user.HasPhoneBeenVerified,
+		datatransform.ToRawMessage(user.VerificationCodes),
+		datatransform.ToRawMessage(user.ExternalAuthIDs),
 	)
-	err := row.Scan(&acc.InternalID)
+	err := row.Scan(&user.InternalID)
 	return err
 }
 
-func (q DAO) UpdateUser(acc auth.User) error {
+func (q DAO) UpdateUser(user auth.User) error {
 	raw, exists := rawQueries["UpdateUser"]
 	if !exists {
 		return ErrNoQuery
 	}
 
 	_, err := q.db.ExecContext(q.ctx, raw,
-		acc.ID,
-		acc.Email.String(),
-		acc.Password,
-		datatransform.ToNullString(acc.Phone.String()),
-		datatransform.ToNullString(acc.Username),
-		datatransform.ToNullString(acc.Document.String()),
-		datatransform.ToNullRawMessage(acc.ExtraData),
-		acc.IsActive,
-		datatransform.ToNullString(acc.PendingEmail.String()),
-		datatransform.ToNullString(acc.PendingPhone.String()),
-		acc.HasEmailBeenVerified,
-		acc.HasPhoneBeenVerified,
-		datatransform.ToRawMessage(acc.VerificationCodes),
-		datatransform.ToRawMessage(acc.ExternalAuthIDs),
-		acc.PasswordUpdatedAt,
-		acc.UpdatedAt,
+		user.ID,
+		user.Email.String(),
+		user.Password,
+		datatransform.ToNullString(user.Phone.String()),
+		datatransform.ToNullString(user.Username),
+		datatransform.ToNullString(user.Document.String()),
+		datatransform.ToNullRawMessage(user.ExtraData),
+		user.IsActive,
+		datatransform.ToNullString(user.PendingEmail.String()),
+		datatransform.ToNullString(user.PendingPhone.String()),
+		user.HasEmailBeenVerified,
+		user.HasPhoneBeenVerified,
+		datatransform.ToRawMessage(user.VerificationCodes),
+		datatransform.ToRawMessage(user.ExternalAuthIDs),
+		user.PasswordUpdatedAt,
+		user.UpdatedAt,
 	)
 	return err
 }

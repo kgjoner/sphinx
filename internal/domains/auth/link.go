@@ -26,11 +26,11 @@ type Link struct {
 	CONSTRUCTORS
 ============================================================================== */
 
-func newLink(acc *User, app Application) *Link {
+func newLink(user *User, app Application) *Link {
 	now := time.Now()
 	consent := &Link{
 		ID:          uuid.New(),
-		UserID:      acc.InternalID,
+		UserID:      user.InternalID,
 		Application: app,
 		HasConsent:  true,
 

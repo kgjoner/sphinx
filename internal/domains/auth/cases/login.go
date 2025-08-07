@@ -19,14 +19,14 @@ type LoginInput struct {
 }
 
 func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
-	acc, err := i.AuthRepo.GetUserByEntry(input.Entry)
+	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return nil, err
-	} else if acc == nil {
+	} else if user == nil {
 		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
-	err = acc.AuthenticateViaPassword(input.Password)
+	err = user.AuthenticateViaPassword(input.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -39,18 +39,18 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 	}
 	input.Application = *app
 
-	access, refresh, err := acc.InitSession(&input.SessionCreationFields)
+	access, refresh, err := user.InitSession(&input.SessionCreationFields)
 	if err != nil {
 		return nil, err
 	}
 
-	err = i.AuthRepo.UpsertSessions(acc.SessionsToPersist()...)
+	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
 		return nil, err
 	}
 
 	return &LoginOutput{
-		UserID:       acc.ID,
+		UserID:       user.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),
 		ExpiresIn:    config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
