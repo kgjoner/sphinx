@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/config"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	oauthcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/oauth/provider"

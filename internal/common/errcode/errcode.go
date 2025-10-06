@@ -1,21 +1,23 @@
 package errcode
 
+import "github.com/kgjoner/cornucopia/v2/helpers/apperr"
+
 const (
-	InvalidCredentials = "INVALID_CREDENTIALS"
-	InvalidAccess      = "INVALID_ACCESS"
-	ExpiredAccess      = "EXPIRED_ACCESS"
-	ExpiredSession     = "EXPIRED_SESSION"
+	InvalidCredentials apperr.Code = "INVALID_CREDENTIALS"
+	InvalidAccess      apperr.Code = "INVALID_ACCESS"
+	ExpiredAccess      apperr.Code = "EXPIRED_ACCESS"
+	ExpiredSession     apperr.Code = "EXPIRED_SESSION"
 
-	DeactivatedUser   = "DEACTIVATED_USER"
-	NoConsent         = "NO_CONSENT"
-	RevokedConsent    = "REVOKED_CONSENT"
-	NoRelatedProvider = "NO_RELATED_PROVIDER"
+	DeactivatedUser    apperr.Code = "DEACTIVATED_USER"
+	NoConsent          apperr.Code = "NO_CONSENT"
+	RevokedConsent     apperr.Code = "REVOKED_CONSENT"
+	NoRelatedProvider  apperr.Code = "NO_RELATED_PROVIDER"
 
-	InvalidProvider     = "INVALID_PROVIDER"
-	UserNotFound        = "USER_NOT_FOUND"
-	ApplicationNotFound = "APPLICATION_NOT_FOUND"
-	SessionNotFound     = "SESSION_NOT_FOUND"
+	InvalidProvider    apperr.Code = "INVALID_PROVIDER"
+	UserNotFound       apperr.Code = "USER_NOT_FOUND"
+	ApplicationNotFound apperr.Code = "APPLICATION_NOT_FOUND"
+	SessionNotFound     apperr.Code = "SESSION_NOT_FOUND"
 
-	DuplicateKey = "DUPLICATE_KEY"
-	InvalidRole  = "INVALID_ROLE"
+	DuplicateKey apperr.Code = "DUPLICATE_KEY"
+	InvalidRole  apperr.Code = "INVALID_ROLE"
 )

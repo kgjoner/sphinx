@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/v2/repositories/cache"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )

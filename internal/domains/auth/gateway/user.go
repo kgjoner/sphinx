@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/helpers/controller"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/helpers/controller"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common"
 	usercase "github.com/kgjoner/sphinx/internal/domains/auth/cases/user"
 )
@@ -40,9 +40,9 @@ func (g AuthGateway) userHandler(r chi.Router) {
 //	@Param			accept-language	header		string					false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		auth.UserCreationFields	true	"Email and password are mandatory."
 //	@Success		200				{object}	presenter.Success[auth.User]
-//	@Failure		400				{object}	normalizederr.NormalizedError
-//	@Failure		401				{object}	normalizederr.NormalizedError
-//	@Failure		500				{object}	normalizederr.NormalizedError
+//	@Failure		400				{object}	apperr.AppError
+//	@Failure		401				{object}	apperr.AppError
+//	@Failure		500				{object}	apperr.AppError
 func (g AuthGateway) createUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -82,8 +82,8 @@ func (g AuthGateway) createUser(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			x-entry	header		string	true	"Email, username, phone or document."
 //	@Success		200		{object}	presenter.Success[bool]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddHeader("X-Entry", "entry")
@@ -120,10 +120,10 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 //	@Produce		json
 //	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
 //	@Success		200			{object}	presenter.Success[auth.UserPrivateView]
-//	@Failure		400			{object}	normalizederr.NormalizedError
-//	@Failure		401			{object}	normalizederr.NormalizedError
-//	@Failure		403			{object}	normalizederr.NormalizedError
-//	@Failure		500			{object}	normalizederr.NormalizedError
+//	@Failure		400			{object}	apperr.AppError
+//	@Failure		401			{object}	apperr.AppError
+//	@Failure		403			{object}	apperr.AppError
+//	@Failure		500			{object}	apperr.AppError
 func (g AuthGateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddActor().
@@ -161,8 +161,8 @@ func (g AuthGateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 //	@Param			id		path	string						true	"User ID"
 //	@Param			payload	body	usercase.VerifyUserInput	true	"Verification kind must be email or phone."
 //	@Success		204
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -201,9 +201,9 @@ func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 //	@Param			accept-language	header	string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body	usercase.ChangePasswordInput	true	"Old password and new one."
 //	@Success		204
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		401	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -244,8 +244,8 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Param			accept-language	header	string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body	usercase.RequestPasswordResetInput	true	"Old password and new one."
 //	@Success		204
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -285,8 +285,8 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Param			id				path	string						true	"User ID"
 //	@Param			payload			body	usercase.ResetPasswordInput	true	"Old password and new one."
 //	@Success		204
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -328,10 +328,10 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Param			x-target	header	string								false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
 //	@Param			payload		body	usercase.EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		204
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		401	{object}	normalizederr.NormalizedError
-//	@Failure		403	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		403	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -371,10 +371,10 @@ func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request)
 //	@Param			x-target	header		string			false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
 //	@Param			payload		body		auth.ExtraData	true	"At least one data must be defined.""
 //	@Success		200			{object}	presenter.Success[auth.UserPrivateView]
-//	@Failure		400			{object}	normalizederr.NormalizedError
-//	@Failure		401			{object}	normalizederr.NormalizedError
-//	@Failure		403			{object}	normalizederr.NormalizedError
-//	@Failure		500			{object}	normalizederr.NormalizedError
+//	@Failure		400			{object}	apperr.AppError
+//	@Failure		401			{object}	apperr.AppError
+//	@Failure		403			{object}	apperr.AppError
+//	@Failure		500			{object}	apperr.AppError
 func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -415,10 +415,10 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Param			accept-language	header		string					false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		auth.UserUniqueFields	true	"At least one field must be defined."
 //	@Success		200				{object}	presenter.Success[auth.UserPrivateView]
-//	@Failure		400				{object}	normalizederr.NormalizedError
-//	@Failure		401				{object}	normalizederr.NormalizedError
-//	@Failure		403				{object}	normalizederr.NormalizedError
-//	@Failure		500				{object}	normalizederr.NormalizedError
+//	@Failure		400				{object}	apperr.AppError
+//	@Failure		401				{object}	apperr.AppError
+//	@Failure		403				{object}	apperr.AppError
+//	@Failure		500				{object}	apperr.AppError
 func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -459,10 +459,10 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //	@Param			id		path	string	true	"User ID"
 //	@Param			field	path	string	true	"Field must be 'email' or 'phone'."
 //	@Success		204
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		401	{object}	normalizederr.NormalizedError
-//	@Failure		403	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		403	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("id", "userID").
@@ -500,10 +500,10 @@ func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) 
 //	@Produce		json
 //	@Param			x-entry	header		string	true	"Email, username, phone or document."
 //	@Success		200		{object}	presenter.Success[string]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		401		{object}	normalizederr.NormalizedError
-//	@Failure		403		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		403		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g AuthGateway) getUserID(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddHeader("X-Entry", "entry")
@@ -540,10 +540,10 @@ func (g AuthGateway) getUserID(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
 //	@Success		200			{object}	presenter.Success[string]
-//	@Failure		400			{object}	normalizederr.NormalizedError
-//	@Failure		401			{object}	normalizederr.NormalizedError
-//	@Failure		403			{object}	normalizederr.NormalizedError
-//	@Failure		500			{object}	normalizederr.NormalizedError
+//	@Failure		400			{object}	apperr.AppError
+//	@Failure		401			{object}	apperr.AppError
+//	@Failure		403			{object}	apperr.AppError
+//	@Failure		500			{object}	apperr.AppError
 func (g AuthGateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddTarget()

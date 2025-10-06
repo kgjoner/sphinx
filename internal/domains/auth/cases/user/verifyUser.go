@@ -2,7 +2,7 @@ package usercase
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
@@ -22,7 +22,7 @@ func (i VerifyUser) Execute(input VerifyUserInput) (bool, error) {
 	if err != nil {
 		return false, err
 	} else if user == nil {
-		return false, normalizederr.NewRequestError("User does not exit", errcode.UserNotFound)
+		return false, apperr.NewRequestError("User does not exit", errcode.UserNotFound)
 	}
 
 	err = user.VerifyUser(input.VerificationKind, input.VerificationCode)

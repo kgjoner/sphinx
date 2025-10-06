@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/validator"
-	"github.com/kgjoner/cornucopia/utils/sliceman"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v2/utils/sliceman"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 )
 
@@ -58,11 +58,11 @@ func (c Link) hasRole(roles ...Role) bool {
 
 func (c *Link) addRole(r Role) error {
 	if sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
-		return normalizederr.NewRequestError("Application does not support the desired role.", errcode.InvalidRole)
+		return apperr.NewRequestError("Application does not support the desired role.", errcode.InvalidRole)
 	}
 
 	if sliceman.IndexOf(c.Roles, r) != -1 {
-		return normalizederr.NewRequestError("Role has already been added.")
+		return apperr.NewRequestError("Role has already been added.")
 	}
 
 	c.Roles = append(c.Roles, r)
@@ -72,12 +72,12 @@ func (c *Link) addRole(r Role) error {
 
 func (c *Link) removeRole(r Role) error {
 	if sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
-		return normalizederr.NewRequestError("Application does not support the desired role.", errcode.InvalidRole)
+		return apperr.NewRequestError("Application does not support the desired role.", errcode.InvalidRole)
 	}
 
 	index := sliceman.IndexOf(c.Roles, r)
 	if index == -1 {
-		return normalizederr.NewRequestError("Role has not been added.")
+		return apperr.NewRequestError("Role has not been added.")
 	}
 
 	c.Roles = sliceman.Remove(c.Roles, index)

@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/controller"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/controller"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
@@ -23,7 +23,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" {
-			err := normalizederr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
+			err := apperr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -36,7 +36,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		if token.IsRefresh() && !strings.Contains(r.URL.Path, "refresh") {
-			err := normalizederr.NewUnauthorizedError("must provide an access token", errcode.InvalidAccess)
+			err := apperr.NewUnauthorizedError("must provide an access token", errcode.InvalidAccess)
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -47,7 +47,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 			presenter.HTTPError(err, w, r)
 			return
 		} else if user == nil {
-			err := normalizederr.NewFatalUnauthorizedError("not existing user", errcode.InvalidAccess)
+			err := apperr.Fatal(apperr.NewUnauthorizedError("not existing user", errcode.InvalidAccess))
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -76,7 +76,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Basic" {
-			err := normalizederr.NewUnauthorizedError("missing app basic token", errcode.InvalidAccess)
+			err := apperr.NewUnauthorizedError("missing app basic token", errcode.InvalidAccess)
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -90,7 +90,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 
 		credentials := strings.Split(string(decodedBytes), ":")
 		if len(credentials) != 2 {
-			err := normalizederr.NewUnauthorizedError("invalid credentials", errcode.InvalidAccess)
+			err := apperr.NewUnauthorizedError("invalid credentials", errcode.InvalidAccess)
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -104,7 +104,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 			presenter.HTTPError(err, w, r)
 			return
 		} else if application == nil {
-			err := normalizederr.NewUnauthorizedError("not existing app", errcode.InvalidAccess)
+			err := apperr.NewUnauthorizedError("not existing app", errcode.InvalidAccess)
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -130,7 +130,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		targetEntry := r.Header.Get("x-target")
 		if targetEntry == "" {
 			if actor == nil {
-				err := normalizederr.NewRequestError("must provide a target header", errcode.InvalidAccess)
+				err := apperr.NewRequestError("must provide a target header", errcode.InvalidAccess)
 				presenter.HTTPError(err, w, r)
 				return
 			}
@@ -145,7 +145,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		isAdmin := actor != nil && actor.(auth.User).HasRoleOnAuth(auth.RoleAdmin)
 		isAuthedApp := app != nil && app.(auth.Application).IsAuthenticated()
 		if !isAdmin && !isAuthedApp {
-			err := normalizederr.NewForbiddenError("does not have permission to execute this action")
+			err := apperr.NewForbiddenError("does not have permission to execute this action")
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -167,7 +167,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 			presenter.HTTPError(err, w, r)
 			return
 		} else if target == nil {
-			err := normalizederr.NewRequestError("target user does not exist", errcode.UserNotFound)
+			err := apperr.NewRequestError("target user does not exist", errcode.UserNotFound)
 			presenter.HTTPError(err, w, r)
 			return
 		}

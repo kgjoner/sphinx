@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/common"
@@ -31,11 +31,11 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.UserPr
 	targetAcc := &input.Target
 
 	if !input.Email.IsZero() && input.Email == targetAcc.Email {
-		return nil, normalizederr.NewRequestError("email is already set to the same value")
+		return nil, apperr.NewRequestError("email is already set to the same value")
 	}
 
 	if !input.Phone.IsZero() && input.Phone == targetAcc.Phone {
-		return nil, normalizederr.NewRequestError("phone is already set to the same value")
+		return nil, apperr.NewRequestError("phone is already set to the same value")
 	}
 
 	err := targetAcc.UpdateUniqueFields(input.UserUniqueFields)
@@ -49,7 +49,7 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.UserPr
 			pattern := regexp.MustCompile("user_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
-			return nil, normalizederr.NewRequestError(msg, errcode.DuplicateKey)
+			return nil, apperr.NewRequestError(msg, errcode.DuplicateKey)
 		}
 		return nil, err
 	}

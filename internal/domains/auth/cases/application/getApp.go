@@ -2,7 +2,7 @@ package appcase
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
@@ -20,7 +20,7 @@ func (i GetApp) Execute(input GetAppInput) (*auth.Application, error) {
 	if err != nil {
 		return nil, err
 	} else if app == nil {
-		return nil, normalizederr.NewRequestError("Application does not exist", errcode.ApplicationNotFound)
+		return nil, apperr.NewRequestError("Application does not exist", errcode.ApplicationNotFound)
 	}
 
 	return app, nil

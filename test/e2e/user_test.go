@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/cornucopia/utils/sanitizer"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/utils/sanitizer"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	"github.com/kgjoner/sphinx/test/mocks"

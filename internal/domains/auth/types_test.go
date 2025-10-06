@@ -1,12 +1,13 @@
 package auth
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/stretchr/testify/assert"
@@ -46,8 +47,9 @@ func TestToken(t *testing.T) {
 	modifiedTokenStr, err := modifiedToken.SignedString([]byte(config.Env.JWT.SECRET))
 	assert.Nil(t, err)
 	_, err = ParseAuthToken(modifiedTokenStr)
-	normErr := err.(normalizederr.NormalizedError)
-	assert.Equal(t, normErr.Code, errcode.ExpiredAccess)
+	var appErr *apperr.AppError
+	assert.True(t, errors.As(err, &appErr))
+	assert.Equal(t, appErr.Code, errcode.ExpiredAccess)
 }
 
 func TestRefreshToken(t *testing.T) {
@@ -86,6 +88,7 @@ func TestRefreshToken(t *testing.T) {
 	modifiedTokenStr, err := modifiedToken.SignedString([]byte(config.Env.JWT.SECRET))
 	assert.Nil(t, err)
 	_, err = ParseAuthToken(modifiedTokenStr)
-	normErr := err.(normalizederr.NormalizedError)
-	assert.Equal(t, normErr.Code, errcode.ExpiredSession)
+	var appErr *apperr.AppError
+	assert.True(t, errors.As(err, &appErr))
+	assert.Equal(t, appErr.Code, errcode.ExpiredSession)
 }

@@ -3,7 +3,7 @@ package usercase
 import (
 	"database/sql"
 
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
@@ -20,7 +20,7 @@ type EditUserPermissionsInput struct {
 
 func (i EditUserPermissions) Execute(input EditUserPermissionsInput) (bool, error) {
 	if !input.ShouldRemove.Valid {
-		return false, normalizederr.NewRequestError("Must inform whether permissions should be added or removed.")
+		return false, apperr.NewRequestError("Must inform whether permissions should be added or removed.")
 	}
 
 	var err error

@@ -2,9 +2,9 @@ package authcase
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/utils/pwdgen"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
@@ -47,7 +47,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 		}
 	}
 	if provider == nil {
-		return nil, normalizederr.NewRequestError("invalid provider", errcode.InvalidProvider)
+		return nil, apperr.NewRequestError("invalid provider", errcode.InvalidProvider)
 	}
 
 	subject, err := provider.Authenticate(input.ExternalAuthInput)
@@ -69,7 +69,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 
 		if user != nil {
 			if !input.ConsentRelation {
-				return nil, normalizederr.NewForbiddenError("consent relation: an account with the same email already exists, user must consent to relate this account with the external provider.", errcode.NoConsent)
+				return nil, apperr.NewForbiddenError("consent relation: an account with the same email already exists, user must consent to relate this account with the external provider.", errcode.NoConsent)
 			}
 
 			err = user.RelateToExternalProvider(provider.Name, subject.ID)
@@ -87,7 +87,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 	// Handle user creation if not found
 	if user == nil {
 		if !input.ConsentCreation {
-			return nil, normalizederr.NewForbiddenError("consent creation: user must consent to create a new account", errcode.NoConsent)
+			return nil, apperr.NewForbiddenError("consent creation: user must consent to create a new account", errcode.NoConsent)
 		}
 
 		if !input.Email.IsZero() {
@@ -95,7 +95,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 		}
 
 		if subject.Email.IsZero() {
-			return nil, normalizederr.NewRequestError("there is no provided email for creating a new user", errcode.UserNotFound)
+			return nil, apperr.NewRequestError("there is no provided email for creating a new user", errcode.UserNotFound)
 		}
 
 		userCreationCase := usercase.CreateUser{
@@ -105,7 +105,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 		user, err = userCreationCase.Execute(usercase.CreateUserInput{
 			UserCreationFields: auth.UserCreationFields{
 				Email:    subject.Email,
-				Password: pwdgen.Generate(16), // Generate a random password
+				Password: pwdgen.GeneratePassword(16), // Generate a random password
 			},
 			Languages: input.Languages,
 		})
@@ -134,7 +134,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 	if err != nil {
 		return nil, err
 	} else if app == nil {
-		return nil, normalizederr.NewRequestError("root application not found", errcode.ApplicationNotFound)
+		return nil, apperr.NewRequestError("root application not found", errcode.ApplicationNotFound)
 	}
 	input.Application = *app
 

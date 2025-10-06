@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/cornucopia/utils/httputil"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/utils/httputil"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"

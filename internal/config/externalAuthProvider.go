@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
 )
 
 type ExternalAuthProvider struct {
@@ -80,7 +80,7 @@ func (e ExternalAuthProvider) Authenticate(input ExternalAuthInput) (subject *Ex
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, normalizederr.NewUnauthorizedError("authentication failed: %s", resp.Status)
+		return nil, apperr.NewUnauthorizedError("authentication failed: %s")
 	}
 
 	var responseBody map[string]interface{}

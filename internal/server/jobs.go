@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"html/template"
 
-	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/cornucopia/utils/httputil"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/utils/httputil"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/style"
 	"github.com/kgjoner/sphinx/internal/config"

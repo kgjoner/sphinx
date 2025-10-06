@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
-	"github.com/kgjoner/cornucopia/utils/httputil"
-	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/utils/httputil"
+	"github.com/kgjoner/cornucopia/v2/utils/structop"
 )
 
 type LoginOutput struct {

@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/validator"
-	"github.com/kgjoner/cornucopia/utils/sanitizer"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v2/utils/sanitizer"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 )
@@ -150,7 +150,7 @@ type authTokenCreationFields struct {
 func newAuthToken(f authTokenCreationFields) (*authToken, error) {
 	s := f.User.session(f.SessionID)
 	if s == nil {
-		return nil, normalizederr.NewRequestError("User and session do not match.")
+		return nil, apperr.NewRequestError("User and session do not match.")
 	}
 
 	now := time.Now()
@@ -196,22 +196,22 @@ func ParseAuthToken(str string) (*authToken, error) {
 			if diff.Seconds() >= float64(config.Env.JWT.REFRESH_LIFETIME_IN_SEC) {
 				code = errcode.ExpiredSession
 			}
-			return nil, normalizederr.NewUnauthorizedError(msg, code)
+			return nil, apperr.NewUnauthorizedError(msg, code)
 		} else {
 			code := errcode.InvalidAccess
-			return nil, normalizederr.NewUnauthorizedError(msg, code)
+			return nil, apperr.NewUnauthorizedError(msg, code)
 		}
 	}
 
 	if !token.Valid {
-		return nil, normalizederr.NewUnauthorizedError("Invalid authToken", errcode.InvalidAccess)
+		return nil, apperr.NewUnauthorizedError("Invalid authToken", errcode.InvalidAccess)
 	}
 
 	var claims jwtClaims
 	ms, _ := json.Marshal(token.Claims)
 	err = json.Unmarshal(ms, &claims)
 	if err != nil {
-		return nil, normalizederr.NewUnauthorizedError("Badly formatted authToken", errcode.InvalidAccess)
+		return nil, apperr.NewUnauthorizedError("Badly formatted authToken", errcode.InvalidAccess)
 	}
 
 	return &authToken{*token, claims, str}, nil

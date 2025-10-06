@@ -1,11 +1,12 @@
 package oauthcase
 
 import (
+	"errors"
 	"time"
 
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/validator"
-	"github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v2/repositories/cache"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -31,7 +32,8 @@ func (i IssueGrant) Execute(input IssueGrantInput) (*IssueGrantOutput, error) {
 	// Create authorization grant
 	grant, err := input.Actor.IssueAuthorizationGrant(&input.AuthorizationGrantCreationFields, input.ClientID)
 	if err != nil {
-		if normerr, ok := err.(normalizederr.NormalizedError); ok && normerr.Code == errcode.NoConsent {
+		var appErr *apperr.AppError
+		if errors.As(err, &appErr) && appErr.Code == errcode.NoConsent {
 			actorWithConsent, err := i.CreateConsentIfGranted(input)
 			if err != nil {
 				return nil, err
@@ -66,14 +68,14 @@ type IssueGrantOutput struct {
 
 func (i IssueGrant) CreateConsentIfGranted(input IssueGrantInput) (*auth.User, error) {
 	if !input.ConsentGranted {
-		return nil, normalizederr.NewForbiddenError("User has not consented to this application.", errcode.NoConsent)
+		return nil, apperr.NewForbiddenError("User has not consented to this application.", errcode.NoConsent)
 	}
 
 	app, err := i.AuthRepo.GetApplicationByID(input.ClientID)
 	if err != nil {
 		return nil, err
 	} else if app == nil {
-		return nil, normalizederr.NewRequestError("Application not found", errcode.ApplicationNotFound)
+		return nil, apperr.NewRequestError("Application not found", errcode.ApplicationNotFound)
 	}
 
 	user := &input.Actor

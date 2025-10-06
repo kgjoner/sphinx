@@ -4,8 +4,8 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/utils/datatransform"
-	"github.com/kgjoner/cornucopia/utils/dbhandler"
+	"github.com/kgjoner/cornucopia/v2/utils/datatransform"
+	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 

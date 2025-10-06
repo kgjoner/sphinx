@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/kgjoner/cornucopia/helpers/i18n"
+	"github.com/kgjoner/cornucopia/v2/helpers/i18n"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/config"
 )
@@ -100,19 +100,16 @@ func executeTemplate(templ *template.Template, params ResourceParams) string {
 	return buf.String()
 }
 
-/*
-================================================================================
-
+/* ================================================================================
 	INIT
+================================================================================ */
 
-================================================================================
-*/
 type resourceMap map[i18n.Language]resource
 
 //go:embed *.json
 var files embed.FS
 
-var AcceptedLanguages = []i18n.Language{i18n.LanguageValues.PT_BR, i18n.LanguageValues.EN_US}
+var AcceptedLanguages = []i18n.Language{i18n.Portuguese, i18n.English}
 var Resources = resourceMap{}
 
 func init() {

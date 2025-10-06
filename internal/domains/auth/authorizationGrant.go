@@ -3,13 +3,12 @@ package auth
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/validator"
-	"github.com/kgjoner/cornucopia/utils/pwdgen"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 )
@@ -45,7 +44,7 @@ type AuthorizationGrantCreationFields struct {
 func newAuthorizationGrant(user User, g *AuthorizationGrantCreationFields) (*AuthorizationGrant, error) {
 	link := user.link(g.ClientID)
 	if link == nil || !link.HasConsent {
-		return nil, normalizederr.NewForbiddenError("user has not consented to this application", errcode.NoConsent)
+		return nil, apperr.NewForbiddenError("user has not consented to this application", errcode.NoConsent)
 	}
 
 	// Validate redirect URI is allowed by application
@@ -57,13 +56,13 @@ func newAuthorizationGrant(user User, g *AuthorizationGrantCreationFields) (*Aut
 		}
 	}
 	if !hasFound {
-		return nil, normalizederr.NewRequestError("Invalid redirect_uri")
+		return nil, apperr.NewRequestError("Invalid redirect_uri")
 	}
 
 	var code string
 	switch g.Type {
 	case "authorization_code":
-		code = pwdgen.Generate(42, "lower", "upper", "number")
+		code = pwdgen.GeneratePassword(42, "lower", "upper", "number")
 		if g.CodeChallenge != "" && g.CodeChallengeMethod == "" {
 			g.CodeChallengeMethod = "S256" // Default to S256 if not specified
 		}
@@ -88,14 +87,14 @@ func newAuthorizationGrant(user User, g *AuthorizationGrantCreationFields) (*Aut
 ============================================================================== */
 
 func (g AuthorizationGrant) IsValid() error {
-	errs := make(map[string]error)
+	errs := make(map[string]string)
 
 	if g.Type == "authorization_code" && g.CodeChallengeMethod != "" && g.CodeChallenge == "" {
-		errs["code_challenge"] = fmt.Errorf("code_challenge is required when code_challenge_method is set")
+		errs["code_challenge"] = "code_challenge is required when code_challenge_method is set"
 	}
 
 	if len(errs) != 0 {
-		return normalizederr.NewValidationErrorFromMap(errs)
+		return apperr.NewMapError(errs)
 	}
 
 	return nil
@@ -122,14 +121,14 @@ type GrantCredentials struct {
 }
 
 func (c GrantCredentials) IsValid() error {
-	errs := make(map[string]error)
+	errs := make(map[string]string)
 
 	if c.GrantType == "authorization_code" && c.AppSecret == "" && c.CodeVerifier == "" {
-		errs["app_secret_or_code_verifier"] = fmt.Errorf("either app_secret or code_verifier must be provided")
+		errs["app_secret_or_code_verifier"] = "either app_secret or code_verifier must be provided"
 	}
 
 	if len(errs) != 0 {
-		return normalizederr.NewValidationErrorFromMap(errs)
+		return apperr.NewMapError(errs)
 	}
 
 	return nil
@@ -147,20 +146,20 @@ func (g *AuthorizationGrant) use(user User, credentials *GrantCredentials) error
 	// Check link mataches
 	link := user.link(credentials.ClientID)
 	if link == nil || link.ID != g.LinkID {
-		return normalizederr.NewUnauthorizedError("Invalid consent", errcode.InvalidCredentials)
+		return apperr.NewUnauthorizedError("Invalid consent", errcode.InvalidCredentials)
 	}
 
 	// Check basic grant validity
 	if !g.isActive() {
 		if g.IsUsed {
-			return normalizederr.NewUnauthorizedError("Authorization code has already been used.", errcode.InvalidCredentials)
+			return apperr.NewUnauthorizedError("Authorization code has already been used.", errcode.InvalidCredentials)
 		}
-		return normalizederr.NewUnauthorizedError("OAuth code has expired.", errcode.InvalidCredentials)
+		return apperr.NewUnauthorizedError("OAuth code has expired.", errcode.InvalidCredentials)
 	}
 
 	// Check simple credentials matches
 	if credentials.GrantType != g.Type || credentials.Code != g.Code || credentials.RedirectUri != g.RedirectUri || credentials.ClientID != link.Application.ID {
-		return normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+		return apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
 	switch g.Type {
@@ -173,7 +172,7 @@ func (g *AuthorizationGrant) use(user User, credentials *GrantCredentials) error
 
 	// Check consent is still valid
 	if !link.HasConsent {
-		return normalizederr.NewForbiddenError("user has revoked consent to application", errcode.RevokedConsent)
+		return apperr.NewForbiddenError("user has revoked consent to application", errcode.RevokedConsent)
 	}
 
 	return validator.Validate(g)
@@ -186,7 +185,7 @@ func (g AuthorizationGrant) validateAuthorizationCode(link *Link, credentials *G
 	// 1. Confidential client using client_secret
 	if isConfidentialClient {
 		if !link.Application.DoesSecretMatch(credentials.AppSecret) {
-			return normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+			return apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 		}
 
 		return nil
@@ -194,7 +193,7 @@ func (g AuthorizationGrant) validateAuthorizationCode(link *Link, credentials *G
 
 	// 2. Public client using PKCE
 	if credentials.CodeVerifier == "" {
-		return normalizederr.NewUnauthorizedError("code_verifier required for PKCE flow", errcode.InvalidCredentials)
+		return apperr.NewUnauthorizedError("code_verifier required for PKCE flow", errcode.InvalidCredentials)
 	}
 
 	var isCodeVerifierValid bool
@@ -209,7 +208,7 @@ func (g AuthorizationGrant) validateAuthorizationCode(link *Link, credentials *G
 	}
 
 	if !isCodeVerifierValid {
-		return normalizederr.NewUnauthorizedError("Invalid code_verifier", errcode.InvalidCredentials)
+		return apperr.NewUnauthorizedError("Invalid code_verifier", errcode.InvalidCredentials)
 	}
 
 	return nil

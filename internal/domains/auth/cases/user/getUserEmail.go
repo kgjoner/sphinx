@@ -1,7 +1,7 @@
 package usercase
 
 import (
-	"github.com/kgjoner/cornucopia/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 

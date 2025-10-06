@@ -3,7 +3,7 @@ package usercase
 import (
 	"fmt"
 
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/common"
@@ -27,7 +27,7 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 	if err != nil {
 		return false, err
 	} else if user == nil {
-		return false, normalizederr.NewRequestError("User does not exist", errcode.UserNotFound)
+		return false, apperr.NewRequestError("User does not exist", errcode.UserNotFound)
 	}
 
 	code, err := user.RequestPasswordReset()

@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/validator"
-	"github.com/kgjoner/cornucopia/utils/pwdgen"
-	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
+	"github.com/kgjoner/cornucopia/v2/utils/structop"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"golang.org/x/crypto/bcrypt"
@@ -41,7 +41,7 @@ type ApplicationCreationFields struct {
 func NewApplication(f *ApplicationCreationFields, actor User) (app *Application, secret string, err error) {
 	actorApp := actor.AuthedSession.Application
 	if !actorApp.isRoot() || !(actor.HasRole(actorApp, RoleAdmin) || actor.HasRole(actorApp, RoleDev)) {
-		return nil, "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+		return nil, "", apperr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
 	secret = generateAppSecret()
@@ -62,7 +62,7 @@ func NewApplication(f *ApplicationCreationFields, actor User) (app *Application,
 }
 
 func generateAppSecret() string {
-	return pwdgen.Generate(42, "lower", "upper", "number")
+	return pwdgen.GeneratePassword(42, "lower", "upper", "number")
 }
 
 /* ==============================================================================
@@ -78,7 +78,7 @@ type ApplicationEditableFields struct {
 func (a *Application) Edit(f *ApplicationEditableFields, actor User) error {
 	actorApp := actor.AuthedSession.Application
 	if actorApp.ID != a.ID || !actor.HasRoleOnAuth(RoleAdmin) {
-		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+		return apperr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
 	structop.New(a).Update(f)
@@ -89,7 +89,7 @@ func (a *Application) Edit(f *ApplicationEditableFields, actor User) error {
 func (a *Application) GenerateNewSecret(actor User) (secret string, err error) {
 	actorApp := actor.AuthedSession.Application
 	if actorApp.ID != a.ID || !actor.HasRoleOnAuth(RoleAdmin) {
-		return "", normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+		return "", apperr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
 	secret = generateAppSecret()
@@ -109,7 +109,7 @@ func (a *Application) DoesSecretMatch(secret string) bool {
 
 func (a *Application) Authenticate(secret string) error {
 	if !a.DoesSecretMatch(secret) {
-		return normalizederr.NewFatalUnauthorizedError("invalid credentials", errcode.InvalidAccess)
+		return apperr.Fatal(apperr.NewUnauthorizedError("invalid credentials", errcode.InvalidAccess))
 	}
 
 	a.HasValidCredentials = true

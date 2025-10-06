@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/validator"
-	"github.com/kgjoner/cornucopia/utils/pwdgen"
-	"github.com/kgjoner/cornucopia/utils/sliceman"
-	"github.com/kgjoner/cornucopia/utils/structop"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
+	"github.com/kgjoner/cornucopia/v2/utils/sliceman"
+	"github.com/kgjoner/cornucopia/v2/utils/structop"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"golang.org/x/crypto/bcrypt"
@@ -126,7 +126,7 @@ func validatePasswordInput(password string) error {
 	}
 
 	msg := fmt.Sprintf("Password: %v", err.Error())
-	return normalizederr.NewValidationError(msg)
+	return apperr.NewValidationError(msg)
 }
 
 /* ==============================================================================
@@ -161,20 +161,20 @@ func (a *User) VerifyUser(kind VerificationKind, code string) error {
 	switch kind {
 	case VerificationEmail:
 		if a.HasEmailBeenVerified && a.PendingEmail.IsZero() {
-			return normalizederr.NewRequestError("Email has already been verified.")
+			return apperr.NewRequestError("Email has already been verified.")
 		}
 	case VerificationPhone:
 		if a.HasPhoneBeenVerified && a.PendingPhone.IsZero() {
-			return normalizederr.NewRequestError("Phone has already been verified.")
+			return apperr.NewRequestError("Phone has already been verified.")
 		}
 	}
 
 	if a.VerificationCodes[kind] == "" {
-		return normalizederr.NewConflictError("User does not have a verification code.")
+		return apperr.NewConflictError("User does not have a verification code.")
 	}
 
 	if code != a.VerificationCodes[kind] {
-		return normalizederr.NewRequestError("Invalid code.")
+		return apperr.NewRequestError("Invalid code.")
 	}
 
 	switch kind {
@@ -203,7 +203,7 @@ func (a *User) VerifyUser(kind VerificationKind, code string) error {
 
 func (a *User) ChangePassword(oldPassword string, newPassword string) error {
 	if !a.DoesPasswordMatch(oldPassword) {
-		return normalizederr.NewUnauthorizedError("Invalid credentials.")
+		return apperr.NewUnauthorizedError("Invalid credentials.")
 	}
 
 	err := validatePasswordInput(newPassword)
@@ -229,9 +229,9 @@ func (a *User) RequestPasswordReset() (string, error) {
 func (a *User) ResetPassword(newPassword string, code string) error {
 	resetCode := a.VerificationCodes[VerificationPasswordReset]
 	if resetCode == "" {
-		return normalizederr.NewRequestError("User did not request a password reset.", "")
+		return apperr.NewRequestError("User did not request a password reset.", "")
 	} else if code != a.VerificationCodes[VerificationPasswordReset] {
-		return normalizederr.NewRequestError("Invalid code.", "")
+		return apperr.NewRequestError("Invalid code.", "")
 	}
 
 	err := validatePasswordInput(newPassword)
@@ -257,13 +257,13 @@ type UserMissableFields struct {
 
 func (a *User) AddMissingFields(f UserMissableFields) error {
 	if !f.Phone.IsZero() && !a.Phone.IsZero() {
-		return normalizederr.NewRequestError("Phone was already added.", "")
+		return apperr.NewRequestError("Phone was already added.", "")
 	}
 	if f.Username != "" && a.Username != "" {
-		return normalizederr.NewRequestError("Username was already added.", "")
+		return apperr.NewRequestError("Username was already added.", "")
 	}
 	if !f.Document.IsZero() && !a.Document.IsZero() {
-		return normalizederr.NewRequestError("Document was already added.", "")
+		return apperr.NewRequestError("Document was already added.", "")
 	}
 
 	now := time.Now()
@@ -302,7 +302,7 @@ func (a *User) UpdateUniqueFields(f UserUniqueFields) error {
 	now := time.Now()
 	if f.Username != "" {
 		if a.UsernameUpdatedAt.Time.After(now.Add(-time.Hour * 24 * 90)) {
-			return normalizederr.NewRequestError("Username can only be updated once every 90 days.")
+			return apperr.NewRequestError("Username can only be updated once every 90 days.")
 		}
 
 		a.Username = strings.ToLower(f.Username)
@@ -343,14 +343,14 @@ func (a *User) CancelPendingField(field string) error {
 	case "phone":
 		return a.cancelPendingPhone()
 	default:
-		return normalizederr.NewRequestError("Invalid field name.")
+		return apperr.NewRequestError("Invalid field name.")
 	}
 }
 
 // Allows users to cancel their pending email update
 func (a *User) cancelPendingEmail() error {
 	if a.PendingEmail.IsZero() {
-		return normalizederr.NewRequestError("No pending email update to cancel.")
+		return apperr.NewRequestError("No pending email update to cancel.")
 	}
 
 	var emptyEmail htypes.Email
@@ -364,7 +364,7 @@ func (a *User) cancelPendingEmail() error {
 // Allows users to cancel their pending phone update
 func (a *User) cancelPendingPhone() error {
 	if a.PendingPhone.IsZero() {
-		return normalizederr.NewRequestError("No pending phone update to cancel.")
+		return apperr.NewRequestError("No pending phone update to cancel.")
 	}
 
 	var emptyPhone htypes.PhoneNumber
@@ -383,7 +383,7 @@ func (a User) DoesPasswordMatch(password string) bool {
 // It will generate an random string and save it in the field Code, under the desired key (kind).
 // It overwrites old value, if any.
 func (a *User) generateCodeFor(kind VerificationKind) {
-	a.VerificationCodes[kind] = pwdgen.Generate(12, "lower", "upper", "number")
+	a.VerificationCodes[kind] = pwdgen.GeneratePassword(12, "lower", "upper", "number")
 }
 
 func (a *User) clearCodeFor(kind VerificationKind) {
@@ -399,7 +399,7 @@ func (a *User) RelateToExternalProvider(providerName string, externalAuthID stri
 		}
 	}
 	if !doesProviderExist {
-		return normalizederr.NewRequestError("invalid provider", errcode.InvalidProvider)
+		return apperr.NewRequestError("invalid provider", errcode.InvalidProvider)
 	}
 
 	if a.ExternalAuthIDs == nil {
@@ -420,7 +420,7 @@ func (a *User) GiveConsent(app Application) error {
 	for i, l := range a.Links {
 		if l.Application.ID == app.ID {
 			if l.HasConsent {
-				return normalizederr.NewRequestError("User has already given link to desired application.", "")
+				return apperr.NewRequestError("User has already given link to desired application.", "")
 			}
 
 			return a.Links[i].restoreConsent()
@@ -437,14 +437,14 @@ func (a *User) RevokeConsent(app Application) error {
 	for i, l := range a.Links {
 		if l.Application.ID == app.ID {
 			if !l.HasConsent {
-				return normalizederr.NewRequestError("User has already revoked link to desired application.", "")
+				return apperr.NewRequestError("User has already revoked link to desired application.", "")
 			}
 
 			return a.Links[i].revokeConsent()
 		}
 	}
 
-	return normalizederr.NewRequestError("User has not given link to desired application.", "")
+	return apperr.NewRequestError("User has not given link to desired application.", "")
 }
 
 // Check whether user has role on application related to their authed session.
@@ -495,12 +495,12 @@ func (a *User) LinksToPersist() []Link {
 // Prepare and execute desired role updates
 func (a *User) updatePermission(app Application, updaterFn func(*Link) error) error {
 	if !app.IsAuthenticated() {
-		return normalizederr.NewForbiddenError("Does not have permission to execute this action.")
+		return apperr.NewForbiddenError("Does not have permission to execute this action.")
 	}
 
 	link := a.link(app.ID)
 	if link == nil || !link.HasConsent {
-		return normalizederr.NewForbiddenError("target user has not consented to desired application")
+		return apperr.NewForbiddenError("target user has not consented to desired application")
 	}
 
 	err := updaterFn(link)
@@ -551,17 +551,17 @@ func (a *User) Authenticate(token *authToken) error {
 		doesMatch := s.doesRefreshTokenMatch(token.String())
 		if !doesMatch {
 			a.TerminateAllSessions()
-			return normalizederr.NewFatalUnauthorizedError("revoked token", errcode.ExpiredSession)
+			return apperr.Fatal(apperr.NewUnauthorizedError("revoked token", errcode.ExpiredSession))
 		}
 	}
 
 	link := a.link(s.Application.ID)
 	if link == nil || !link.HasConsent {
-		return normalizederr.NewForbiddenError("target user has revoked consent to desired application", errcode.RevokedConsent)
+		return apperr.NewForbiddenError("target user has revoked consent to desired application", errcode.RevokedConsent)
 	}
 
 	if !a.IsActive {
-		return normalizederr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
+		return apperr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
 	}
 
 	a.AuthToken = token
@@ -571,11 +571,11 @@ func (a *User) Authenticate(token *authToken) error {
 
 func (a *User) AuthenticateViaPassword(password string) error {
 	if !a.DoesPasswordMatch(password) {
-		return normalizederr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
+		return apperr.NewUnauthorizedError("Invalid credentials.", errcode.InvalidCredentials)
 	}
 
 	if !a.IsActive {
-		return normalizederr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
+		return apperr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
 	}
 
 	a.hasValidCredentials = true
@@ -588,7 +588,7 @@ func (a *User) AuthenticateViaGrant(grant *AuthorizationGrant, credentials *Gran
 	}
 
 	if !a.IsActive {
-		return normalizederr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
+		return apperr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
 	}
 
 	a.hasValidCredentials = true
@@ -597,15 +597,15 @@ func (a *User) AuthenticateViaGrant(grant *AuthorizationGrant, credentials *Gran
 
 func (a *User) AuthenticateViaExternalProvider(subject config.ExternalSubject) error {
 	if !subject.IsAuthenticated() {
-		return normalizederr.NewUnauthorizedError("subject is not authenticated in external provider.", errcode.InvalidCredentials)
+		return apperr.NewUnauthorizedError("subject is not authenticated in external provider.", errcode.InvalidCredentials)
 	}
 
 	if !a.IsActive {
-		return normalizederr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
+		return apperr.NewForbiddenError("user is no longer active", errcode.DeactivatedUser)
 	}
 
 	if subjectID, exists := a.ExternalAuthIDs[subject.ProviderName]; !exists || subjectID != subject.ID {
-		return normalizederr.NewForbiddenError("user is not related to the external provider.", errcode.NoRelatedProvider)
+		return apperr.NewForbiddenError("user is not related to the external provider.", errcode.NoRelatedProvider)
 	}
 
 	a.hasValidCredentials = true
@@ -619,11 +619,11 @@ func (a User) IsAuthenticated() bool {
 // Creates an authorization grant for an application that user has linked to
 func (a User) IssueAuthorizationGrant(f *AuthorizationGrantCreationFields, appID uuid.UUID) (*AuthorizationGrant, error) {
 	if !a.IsAuthenticated() {
-		return nil, normalizederr.NewUnauthorizedError("User must be authenticated.")
+		return nil, apperr.NewUnauthorizedError("User must be authenticated.")
 	}
 
 	if a.AuthedSession != nil && !a.AuthedSession.Application.isRoot() {
-		return nil, normalizederr.NewForbiddenError("User can only issue grants with a root app auth token")
+		return nil, apperr.NewForbiddenError("User can only issue grants with a root app auth token")
 	}
 
 	return newAuthorizationGrant(a, f)
@@ -632,17 +632,17 @@ func (a User) IssueAuthorizationGrant(f *AuthorizationGrantCreationFields, appID
 // Create a new session and generate tokens
 func (a *User) InitSession(f *SessionCreationFields) (access *authToken, refresh *authToken, err error) {
 	if !a.IsAuthenticated() {
-		return nil, nil, normalizederr.NewUnauthorizedError("User must be authenticated.")
+		return nil, nil, apperr.NewUnauthorizedError("User must be authenticated.")
 	}
 
 	if !a.hasValidCredentials {
-		return nil, nil, normalizederr.NewForbiddenError("User can only init sessions with valid credentials, not with another auth token.")
+		return nil, nil, apperr.NewForbiddenError("User can only init sessions with valid credentials, not with another auth token.")
 	}
 
 	// Check if link exists and is active
 	link := a.link(f.Application.ID)
 	if link == nil || !link.HasConsent {
-		return nil, nil, normalizederr.NewForbiddenError("User has not consented to this application.")
+		return nil, nil, apperr.NewForbiddenError("User has not consented to this application.")
 	}
 	f.Application = link.Application
 
@@ -689,9 +689,9 @@ func (a *User) InitSession(f *SessionCreationFields) (access *authToken, refresh
 // Generate new tokens for an existing session
 func (a *User) IssueNewTokens() (access *authToken, refresh *authToken, err error) {
 	if !a.IsAuthenticated() {
-		return nil, nil, normalizederr.NewUnauthorizedError("Unauthenticated.")
+		return nil, nil, apperr.NewUnauthorizedError("Unauthenticated.")
 	} else if !a.AuthToken.IsRefresh() {
-		return nil, nil, normalizederr.NewUnauthorizedError("Non refresh token", errcode.InvalidAccess)
+		return nil, nil, apperr.NewUnauthorizedError("Non refresh token", errcode.InvalidAccess)
 	}
 
 	newRefreshToken, err := newAuthToken(authTokenCreationFields{*a, a.AuthedSession.ID, true})
@@ -701,7 +701,7 @@ func (a *User) IssueNewTokens() (access *authToken, refresh *authToken, err erro
 
 	a.AuthedSession = a.session(a.AuthedSession.ID)
 	if a.AuthedSession == nil {
-		return nil, nil, normalizederr.NewConflictError("No active session.", errcode.SessionNotFound)
+		return nil, nil, apperr.NewConflictError("No active session.", errcode.SessionNotFound)
 	}
 
 	a.AuthedSession.updateRefreshToken(*newRefreshToken)
@@ -739,12 +739,12 @@ func (a *User) TerminateSession(sessionID uuid.UUID) (*Session, error) {
 		}
 	}
 
-	return nil, normalizederr.NewRequestError("Session not found.", errcode.SessionNotFound)
+	return nil, apperr.NewRequestError("Session not found.", errcode.SessionNotFound)
 }
 
 func (a *User) TerminateAuthedSession() (*Session, error) {
 	if !a.IsAuthenticated() {
-		return nil, normalizederr.NewUnauthorizedError("Unauthenticated")
+		return nil, apperr.NewUnauthorizedError("Unauthenticated")
 	}
 
 	s, err := a.TerminateSession(a.AuthedSession.ID)
@@ -797,16 +797,16 @@ func (a *User) verifyToken(token *authToken) (*Session, error) {
 		if token.IsRefresh() {
 			code = errcode.ExpiredSession
 		}
-		return nil, normalizederr.NewUnauthorizedError("Expired token", code)
+		return nil, apperr.NewUnauthorizedError("Expired token", code)
 	}
 
 	s := a.session(token.Claims.SessionID)
 	if s == nil {
-		return nil, normalizederr.NewUnauthorizedError("Invalid session", errcode.InvalidAccess)
+		return nil, apperr.NewUnauthorizedError("Invalid session", errcode.InvalidAccess)
 	}
 
 	if token.Claims.Sub != a.ID || token.Claims.Aud != s.Application.ID {
-		return nil, normalizederr.NewUnauthorizedError("Mismatched authentication", errcode.InvalidAccess)
+		return nil, apperr.NewUnauthorizedError("Mismatched authentication", errcode.InvalidAccess)
 	}
 
 	return s, nil
@@ -859,7 +859,7 @@ type UserPrivateView struct {
 
 func (a User) PrivateView(actor User) (*UserPrivateView, error) {
 	if !(a.ID == actor.ID || actor.HasRoleOnAuth(RoleAdmin)) {
-		return nil, normalizederr.NewForbiddenError("Does not have permission to view this user information.")
+		return nil, apperr.NewForbiddenError("Does not have permission to view this user information.")
 	}
 
 	link := actor.authedLink()

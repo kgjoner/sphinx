@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
@@ -220,11 +220,11 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 		config.Env.EXTERNAL_AUTH_PROVIDERS = originalProviders
 	}()
 	config.Env.EXTERNAL_AUTH_PROVIDERS = mockAuthManager.GetConfigs()
-	
+
 	t.Run("should reject creation without consent", func(t *testing.T) {
 		email := factory.RandomUser()["email"].(string)
 		token := "valid-creation-123"
-	
+
 		testProvider.AddValidToken(token, &mocks.MockAuthSubject{
 			ID:    "creation-123",
 			Email: email,
@@ -245,8 +245,8 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 
 	t.Run("should create user with consent", func(t *testing.T) {
 		externalAuthData := map[string]interface{}{
-			"providerName":        testProvider.Name,
-			"consentCreation":     true,
+			"providerName":    testProvider.Name,
+			"consentCreation": true,
 		}
 
 		resp, err := ts.Request("POST", "/auth/external", externalAuthData, map[string]string{
@@ -275,7 +275,7 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 
 		t.Run("should login an already consented user without pass consent again", func(t *testing.T) {
 			externalAuthData := map[string]interface{}{
-				"providerName":        testProvider.Name,
+				"providerName": testProvider.Name,
 			}
 
 			resp, err := ts.Request("POST", "/auth/external", externalAuthData, map[string]string{
@@ -296,7 +296,7 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 		})
 	})
 
-		t.Run("should reject relating existing user without consent", func(t *testing.T) {
+	t.Run("should reject relating existing user without consent", func(t *testing.T) {
 		// First create a user
 		userData := factory.RandomUser()
 		email := userData["email"].(string)
@@ -363,7 +363,7 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 
 		t.Run("should login a related existing user without pass consent again", func(t *testing.T) {
 			externalAuthData := map[string]interface{}{
-				"providerName":        testProvider.Name,
+				"providerName": testProvider.Name,
 			}
 
 			resp, err := ts.Request("POST", "/auth/external", externalAuthData, map[string]string{

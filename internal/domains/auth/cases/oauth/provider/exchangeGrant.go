@@ -1,8 +1,8 @@
 package oauthcase
 
 import (
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/repositories/cache"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/repositories/cache"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -24,7 +24,7 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	err := i.CacheRepo.GetJSON("grant:"+input.Code, &grant)
 	if err != nil {
 		if err == cache.ErrNil {
-			return nil, normalizederr.NewUnauthorizedError("Invalid code", errcode.InvalidCredentials)
+			return nil, apperr.NewUnauthorizedError("Invalid code", errcode.InvalidCredentials)
 		}
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	if err != nil {
 		return nil, err
 	} else if user == nil {
-		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+		return nil, apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
 	// Authenticate via authorization grant

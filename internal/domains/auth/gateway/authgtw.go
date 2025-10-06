@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/helpers/controller"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/helpers/controller"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
 	oauthcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/oauth/provider"
@@ -50,9 +50,9 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 //	@Produce		json
 //	@Param			payload	body		authcase.LoginInput	true	"Credentials. Entry can be: email, phone, username or document"
 //	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		401		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -90,9 +90,9 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Success		204
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		401	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddActor()
@@ -129,9 +129,9 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			payload	body		oauthcase.IssueGrantInput	true "OAUTH 2.0 parameters"
 //	@Success		200		{object}	presenter.Success[oauthcase.IssueGrantOutput]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		401		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -169,9 +169,9 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			payload	body		auth.GrantCredentials	true	"You must inform either client_secret or code_verifier"
 //	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		401		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -210,9 +210,9 @@ func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	presenter.Success[authcase.LoginOutput]
-//	@Failure		400	{object}	normalizederr.NormalizedError
-//	@Failure		401	{object}	normalizederr.NormalizedError
-//	@Failure		500	{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddActor()
@@ -248,10 +248,10 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			payload	body		authcase.ExternalAuthInput	true	"You may inform email if creation is expected and provider does not provide it."
 //	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		401		{object}	normalizederr.NormalizedError
-//	@Failure		403		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		403		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g AuthGateway) externalAuth(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().

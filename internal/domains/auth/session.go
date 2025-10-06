@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/htypes"
-	"github.com/kgjoner/cornucopia/helpers/validator"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
 )
 
 type Session struct {

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/common"
@@ -36,7 +36,7 @@ func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
 	if err != nil {
 		return nil, err
 	} else if app == nil {
-		return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
+		return nil, apperr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
 	}
 
 	err = i.AuthRepo.InsertUser(user)
@@ -45,7 +45,7 @@ func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
 			pattern := regexp.MustCompile("user_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
-			return nil, normalizederr.NewConflictError(msg, errcode.DuplicateKey)
+			return nil, apperr.NewConflictError(msg, errcode.DuplicateKey)
 		}
 		return nil, err
 	}

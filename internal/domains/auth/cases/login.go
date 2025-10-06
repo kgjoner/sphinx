@@ -2,7 +2,7 @@ package authcase
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -23,7 +23,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 	if err != nil {
 		return nil, err
 	} else if user == nil {
-		return nil, normalizederr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+		return nil, apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
 	err = user.AuthenticateViaPassword(input.Password)
@@ -35,7 +35,7 @@ func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
 	if err != nil {
 		return nil, err
 	} else if app == nil {
-		return nil, normalizederr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
+		return nil, apperr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
 	}
 	input.Application = *app
 

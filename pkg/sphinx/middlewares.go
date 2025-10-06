@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/helpers/controller"
-	"github.com/kgjoner/cornucopia/helpers/normalizederr"
-	"github.com/kgjoner/cornucopia/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/controller"
+	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 )
 
@@ -27,7 +27,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" || authHeaderParts[1] == "" {
-			err := normalizederr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
+			err := apperr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -35,10 +35,6 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		tokenStr := authHeaderParts[1]
 		user, err := m.sphinx.User(tokenStr)
 		if err != nil {
-			if nerr, ok := err.(normalizederr.NormalizedError); ok {
-				presenter.HTTPError(nerr.MakeItInternal(), w, r)
-				return
-			}
 			presenter.HTTPError(err, w, r)
 			return
 		}
@@ -71,7 +67,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			actorValue := r.Context().Value(controller.ActorKey)
 			if actorValue == nil {
-				err := normalizederr.NewUnauthorizedError("no actor found, user must be authenticated prior guard middleware", errcode.InvalidAccess)
+				err := apperr.NewUnauthorizedError("no actor found, user must be authenticated prior guard middleware", errcode.InvalidAccess)
 				presenter.HTTPError(err, w, r)
 				return
 			}
@@ -89,7 +85,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 				}
 			}
 
-			err := normalizederr.NewForbiddenError("user does not have enough permission")
+			err := apperr.NewForbiddenError("user does not have enough permission")
 			presenter.HTTPError(err, w, r)
 		})
 	}
