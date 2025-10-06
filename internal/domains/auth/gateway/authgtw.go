@@ -127,7 +127,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		oauthcase.IssueGrantInput	true
+//	@Param			payload	body		oauthcase.IssueGrantInput	true "OAUTH 2.0 parameters"
 //	@Success		200		{object}	presenter.Success[oauthcase.IssueGrantOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError
@@ -167,7 +167,7 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		auth.OAuthAuthenticateFields	true	"You must inform either client_secret or code_verifier"
+//	@Param			payload	body		auth.GrantCredentials	true	"You must inform either client_secret or code_verifier"
 //	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
 //	@Failure		400		{object}	normalizederr.NormalizedError
 //	@Failure		401		{object}	normalizederr.NormalizedError

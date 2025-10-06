@@ -37,7 +37,7 @@ func (g AuthGateway) userHandler(r chi.Router) {
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			accept-language	header		string					false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		auth.UserCreationFields	true	"Email and password are mandatory."
 //	@Success		200				{object}	presenter.Success[auth.User]
 //	@Failure		400				{object}	normalizederr.NormalizedError
@@ -158,11 +158,11 @@ func (g AuthGateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string							true	"User ID"
-//	@Param			payload	body		usercase.VerifyUserInput	true	"Verification kind must be email or phone."
+//	@Param			id		path	string						true	"User ID"
+//	@Param			payload	body	usercase.VerifyUserInput	true	"Verification kind must be email or phone."
 //	@Success		204
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -198,12 +198,12 @@ func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		usercase.ChangePasswordInput	true	"Old password and new one."
+//	@Param			accept-language	header	string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			payload			body	usercase.ChangePasswordInput	true	"Old password and new one."
 //	@Success		204
-//	@Failure		400				{object}	normalizederr.NormalizedError
-//	@Failure		401				{object}	normalizederr.NormalizedError
-//	@Failure		500				{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		401	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -241,11 +241,11 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			accept-language	header		string									false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		usercase.RequestPasswordResetInput	true	"Old password and new one."
+//	@Param			accept-language	header	string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			payload			body	usercase.RequestPasswordResetInput	true	"Old password and new one."
 //	@Success		204
-//	@Failure		400				{object}	normalizederr.NormalizedError
-//	@Failure		500				{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -281,12 +281,12 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			accept-language	header		string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			id				path		string							true	"User ID"
-//	@Param			payload			body		usercase.ResetPasswordInput	true	"Old password and new one."
+//	@Param			accept-language	header	string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			id				path	string						true	"User ID"
+//	@Param			payload			body	usercase.ResetPasswordInput	true	"Old password and new one."
 //	@Success		204
-//	@Failure		400				{object}	normalizederr.NormalizedError
-//	@Failure		500				{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -325,13 +325,13 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string									false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
-//	@Param			payload		body		usercase.EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
+//	@Param			x-target	header	string								false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
+//	@Param			payload		body	usercase.EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		204
-//	@Failure		400			{object}	normalizederr.NormalizedError
-//	@Failure		401			{object}	normalizederr.NormalizedError
-//	@Failure		403			{object}	normalizederr.NormalizedError
-//	@Failure		500			{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		401	{object}	normalizederr.NormalizedError
+//	@Failure		403	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -411,8 +411,8 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target		header		string						false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
-//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			x-target		header		string					false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
+//	@Param			accept-language	header		string					false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		auth.UserUniqueFields	true	"At least one field must be defined."
 //	@Success		200				{object}	presenter.Success[auth.UserPrivateView]
 //	@Failure		400				{object}	normalizederr.NormalizedError
@@ -456,13 +456,13 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string	true	"User ID"
-//	@Param			field	path		string	true	"Field must be 'email' or 'phone'."
+//	@Param			id		path	string	true	"User ID"
+//	@Param			field	path	string	true	"Field must be 'email' or 'phone'."
 //	@Success		204
-//	@Failure		400		{object}	normalizederr.NormalizedError
-//	@Failure		401		{object}	normalizederr.NormalizedError
-//	@Failure		403		{object}	normalizederr.NormalizedError
-//	@Failure		500		{object}	normalizederr.NormalizedError
+//	@Failure		400	{object}	normalizederr.NormalizedError
+//	@Failure		401	{object}	normalizederr.NormalizedError
+//	@Failure		403	{object}	normalizederr.NormalizedError
+//	@Failure		500	{object}	normalizederr.NormalizedError
 func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("id", "userID").
