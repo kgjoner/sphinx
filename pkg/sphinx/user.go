@@ -116,7 +116,7 @@ func (s Service) UserIDByEntry(entry string) (*uuid.UUID, error) {
 }
 
 // Add roles and/or grantings to target user.
-func (s Service) GrantPermissions(target string, roles []string, grantings []string) (bool, error) {
+func (s Service) GrantPermissions(target string, roles []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
 			Valid: true,
@@ -126,10 +126,6 @@ func (s Service) GrantPermissions(target string, roles []string, grantings []str
 
 	if len(roles) > 0 {
 		body["roles"] = roles
-	}
-
-	if len(grantings) > 0 {
-		body["grantings"] = grantings
 	}
 
 	var respData presenter.Success[bool]
@@ -148,7 +144,7 @@ func (s Service) GrantPermissions(target string, roles []string, grantings []str
 }
 
 // Remove roles and/or grantings from target user.
-func (s Service) RevokePermissions(target string, roles []string, grantings []string) (bool, error) {
+func (s Service) RevokePermissions(target string, roles []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
 			Valid: true,
@@ -158,10 +154,6 @@ func (s Service) RevokePermissions(target string, roles []string, grantings []st
 
 	if len(roles) > 0 {
 		body["roles"] = roles
-	}
-
-	if len(grantings) > 0 {
-		body["grantings"] = grantings
 	}
 
 	var respData presenter.Success[bool]
