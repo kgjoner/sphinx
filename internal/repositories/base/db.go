@@ -92,7 +92,7 @@ func (p Pool) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(
 // This is useful for operations that require consistent reads without modifying data.
 func (p Pool) WithReadOnlyTransaction(ctx context.Context, fn func(common.BaseRepo) (any, error)) (any, error) {
 	opts := &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
+		Isolation: sql.LevelRepeatableRead,
 		ReadOnly:  true,
 	}
 
