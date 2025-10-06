@@ -91,16 +91,19 @@ func (s *Server) Setup() *Server {
 		MailService: s.mailSvc,
 	}
 
-	r := chi.NewRouter()
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Timeout(60 * time.Second))
-	r.Use(cors.Handler(cors.Options{
+	baseR := chi.NewRouter()
+	baseR.Use(middleware.RealIP)
+	baseR.Use(middleware.Timeout(60 * time.Second))
+	baseR.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-App", "X-Entry", "X-Target"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+
+	r := chi.NewRouter()
+	baseR.Mount(config.BASE_PATH, r)
 
 	// Api versioning
 	r.Route("/api", func(r chi.Router) {
@@ -127,12 +130,14 @@ func (s *Server) Setup() *Server {
 	})
 
 	// Docs
+	docs.SwaggerInfo.Version = config.Env.APP_VERSION
 	docs.SwaggerInfo.Host = config.Env.HOST
+	docs.SwaggerInfo.BasePath = config.BASE_PATH
 	r.Get("/docs/*", httpSwagger.Handler(
-		httpSwagger.URL("/docs/doc.json"),
+		httpSwagger.URL(config.BASE_PATH+"/docs/doc.json"),
 	))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/docs/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, config.BASE_PATH+"/docs/", http.StatusTemporaryRedirect)
 	})
 
 	s.Handler = r
