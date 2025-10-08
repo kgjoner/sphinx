@@ -1,4 +1,9 @@
-{{- $versionPath := regexFind "^v\\d+" .Chart.AppVersion -}}
+{{- $versionPath := regexFind "^v\\d+" (include "version" .) -}}
+
+{{- if empty $versionPath }}
+  {{- fail (printf "Invalid image tag '%s'. Must be semantic version (e.g., v1.2.3 or just v1)" (include "version" .)) }}
+{{- end }}
+
 {{- if eq .Values.ingress.className "traefik" }}
 # ======================================================
 # TRAEFIK

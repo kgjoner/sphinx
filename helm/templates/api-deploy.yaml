@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
       - name: {{ .Chart.Name }}-api
-        image: docker.kgjoner.com.br/sphinx:{{ .Chart.AppVersion }}
-        imagePullPolicy: {{ .Values.api.imagePullPolicy }}
+        image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
         envFrom:
         - secretRef:
           {{- if empty .Values.secret.existentName }}

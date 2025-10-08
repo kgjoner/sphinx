@@ -1,8 +1,10 @@
 # Default values for sphinx-api.
 api:
-  version: latest
+  image:
+    repository: docker.kgjoner.com.br/sphinx
+    tag: "" # If empty, uses Chart.AppVersion
+    pullPolicy: Always
   replicaCount: 1
-  imagePullPolicy: Always
   imagePullSecretName:
 
 ingress:
@@ -27,13 +29,25 @@ secret:
   rootAppID: 80cadd74-5ccd-41c4-9938-3c8961be04db
   jwtSecret: mysecret
   hermesApiKey: mysecret
+  # Use the following with caution, only with trusted providers, as this may open security vulnerabilities.
+  # externalAuthProviders:
+  # - name: myprovider
+  #   url: api.myprovider.com/v1/api/auth
+  #   method: GET
+  #   headers:
+  #     apiKey: myproviderapikey
+  #   subjectIDPath: user.id
+  #   emailPath: user.email
 
 configMap:
   appName: Sphinx
+  # appStyleUrl:
+  # appLogoUrl:
   supportEmail: support@example.com
   maxConcurrentSessions: 0
   fallbackLanguage: pt-br
-  jwtAccessLifetimeInSec: "300"
+  authGrantLifetimeInSec: "300"
+  jwtAccessLifetimeInSec: "900"
   jwtRefreshLifetimeInSec: "15552000"
   hermesBaseURL: hermes/v1
   clientBaseURL: sphinx.com.br

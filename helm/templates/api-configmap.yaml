@@ -7,8 +7,11 @@ data:
   HOST: https://{{ .host }}
   {{- end }}
   APP_NAME: {{ .Values.configMap.appName }}
+  APP_STYLE_URL: {{ .Values.configMap.appStyleUrl }}
+  APP_LOGO_URL: {{ .Values.configMap.appLogoUrl }}
   MAX_CONCURRENT_SESSIONS: {{ .Values.configMap.maxConcurrentSessions | quote }}
   FALLBACK_LANGUAGE: {{ .Values.configMap.fallbackLanguage }}
+  AUTH_GRANT_LIFETIME_IN_SEC: {{ .Values.configMap.authGrantLifetimeInSec | quote }}
   JWT_ACCESS_LIFETIME_IN_SEC: {{ .Values.configMap.jwtAccessLifetimeInSec | quote }}
   JWT_REFRESH_LIFETIME_IN_SEC: {{ .Values.configMap.jwtRefreshLifetimeInSec | quote }}
   HERMES_BASE_URL: {{ .Values.configMap.hermesBaseURL }}

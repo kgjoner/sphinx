@@ -1,5 +1,9 @@
+{{- define "version" -}}
+{{- .Values.api.image.tag | default .Chart.AppVersion -}}
+{{- end -}}
+
 {{- define "version.major" -}}
-{{- regexFind "^v\\d+" .Chart.AppVersion -}}
+{{- regexFind "^v\\d+" (include "version" .) -}}
 {{- end -}}
 
 {{- define "prefix" -}}

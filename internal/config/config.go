@@ -1,6 +1,8 @@
 package config
 
 import (
+	"encoding/json"
+	"os"
 	"strings"
 
 	"github.com/vrischmann/envconfig"
@@ -53,6 +55,13 @@ var BASE_PATH string
 func Must() {
 	if err := envconfig.Init(&Env); err != nil {
 		panic(err)
+	}
+
+	// Handle EXTERNAL_AUTH_PROVIDERS JSON parsing manually
+	if providersJSON := os.Getenv("EXTERNAL_AUTH_PROVIDERS"); providersJSON != "" {
+		if err := json.Unmarshal([]byte(providersJSON), &Env.EXTERNAL_AUTH_PROVIDERS); err != nil {
+			panic("failed to parse EXTERNAL_AUTH_PROVIDERS JSON: " + err.Error())
+		}
 	}
 
 	if !strings.HasPrefix(Env.APP_VERSION, "v") {
