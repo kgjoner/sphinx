@@ -74,6 +74,23 @@ db:
     name: sphinx-data 
     accessMode: ReadWriteOnce
     size: 10Gi
+  migration:
+    enabled: true
+    version: v4.17.0 # golang-migrate
+    imagePullPolicy: IfNotPresent
+    # imagePullSecretName: regcred  # Uncomment if using private registry
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi  
+    # Manual migration job configuration
+    manual:
+      enabled: false
+      command: "version"  # Options: up, down 1, goto 5, version, etc.
+      ttlSecondsAfterFinished: 600  # Clean up job after 10 minutes
 
 redis:
   enabled: false

@@ -1,0 +1,57 @@
+{{- if .Values.db.migration.manual.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "prefix" . }}-migration-manual-{{ randAlphaNum 8 | lower }}
+  labels:
+    app: {{ .Chart.Name }}-migration-manual
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.db.migration.manual.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      name: {{ template "prefix" . }}-migration-manual
+      labels:
+        app: {{ .Chart.Name }}-migration-manual
+        release: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: migrate/migrate:{{ .Values.db.migration.version }}
+        imagePullPolicy: {{ .Values.db.migration.imagePullPolicy }}
+        command:
+          - /bin/sh
+          - -c
+          - |
+            echo "Starting manual database migration..."
+            echo "Command: {{ .Values.db.migration.manual.command }}"
+            migrate -path /migrations -database "$DATABASE_URL" {{ .Values.db.migration.manual.command }}
+            echo "Migration completed!"
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              {{- if empty .Values.secret.existentName }}
+              name: {{ template "api.secretName" . }}
+              {{- else }}
+              name: {{ .Values.secret.existentName }}
+              {{- end }}
+              key: DATABASE_URL
+        volumeMounts:
+        - name: migrations
+          mountPath: /migrations
+          readOnly: true
+        resources:
+          {{- toYaml .Values.db.migration.resources | nindent 10 }}
+      volumes:
+      - name: migrations
+        configMap:
+          name: {{ template "prefix" . }}-migrations
+      {{- if .Values.db.migration.imagePullSecretName }}
+      imagePullSecrets:
+      - name: {{ .Values.db.migration.imagePullSecretName }}
+      {{- end }}
+{{- end }}

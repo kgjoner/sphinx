@@ -1,0 +1,16 @@
+{{- if .Values.db.migration.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "prefix" . }}-migrations
+  labels:
+    app: {{ .Chart.Name }}-migration
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+{{- range $path, $_ := .Files.Glob "migrations/*.sql" }}
+  {{ base $path }}: |
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+{{- end }}
