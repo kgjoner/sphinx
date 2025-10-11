@@ -12,16 +12,16 @@ import (
 )
 
 type ExternalAuthProvider struct {
-	Name           string `validate:"required"`
-	URL            string `validate:"required"`
-	Method         string // Default is GET
-	DefaultHeaders map[string]string
-	DefaultParams  map[string]string
-	DefaultBody    map[string]string
+	Name           string            `validate:"required"`
+	URL            string            `validate:"required"`
+	Method         string            `json:",omitempty"` // Default is GET
+	DefaultHeaders map[string]string `json:",omitempty"`
+	DefaultParams  map[string]string `json:",omitempty"`
+	DefaultBody    map[string]string `json:",omitempty"`
 
 	// JSON path to extract subject ID from response
-	SubjectIDPath string `validate:"required"`
-	EmailPath     string
+	SubjectIDPath string `json:",omitempty" validate:"required"`
+	EmailPath     string `json:",omitempty"`
 }
 
 type ExternalAuthInput struct {

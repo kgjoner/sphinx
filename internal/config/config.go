@@ -47,7 +47,7 @@ var Env struct {
 	// Use with caution, only with trusted providers, as this may open security vulnerabilities.
 	//
 	// See documentation for more details.
-	EXTERNAL_AUTH_PROVIDERS []ExternalAuthProvider `envconfig:"optional" json:",omitempty"`
+	EXTERNAL_AUTH_PROVIDERS []ExternalAuthProvider `envconfig:"-" json:",omitempty"`
 }
 
 var BASE_PATH string
