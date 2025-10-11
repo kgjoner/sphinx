@@ -91,7 +91,7 @@ INSERT INTO
 VALUES (
   '80cadd74-5ccd-41c4-9938-3c8961be04db',
   'sphynx',
-  '{"DEV"}'
+  '{"ADMIN","DEV"}'
 )
 ON CONFLICT (id)
 DO NOTHING;
