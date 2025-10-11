@@ -2,20 +2,26 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "prefix" . }}-migration-manual-{{ randAlphaNum 8 | lower }}
+  name: {{ template "sphinx.prefix" . }}-migration-manual-{{ randAlphaNum 8 | lower }}
   labels:
-    app: {{ .Chart.Name }}-migration-manual
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
+    app.kubernetes.io/version: 16
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   ttlSecondsAfterFinished: {{ .Values.db.migration.manual.ttlSecondsAfterFinished }}
   template:
     metadata:
-      name: {{ template "prefix" . }}-migration-manual
+      name: {{ template "sphinx.prefix" . }}-migration-manual
       labels:
-        app: {{ .Chart.Name }}-migration-manual
-        release: {{ .Release.Name }}
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
+        app.kubernetes.io/version: 16
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: {{ .Chart.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
     spec:
       restartPolicy: Never
       containers:
@@ -35,7 +41,7 @@ spec:
           valueFrom:
             secretKeyRef:
               {{- if empty .Values.secret.existentName }}
-              name: {{ template "api.secretName" . }}
+              name: {{ template "sphinx.secretName" . }}
               {{- else }}
               name: {{ .Values.secret.existentName }}
               {{- end }}
@@ -49,7 +55,7 @@ spec:
       volumes:
       - name: migrations
         configMap:
-          name: {{ template "prefix" . }}-migrations
+          name: {{ template "sphinx.prefix" . }}-migrations
       {{- if .Values.db.migration.imagePullSecretName }}
       imagePullSecrets:
       - name: {{ .Values.db.migration.imagePullSecretName }}

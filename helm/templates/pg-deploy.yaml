@@ -2,17 +2,30 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata: 
-  name: {{ template "prefix" . }}-db
+  name: {{ template "sphinx.prefix" . }}-pg
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
+    app.kubernetes.io/version: 16
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
-  serviceName: {{ template "db.serviceName" . }}
+  serviceName: {{ template "sphinx.db.serviceName" . }}
   replicas: {{ .Values.db.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}-pg
+      app.kubernetes.io/name: postgres
+      app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
   template:
     metadata: 
       labels:
-        app: {{ .Chart.Name }}-pg
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
+        app.kubernetes.io/version: 16
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: {{ .Chart.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
     spec:
       containers:
       - name: {{ .Chart.Name }}-pg
@@ -22,7 +35,7 @@ spec:
         envFrom:
         - secretRef:
             {{- if empty .Values.db.secret.existentName }}
-              name: {{ template "db.secretName" . }}
+              name: {{ template "sphinx.db.secretName" . }}
             {{- else }}
               name: {{ .Values.db.secret.existentName }}
             {{- end }}
@@ -36,6 +49,10 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: {{ .Values.db.volume.name }}
+        labels:
+          app.kubernetes.io/name: postgres
+          app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
+          app.kubernetes.io/component: database
       spec:
         accessModes:
           - {{ .Values.db.volume.accessMode }}

@@ -1,42 +1,61 @@
-{{- define "version" -}}
+{{- define "sphinx.version" -}}
 {{- .Values.api.image.tag | default .Chart.AppVersion -}}
 {{- end -}}
 
-{{- define "version.major" -}}
-{{- regexFind "^v\\d+" (include "version" .) -}}
+{{- define "sphinx.version.major" -}}
+{{- regexFind "^v\\d+" (include "sphinx.version" .) -}}
 {{- end -}}
 
-{{- define "prefix" -}}
-{{ .Chart.Name }}-{{ template "version.major" . }}
+{{- define "sphinx.prefix" -}}
+{{- if contains .Chart.Name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{- define "sphinx.serviceName" -}}
+{{ template "sphinx.prefix" . }}
 {{- end -}}
 
-{{- define "api.serviceName" -}}
-{{ template "prefix" . }}
+{{- define "sphinx.configMapName" -}}
+{{ template "sphinx.prefix" . }}-config
 {{- end -}}
 
-{{- define "api.configMapName" -}}
-{{ template "prefix" . }}-config
+{{- define "sphinx.secretName" -}}
+{{ template "sphinx.prefix" . }}-secret
 {{- end -}}
 
-{{- define "api.secretName" -}}
-{{ template "prefix" . }}-secret
+{{- define "sphinx.db.serviceName" -}}
+{{ template "sphinx.prefix" . }}-pg
 {{- end -}}
 
-{{- define "db.serviceName" -}}
-{{ template "prefix" . }}-pg
+{{- define "sphinx.db.secretName" -}}
+{{ template "sphinx.prefix" . }}-pg-secret
 {{- end -}}
 
-{{- define "db.secretName" -}}
-{{ template "prefix" . }}-pg-secret
+{{- define "sphinx.redis.serviceName" -}}
+{{ template "sphinx.prefix" . }}-redis
 {{- end -}}
 
-{{- define "redis.serviceName" -}}
-{{ template "prefix" . }}-redis
+{{- define "sphinx.redis.configName" -}}
+{{ template "sphinx.prefix" . }}-redis-config
 {{- end -}}
 
-{{- define "redis.configName" -}}
-{{ template "prefix" . }}-redis-config
-{{- end -}}
+
+{{- define "sphinx.labels" -}}
+helm.sh/chart: {{ include "sphinx.chart" . }}
+{{ include "sphinx.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{- define "sphinx.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "sphinx.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
 
 
 

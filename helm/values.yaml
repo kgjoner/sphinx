@@ -101,3 +101,7 @@ redis:
     # If existentName is set, below configurations will not be used
     user: redis
     password: redis
+  volume:
+    className: ""  # Empty for no persistent storage
+    accessMode: ReadWriteOnce
+    size: 1Gi

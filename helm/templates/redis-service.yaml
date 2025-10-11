@@ -2,10 +2,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "redis.serviceName" . }}
+  name: {{ template "sphinx.redis.serviceName" . }}
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-redis
+    app.kubernetes.io/version: 7.2.5
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   selector:
-    app: {{ .Chart.Name }}-redis
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-redis
   ports:
   - port: 6379
 {{- end }}

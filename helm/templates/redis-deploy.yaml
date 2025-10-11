@@ -2,19 +2,30 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata: 
-  name: {{ template "prefix" . }}-redis
+  name: {{ template "sphinx.prefix" . }}-redis
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-redis
+    app.kubernetes.io/version: 7.2.5
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
-  serviceName: {{ template "redis.serviceName" . }}
+  serviceName: {{ template "sphinx.redis.serviceName" . }}
   replicas: {{ .Values.redis.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}-redis
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-redis
   template:
     metadata: 
       labels:
-        app: {{ .Chart.Name }}-redis
-        version: {{ .Chart.AppVersion }}
-        component: db
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-redis
+        app.kubernetes.io/version: 7.2.5
+        app.kubernetes.io/component: cache
+        app.kubernetes.io/part-of: {{ .Chart.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
     spec:
       containers:
       - name: {{ .Chart.Name }}-redis
@@ -28,27 +39,33 @@ spec:
         ports:
         - containerPort: 6379
         volumeMounts:
-        - mountPath: /redis-master-data
-          name: data
+        {{- if not (empty .Values.redis.volume.className) }}
+        - mountPath: /data
+          name: redis-data
+        {{- end }}
         - mountPath: /redis-master
           name: config
       volumes:
-        - name: data
-          emptyDir: {}
         - name: config
           configMap:
-            name: {{ template "redis.configName" . }}
+            name: {{ template "sphinx.redis.configName" . }}
             items:
             - key: redis-config
               path: redis.conf
+ {{- if not (empty .Values.redis.volume.className) }}
   volumeClaimTemplates:
     - metadata:
-        name: {{ .Values.db.volume.name }}
+        name: redis-data
+        labels:
+          app.kubernetes.io/name: redis
+          app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-redis
+          app.kubernetes.io/component: cache
       spec:
         accessModes:
-          - {{ .Values.db.volume.accessMode }}
+          - {{ .Values.redis.volume.accessMode }}
         resources:
           requests:
-            storage: {{ .Values.db.volume.size }}
-        storageClassName: {{ .Values.db.volume.className }}
+            storage: {{ .Values.redis.volume.size }}
+        storageClassName: {{ .Values.redis.volume.className }}
+  {{- end }}
 {{- end }}

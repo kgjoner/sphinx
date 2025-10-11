@@ -2,12 +2,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "prefix" . }}-migration
+  name: {{ template "sphinx.prefix" . }}-migration
   labels:
-    app: {{ .Chart.Name }}-migration
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
+    app.kubernetes.io/version: 16
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
   annotations:
     "helm.sh/hook": post-install,pre-upgrade
     "helm.sh/hook-delete-policy": hook-succeeded
@@ -15,10 +17,14 @@ spec:
   ttlSecondsAfterFinished: 300
   template:
     metadata:
-      name: {{ template "prefix" . }}-migration
+      name: {{ template "sphinx.prefix" . }}-migration
       labels:
-        app: {{ .Chart.Name }}-migration
-        release: {{ .Release.Name }}
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
+        app.kubernetes.io/version: 16
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: {{ .Chart.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
     spec:
       restartPolicy: Never
       initContainers:
@@ -47,7 +53,7 @@ spec:
           valueFrom:
             secretKeyRef:
               {{- if empty .Values.secret.existentName }}
-              name: {{ template "api.secretName" . }}
+              name: {{ template "sphinx.secretName" . }}
               {{- else }}
               name: {{ .Values.secret.existentName }}
               {{- end }}
@@ -68,7 +74,7 @@ spec:
           valueFrom:
             secretKeyRef:
               {{- if empty .Values.secret.existentName }}
-              name: {{ template "api.secretName" . }}
+              name: {{ template "sphinx.secretName" . }}
               {{- else }}
               name: {{ .Values.secret.existentName }}
               {{- end }}
@@ -82,7 +88,7 @@ spec:
       volumes:
       - name: migrations
         configMap:
-          name: {{ template "prefix" . }}-migrations
+          name: {{ template "sphinx.prefix" . }}-migrations
       {{- if .Values.db.migration.imagePullSecretName }}
       imagePullSecrets:
       - name: {{ .Values.db.migration.imagePullSecretName }}

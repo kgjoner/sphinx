@@ -2,9 +2,17 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "api.serviceName" . }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
+    app.kubernetes.io/version: {{ template "sphinx.version" . }}
+    app.kubernetes.io/component: server
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   selector:
-    app: {{ .Chart.Name }}-api
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
   ports:
     - port: 80
       targetPort: 8080

@@ -2,7 +2,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "redis.configName" . }}
+  name: {{ template "sphinx.redis.configName" . }}
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-redis
+    app.kubernetes.io/version: 7.2.5
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 data:
   redis-config: |
     requirepass  {{ .Values.redis.config.password }}

@@ -1,17 +1,24 @@
-{{- $versionPath := regexFind "^v\\d+" (include "version" .) -}}
+{{- $versionPath := regexFind "^v\\d+" (include "sphinx.version" .) -}}
 
 {{- if empty $versionPath }}
-  {{- fail (printf "Invalid image tag '%s'. Must be semantic version (e.g., v1.2.3 or just v1)" (include "version" .)) }}
+  {{- fail (printf "Invalid image tag '%s'. Must be semantic version (e.g., v1.2.3 or just v1)" (include "sphinx.version" .)) }}
 {{- end }}
 
 {{- if eq .Values.ingress.className "traefik" }}
 # ======================================================
 # TRAEFIK
 # ======================================================
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ template "prefix" . }}-ingress
+  name: {{ template "sphinx.prefix" . }}-ingress
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
+    app.kubernetes.io/version: {{ template "sphinx.version" . }}
+    app.kubernetes.io/component: server
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   entryPoints:
     - web
@@ -24,17 +31,24 @@ spec:
     {{- end }}
     kind: Rule
     services:
-    - name: {{ template "api.serviceName" $ }}
+    - name: {{ template "sphinx.serviceName" $ }}
       port: 80
   {{- end }}
 
   {{- if not (empty .Values.ingress.tls.issuer) }}
 ---
 # Traefik TLS
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ template "prefix" . }}-ingress-tls
+  name: {{ template "sphinx.prefix" . }}-ingress-tls
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
+    app.kubernetes.io/version: {{ template "sphinx.version" . }}
+    app.kubernetes.io/component: server
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   entryPoints:
     - websecure
@@ -47,18 +61,25 @@ spec:
     {{- end }}
     kind: Rule
     services:
-    - name: {{ template "api.serviceName" $ }}
+    - name: {{ template "sphinx.serviceName" $ }}
       port: 80
   {{- end }}
   tls:
-    secretName: {{ template "prefix" . }}-tls
+    secretName: {{ template "sphinx.prefix" . }}-tls
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{ template "prefix" . }}-cert
+  name: {{ template "sphinx.prefix" . }}-cert
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
+    app.kubernetes.io/version: {{ template "sphinx.version" . }}
+    app.kubernetes.io/component: server
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
-  secretName: {{ template "prefix" . }}-tls
+  secretName: {{ template "sphinx.prefix" . }}-tls
   issuerRef:
     kind: ClusterIssuer
     name: letsencrypt-prod
@@ -76,7 +97,14 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ template "prefix" . }}-ingress
+  name: {{ template "sphinx.prefix" . }}-ingress
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
+    app.kubernetes.io/version: {{ template "sphinx.version" . }}
+    app.kubernetes.io/component: server
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
   annotations:
     {{- if not (empty .Values.ingress.tls.issuer) }}
     cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.issuer | quote }}
@@ -90,7 +118,7 @@ spec:
       {{- range .Values.ingress.rules }}
       - {{ .host }}
       {{- end }}
-      secretName: {{ template "prefix" . }}-tls
+      secretName: {{ template "sphinx.prefix" . }}-tls
   {{- end }}
   rules:
     {{- range .Values.ingress.rules }}
@@ -101,7 +129,7 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: {{ template "api.serviceName" $ }}
+              name: {{ template "sphinx.serviceName" $ }}
               port: 
                 number: 80
     {{- end }}
