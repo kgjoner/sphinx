@@ -98,3 +98,16 @@ func (p Pool) WithReadOnlyTransaction(ctx context.Context, fn func(common.BaseRe
 
 	return p.WithTransaction(ctx, opts, fn)
 }
+
+type executor interface {
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
+// executor returns the transaction if available, otherwise the database connection
+func (q DAO) executor() executor {
+	if q.tx != nil {
+		return q.tx
+	}
+	return q.db
+}

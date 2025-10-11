@@ -14,7 +14,7 @@ func (q DAO) InsertApplication(app *auth.Application) error {
 		return ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw,
+	row := q.executor().QueryRowContext(q.ctx, raw,
 		app.ID,
 		app.Name,
 		pq.Array(app.PossibleRoles),
@@ -31,7 +31,7 @@ func (q DAO) UpdateApplication(app auth.Application) error {
 		return ErrNoQuery
 	}
 
-	_, err := q.db.ExecContext(q.ctx, raw,
+	_, err := q.executor().ExecContext(q.ctx, raw,
 		app.ID,
 		app.Name,
 		pq.Array(app.PossibleRoles),
@@ -46,7 +46,7 @@ func (q DAO) GetApplicationByID(id uuid.UUID) (*auth.Application, error) {
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, id)
+	row := q.executor().QueryRowContext(q.ctx, raw, id)
 	var item auth.Application
 	err := row.Scan(
 		&item.InternalID,

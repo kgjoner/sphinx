@@ -54,7 +54,7 @@ func (q DAO) UpsertLinks(links ...auth.Link) error {
 		return ErrNoQuery
 	}
 
-	_, err := q.db.ExecContext(q.ctx, raw,
+	_, err := q.executor().ExecContext(q.ctx, raw,
 		datatransform.ToRawMessage(formattedLinks),
 	)
 	return err

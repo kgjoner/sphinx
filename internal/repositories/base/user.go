@@ -15,7 +15,7 @@ func (q DAO) InsertUser(user *auth.User) error {
 		return ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw,
+	row := q.executor().QueryRowContext(q.ctx, raw,
 		user.ID,
 		user.Email.String(),
 		user.Password,
@@ -41,7 +41,7 @@ func (q DAO) UpdateUser(user auth.User) error {
 		return ErrNoQuery
 	}
 
-	_, err := q.db.ExecContext(q.ctx, raw,
+	_, err := q.executor().ExecContext(q.ctx, raw,
 		user.ID,
 		user.Email.String(),
 		user.Password,
@@ -68,7 +68,7 @@ func (q DAO) GetUserByID(id uuid.UUID) (*auth.User, error) {
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, id)
+	row := q.executor().QueryRowContext(q.ctx, raw, id)
 	var item auth.User
 	err := row.Scan(
 		&item.InternalID,
@@ -107,7 +107,7 @@ func (q DAO) GetUserByEntry(entry auth.Entry) (*auth.User, error) {
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, entry.String())
+	row := q.executor().QueryRowContext(q.ctx, raw, entry.String())
 	var item auth.User
 	err := row.Scan(
 		&item.InternalID,
@@ -146,7 +146,7 @@ func (q DAO) GetUserByLink(linkID uuid.UUID) (*auth.User, error) {
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, linkID)
+	row := q.executor().QueryRowContext(q.ctx, raw, linkID)
 	var item auth.User
 	err := row.Scan(
 		&item.InternalID,
@@ -185,7 +185,7 @@ func (q DAO) GetUserByExternalAuthID(provider string, id string) (*auth.User, er
 		return nil, ErrNoQuery
 	}
 
-	row := q.db.QueryRowContext(q.ctx, raw, provider, id)
+	row := q.executor().QueryRowContext(q.ctx, raw, provider, id)
 	var item auth.User
 	err := row.Scan(
 		&item.InternalID,

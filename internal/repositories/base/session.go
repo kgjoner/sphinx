@@ -66,7 +66,7 @@ func (q DAO) UpsertSessions(sessions ...auth.Session) error {
 		return ErrNoQuery
 	}
 
-	_, err := q.db.ExecContext(q.ctx, raw,
+	_, err := q.executor().ExecContext(q.ctx, raw,
 		datatransform.ToRawMessage(formattedSessions),
 	)
 	return err
