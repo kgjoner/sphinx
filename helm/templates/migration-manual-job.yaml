@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: postgres
     app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
-    app.kubernetes.io/version: 16
+    app.kubernetes.io/version: "16"
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: {{ .Chart.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
@@ -18,7 +18,7 @@ spec:
       labels:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}-postgres
-        app.kubernetes.io/version: 16
+        app.kubernetes.io/version: "16"
         app.kubernetes.io/component: database
         app.kubernetes.io/part-of: {{ .Chart.Name }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}

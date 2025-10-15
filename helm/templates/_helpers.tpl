@@ -41,21 +41,3 @@
 {{- define "sphinx.redis.configName" -}}
 {{ template "sphinx.prefix" . }}-redis-config
 {{- end -}}
-
-
-{{- define "sphinx.labels" -}}
-helm.sh/chart: {{ include "sphinx.chart" . }}
-{{ include "sphinx.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{- define "sphinx.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "sphinx.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-
-

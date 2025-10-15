@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "api.serviceName" . }}
+  name: {{ template "sphinx.serviceName" . }}
   labels:
     app.kubernetes.io/name: {{ .Chart.Name }}
     app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
