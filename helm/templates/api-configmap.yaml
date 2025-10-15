@@ -10,8 +10,9 @@ metadata:
     app.kubernetes.io/part-of: {{ .Chart.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 data:
+  SCHEME: {{ if (not empty .Values.ingress.tls.issuer) }}https{{ else }}http{{ end }}
   {{- with (first .Values.ingress.rules) }}
-  HOST: https://{{ .host }}
+  HOST: {{ .host }}
   {{- end }}
   APP_NAME: {{ .Values.configMap.appName }}
   APP_STYLE_URL: {{ .Values.configMap.appStyleUrl }}

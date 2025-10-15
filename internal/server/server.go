@@ -60,7 +60,7 @@ func New() *Server {
 //	@description	An authentication and authorization server.
 
 //	@contact.name	Kaio Rosa
-//	@contact.url	http://dev.kgjoner.com.br
+//	@contact.url	https://dev.kgjoner.com.br
 //	@contact.email	dev@kgjoner.com.br
 
 //	@securityDefinitions.basic	BasicApp
@@ -132,7 +132,8 @@ func (s *Server) Setup() *Server {
 	// Docs
 	docs.SwaggerInfo.Version = config.Env.APP_VERSION
 	docs.SwaggerInfo.Host = config.Env.HOST
-	docs.SwaggerInfo.BasePath = config.BASE_PATH
+	docs.SwaggerInfo.Schemes = []string{config.Env.SCHEME}
+	docs.SwaggerInfo.BasePath = config.BASE_PATH + "/api"
 	r.Get("/docs/*", httpSwagger.Handler(
 		httpSwagger.URL(config.BASE_PATH+"/docs/doc.json"),
 	))
@@ -140,7 +141,7 @@ func (s *Server) Setup() *Server {
 		http.Redirect(w, r, config.BASE_PATH+"/docs/", http.StatusTemporaryRedirect)
 	})
 
-	s.Handler = r
+	s.Handler = baseR
 	return s
 }
 

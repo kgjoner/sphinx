@@ -28,7 +28,7 @@ func (s Server) runJobs(ctx context.Context) {
 func updateHermesStyle(hms *hermes.Service) error {
 	logoURL := config.Env.APP_LOGO_URL
 	if logoURL == "" {
-		logoURL = config.Env.HOST + "/root/logo.svg"
+		logoURL = config.Env.SCHEME + "://" + config.Env.HOST + "/root/logo.svg"
 	}
 
 	if config.Env.APP_STYLE_URL == "" {

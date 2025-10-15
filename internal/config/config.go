@@ -9,6 +9,7 @@ import (
 )
 
 var Env struct {
+	SCHEME       string `envconfig:"default=http"`
 	HOST         string `envconfig:"default=localhost:8080"`
 	APP_VERSION  string `envconfig:"default=v0.1.0"`
 	DATABASE_URL string `envconfig:"default=postgres://postgres:postgres@db:5432/sphynx?sslmode=disable&pool_max_conns=20"`
