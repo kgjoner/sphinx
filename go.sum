@@ -36,8 +36,12 @@ github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8Hm
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/kgjoner/cornucopia/v2 v2.0.1 h1:SDlmaKXGbrEGCayOsCtx1K5jwpOJ7luU8BhMJniqIR8=
 github.com/kgjoner/cornucopia/v2 v2.0.1/go.mod h1:ZsXrTHoK6+ry67mCXFsxddZvWVBuN+u7q+9NTRojD50=
+github.com/kgjoner/cornucopia/v2 v2.1.0 h1:3a9yIkMNTxQbBKkCopSL1LguxARuc/gySiKDCxXlza4=
+github.com/kgjoner/cornucopia/v2 v2.1.0/go.mod h1:ZsXrTHoK6+ry67mCXFsxddZvWVBuN+u7q+9NTRojD50=
 github.com/kgjoner/hermes v0.5.2 h1:sSda/69HhwRbzVX9ZmrdXUmtf4+tmHYhcQ0qFm9jbFE=
 github.com/kgjoner/hermes v0.5.2/go.mod h1:WJ8fHh/5cFAlueJbHQBhmH0s0QC4LUqyrk6umpQsLgM=
+github.com/kgjoner/hermes v0.5.3 h1:emzufxcLQ4HlJw7okWZKg4CvgqI0fkANtP/ZxA8kILk=
+github.com/kgjoner/hermes v0.5.3/go.mod h1:1c9CjtLdwmb6/Y67drs10MbO9mB3EM7dSewxOQO92QU=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
