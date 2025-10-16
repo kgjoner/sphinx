@@ -1,6 +1,6 @@
 -- name: CreateUser :one
 INSERT INTO
-  user (
+  "user" (
     id,
     email,
     password,
@@ -37,7 +37,7 @@ RETURNING internal_id;
 
 -- name: UpdateUser :exec
 UPDATE
-  user
+  "user"
 SET
   email = $2,
   password = $3,
@@ -105,7 +105,7 @@ SELECT
   a.created_at,
   a.updated_at
 FROM
-  user a
+  "user" a
   LEFT JOIN la ON la.user_id = a.internal_id
   LEFT JOIN sa ON sa.user_id = a.internal_id
 WHERE
@@ -161,7 +161,7 @@ SELECT
   a.created_at,
   a.updated_at
 FROM
-  user a
+  "user" a
   LEFT JOIN la ON la.user_id = a.internal_id
   LEFT JOIN sa ON sa.user_id = a.internal_id 
 WHERE
@@ -222,7 +222,7 @@ SELECT
   a.created_at,
   a.updated_at
 FROM
-  user a
+  "user" a
   RIGHT JOIN la ON la.user_id = a.internal_id
   LEFT JOIN sa ON sa.user_id = a.internal_id
 GROUP BY
@@ -276,7 +276,7 @@ SELECT
   a.created_at,
   a.updated_at
 FROM
-  user a
+  "user" a
   LEFT JOIN la ON la.user_id = a.internal_id
   LEFT JOIN sa ON sa.user_id = a.internal_id 
 WHERE
