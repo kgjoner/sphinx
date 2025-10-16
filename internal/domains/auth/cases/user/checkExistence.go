@@ -12,16 +12,15 @@ type CheckEntryExistenceInput struct {
 	Entry auth.Entry
 }
 
-func (i CheckEntryExistence) Execute(input CheckEntryExistenceInput) (bool, error) {
+func (i CheckEntryExistence) Execute(input CheckEntryExistenceInput) (out bool, err error) {
 	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
-	res := false
 	if user != nil {
-		res = true
+		out = true
 	}
 
-	return res, nil
+	return out, nil
 }

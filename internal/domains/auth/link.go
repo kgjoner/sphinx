@@ -11,15 +11,15 @@ import (
 )
 
 type Link struct {
-	InternalID  int         `json:"-"`
-	ID          uuid.UUID   `json:"id" validate:"required"`
-	UserID      int         `json:"-" validate:"required"`
-	Application Application `json:"application" validate:"required"`
-	Roles       []Role      `json:"roles"`
-	HasConsent  bool        `json:"hasConsent"`
+	InternalID  int
+	ID          uuid.UUID   `validate:"required"`
+	UserID      int         `validate:"required"`
+	Application Application `validate:"required"`
+	Roles       []Role
+	HasConsent  bool
 
-	CreatedAt time.Time `json:"createdAt" validate:"required"`
-	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
+	CreatedAt time.Time `validate:"required"`
+	UpdatedAt time.Time `validate:"required"`
 }
 
 /* ==============================================================================
@@ -95,4 +95,28 @@ func (c *Link) restoreConsent() error {
 	c.HasConsent = true
 	c.UpdatedAt = time.Now()
 	return validator.Validate(c)
+}
+
+/* ==============================================================================
+	VIEWS
+============================================================================== */
+
+type LinkView struct {
+	ID          uuid.UUID       `json:"id"`
+	Application ApplicationView `json:"application"`
+	Roles       []Role          `json:"roles"`
+	HasConsent  bool            `json:"hasConsent"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
+}
+
+func (l Link) View() LinkView {
+	return LinkView{
+		ID:          l.ID,
+		Application: l.Application.View(),
+		Roles:       l.Roles,
+		HasConsent:  l.HasConsent,
+		CreatedAt:   l.CreatedAt,
+		UpdatedAt:   l.UpdatedAt,
+	}
 }

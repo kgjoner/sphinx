@@ -27,20 +27,20 @@ type UpdateUniqueFieldsInput struct {
 	Languages []string  `json:"-"`
 }
 
-func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.UserPrivateView, error) {
+func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (out auth.UserPrivateView, err error) {
 	targetAcc := &input.Target
 
 	if !input.Email.IsZero() && input.Email == targetAcc.Email {
-		return nil, apperr.NewRequestError("email is already set to the same value")
+		return out, apperr.NewRequestError("email is already set to the same value")
 	}
 
 	if !input.Phone.IsZero() && input.Phone == targetAcc.Phone {
-		return nil, apperr.NewRequestError("phone is already set to the same value")
+		return out, apperr.NewRequestError("phone is already set to the same value")
 	}
 
-	err := targetAcc.UpdateUniqueFields(input.UserUniqueFields)
+	err = targetAcc.UpdateUniqueFields(input.UserUniqueFields)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpdateUser(*targetAcc)
@@ -49,9 +49,9 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (*auth.UserPr
 			pattern := regexp.MustCompile("user_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
-			return nil, apperr.NewRequestError(msg, errcode.DuplicateKey)
+			return out, apperr.NewRequestError(msg, errcode.DuplicateKey)
 		}
-		return nil, err
+		return out, err
 	}
 
 	// Check if email is being updated

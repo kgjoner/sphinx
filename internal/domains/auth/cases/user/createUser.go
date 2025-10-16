@@ -26,7 +26,18 @@ type CreateUserInput struct {
 	Languages []string `json:"-"`
 }
 
-func (i CreateUser) Execute(input CreateUserInput) (*auth.User, error) {
+func (i CreateUser) Execute(input CreateUserInput) (out auth.UserView, err error) {
+	user, err := i.ExecuteEntity(input)
+	if err != nil {
+		return out, err
+	}
+
+	return user.View(), nil
+}
+
+// ExecuteEntity is application-internal: returns the entity for chaining.
+// Only used by internal application layer (e.g., ExternalAuth).
+func (i CreateUser) ExecuteEntity(input CreateUserInput) (*auth.User, error) {
 	user, err := auth.NewUser(&input.UserCreationFields)
 	if err != nil {
 		return nil, err

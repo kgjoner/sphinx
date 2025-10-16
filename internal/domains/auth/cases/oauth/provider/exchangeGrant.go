@@ -19,14 +19,14 @@ type ExchangeGrantInput struct {
 	auth.SessionCreationFields `json:"-"`
 }
 
-func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput, error) {
+func (i ExchangeGrant) Execute(input ExchangeGrantInput) (out authcase.LoginOutput, err error) {
 	var grant *auth.AuthorizationGrant
-	err := i.CacheRepo.GetJSON("grant:"+input.Code, &grant)
+	err = i.CacheRepo.GetJSON("grant:"+input.Code, &grant)
 	if err != nil {
 		if err == cache.ErrNil {
-			return nil, apperr.NewUnauthorizedError("Invalid code", errcode.InvalidCredentials)
+			return out, apperr.NewUnauthorizedError("Invalid code", errcode.InvalidCredentials)
 		}
-		return nil, err
+		return out, err
 	}
 
 	// Clear grant from cache independent of outcome
@@ -35,31 +35,31 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (*authcase.LoginOutput,
 	// Get user by link ID
 	user, err := i.AuthRepo.GetUserByLink(grant.LinkID)
 	if err != nil {
-		return nil, err
+		return out, err
 	} else if user == nil {
-		return nil, apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+		return out, apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
 	// Authenticate via authorization grant
 	err = user.AuthenticateViaGrant(grant, &input.GrantCredentials)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	// Create session
 	input.SessionCreationFields.Application.ID = input.ClientID
 	access, refresh, err := user.InitSession(&input.SessionCreationFields)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	// Persist sessions
 	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
-	return &authcase.LoginOutput{
+	return authcase.LoginOutput{
 		UserID:       user.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),

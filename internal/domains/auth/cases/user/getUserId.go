@@ -13,15 +13,15 @@ type GetUserIDInput struct {
 	Entry auth.Entry
 }
 
-func (i GetUserID) Execute(input GetUserIDInput) (*uuid.UUID, error) {
+func (i GetUserID) Execute(input GetUserIDInput) (out uuid.UUID, err error) {
 	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	if user == nil {
-		return nil, nil
+		return out, nil
 	}
 
-	return &user.ID, nil
+	return user.ID, nil
 }

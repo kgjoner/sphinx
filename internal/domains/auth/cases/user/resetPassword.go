@@ -21,17 +21,17 @@ type ResetPasswordInput struct {
 	Languages   []string `json:"-"`
 }
 
-func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
+func (i ResetPassword) Execute(input ResetPasswordInput) (out bool, err error) {
 	user, err := i.AuthRepo.GetUserByID(input.UserID)
 	if err != nil {
-		return false, err
+		return out, err
 	} else if user == nil {
-		return false, apperr.NewRequestError("User does not exist", errcode.UserNotFound)
+		return out, apperr.NewRequestError("User does not exist", errcode.UserNotFound)
 	}
 
 	err = user.ResetPassword(input.NewPassword, input.Code)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	// Send email
@@ -44,18 +44,18 @@ func (i ResetPassword) Execute(input ResetPasswordInput) (bool, error) {
 		Languages:   input.Languages,
 	})
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	// Save only after assuring notification email was sent
 	err = i.AuthRepo.UpdateUser(*user)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	return true, nil

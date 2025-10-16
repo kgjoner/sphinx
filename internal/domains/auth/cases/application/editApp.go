@@ -17,23 +17,23 @@ type EditAppInput struct {
 	Actor auth.User `json:"-"`
 }
 
-func (i EditApp) Execute(input EditAppInput) (*auth.Application, error) {
+func (i EditApp) Execute(input EditAppInput) (out auth.ApplicationView, err error) {
 	app, err := i.AuthRepo.GetApplicationByID(input.ApplicationID)
 	if err != nil {
-		return nil, err
+		return out, err
 	} else if app == nil {
-		return nil, apperr.NewRequestError("Application does not exist", errcode.ApplicationNotFound)
+		return out, apperr.NewRequestError("Application does not exist", errcode.ApplicationNotFound)
 	}
 
 	err = app.Edit(&input.ApplicationEditableFields, input.Actor)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpdateApplication(*app)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
-	return app, nil
+	return app.View(), nil
 }

@@ -14,18 +14,18 @@ import (
 )
 
 type Application struct {
-	InternalID    int       `json:"-"`
-	ID            uuid.UUID `json:"id" validate:"required"`
-	Name          string    `json:"name" validate:"required"`
-	PossibleRoles []Role    `json:"possibleRoles"`
+	InternalID    int
+	ID            uuid.UUID `validate:"required"`
+	Name          string    `validate:"required"`
+	PossibleRoles []Role
 
-	Secret              string   `json:"-" validate:"required"`
-	AllowedRedirectUris []string `json:"allowedRedirectUris" validate:"uri"`
+	Secret              string   `validate:"required"`
+	AllowedRedirectUris []string `validate:"uri"`
 
-	HasValidCredentials bool `json:"-"`
+	HasValidCredentials bool
 
-	CreatedAt time.Time `json:"createdAt" validate:"required"`
-	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
+	CreatedAt time.Time `validate:"required"`
+	UpdatedAt time.Time `validate:"required"`
 }
 
 /* ==============================================================================
@@ -118,4 +118,30 @@ func (a *Application) Authenticate(secret string) error {
 
 func (a Application) IsAuthenticated() bool {
 	return a.HasValidCredentials
+}
+
+/* ==============================================================================
+	VIEWS
+============================================================================== */
+
+type ApplicationView struct {
+	ID                  uuid.UUID `json:"id"`
+	Name                string    `json:"name"`
+	PossibleRoles       []Role    `json:"possibleRoles"`
+	AllowedRedirectUris []string  `json:"allowedRedirectUris"`
+
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (a Application) View() ApplicationView {
+	return ApplicationView{
+		ID:                  a.ID,
+		Name:                a.Name,
+		PossibleRoles:       a.PossibleRoles,
+		AllowedRedirectUris: a.AllowedRedirectUris,
+
+		CreatedAt: a.CreatedAt,
+		UpdatedAt: a.UpdatedAt,
+	}
 }

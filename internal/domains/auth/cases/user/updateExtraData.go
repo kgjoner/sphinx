@@ -14,16 +14,16 @@ type UpdateExtraDataInput struct {
 	Actor  auth.User `json:"-"`
 }
 
-func (i UpdateExtraData) Execute(input UpdateExtraDataInput) (*auth.UserPrivateView, error) {
+func (i UpdateExtraData) Execute(input UpdateExtraDataInput) (out auth.UserPrivateView, err error) {
 	targetAcc := &input.Target
-	err := targetAcc.UpdateExtraData(input.UserExtraFields)
+	err = targetAcc.UpdateExtraData(input.UserExtraFields)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpdateUser(*targetAcc)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	return targetAcc.PrivateView(input.Actor)

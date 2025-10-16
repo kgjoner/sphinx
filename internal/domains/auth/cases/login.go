@@ -18,38 +18,38 @@ type LoginInput struct {
 	auth.SessionCreationFields `json:"-"`
 }
 
-func (i Login) Execute(input LoginInput) (*LoginOutput, error) {
+func (i Login) Execute(input LoginInput) (out LoginOutput, err error) {
 	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
-		return nil, err
+		return out, err
 	} else if user == nil {
-		return nil, apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
+		return out, apperr.NewUnauthorizedError("Invalid credentials", errcode.InvalidCredentials)
 	}
 
 	err = user.AuthenticateViaPassword(input.Password)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	app, err := i.AuthRepo.GetApplicationByID(uuid.MustParse(config.Env.ROOT_APP_ID))
 	if err != nil {
-		return nil, err
+		return out, err
 	} else if app == nil {
-		return nil, apperr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
+		return out, apperr.NewRequestError("Root application not found", errcode.ApplicationNotFound)
 	}
 	input.Application = *app
 
 	access, refresh, err := user.InitSession(&input.SessionCreationFields)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
-	return &LoginOutput{
+	return LoginOutput{
 		UserID:       user.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),

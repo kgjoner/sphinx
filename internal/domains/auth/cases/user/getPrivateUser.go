@@ -13,6 +13,6 @@ type GetPrivateUserInput struct {
 	Actor  auth.User `json:"-"`
 }
 
-func (i GetPrivateUser) Execute(input GetPrivateUserInput) (*auth.UserPrivateView, error) {
+func (i GetPrivateUser) Execute(input GetPrivateUserInput) (auth.UserPrivateView, error) {
 	return input.Target.PrivateView(input.Actor)
 }

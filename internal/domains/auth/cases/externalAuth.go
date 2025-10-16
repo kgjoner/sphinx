@@ -37,7 +37,7 @@ type ExternalAuthInput struct {
 	auth.SessionCreationFields `json:"-"`
 }
 
-func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
+func (i ExternalAuth) Execute(input ExternalAuthInput) (out LoginOutput, err error) {
 	// Ensure actor has valid claims in external provider
 	var provider *config.ExternalAuthProvider
 	for _, p := range config.Env.EXTERNAL_AUTH_PROVIDERS {
@@ -47,39 +47,39 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 		}
 	}
 	if provider == nil {
-		return nil, apperr.NewRequestError("invalid provider", errcode.InvalidProvider)
+		return out, apperr.NewRequestError("invalid provider", errcode.InvalidProvider)
 	}
 
 	subject, err := provider.Authenticate(input.ExternalAuthInput)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	// Handle user-provider relation
 	user, err := i.AuthRepo.GetUserByExternalAuthID(subject.ProviderName, subject.ID)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	if user == nil {
 		user, err = i.AuthRepo.GetUserByEntry(auth.Entry(subject.Email))
 		if err != nil {
-			return nil, err
+			return out, err
 		}
 
 		if user != nil {
 			if !input.ConsentRelation {
-				return nil, apperr.NewForbiddenError("consent relation: an account with the same email already exists, user must consent to relate this account with the external provider.", errcode.NoConsent)
+				return out, apperr.NewForbiddenError("consent relation: an account with the same email already exists, user must consent to relate this account with the external provider.", errcode.NoConsent)
 			}
 
 			err = user.RelateToExternalProvider(provider.Name, subject.ID)
 			if err != nil {
-				return nil, err
+				return out, err
 			}
 
 			err = i.AuthRepo.UpdateUser(*user)
 			if err != nil {
-				return nil, err
+				return out, err
 			}
 		}
 	}
@@ -87,7 +87,7 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 	// Handle user creation if not found
 	if user == nil {
 		if !input.ConsentCreation {
-			return nil, apperr.NewForbiddenError("consent creation: user must consent to create a new account", errcode.NoConsent)
+			return out, apperr.NewForbiddenError("consent creation: user must consent to create a new account", errcode.NoConsent)
 		}
 
 		if !input.Email.IsZero() {
@@ -95,14 +95,14 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 		}
 
 		if subject.Email.IsZero() {
-			return nil, apperr.NewRequestError("there is no provided email for creating a new user", errcode.UserNotFound)
+			return out, apperr.NewRequestError("there is no provided email for creating a new user", errcode.UserNotFound)
 		}
 
 		userCreationCase := usercase.CreateUser{
 			AuthRepo:    i.AuthRepo,
 			MailService: i.MailService,
 		}
-		user, err = userCreationCase.Execute(usercase.CreateUserInput{
+		user, err = userCreationCase.ExecuteEntity(usercase.CreateUserInput{
 			UserCreationFields: auth.UserCreationFields{
 				Email:    subject.Email,
 				Password: pwdgen.GeneratePassword(16), // Generate a random password
@@ -110,45 +110,45 @@ func (i ExternalAuth) Execute(input ExternalAuthInput) (*LoginOutput, error) {
 			Languages: input.Languages,
 		})
 		if err != nil {
-			return nil, err
+			return out, err
 		}
 
 		err = user.RelateToExternalProvider(provider.Name, subject.ID)
 		if err != nil {
-			return nil, err
+			return out, err
 		}
 
 		err = i.AuthRepo.UpdateUser(*user)
 		if err != nil {
-			return nil, err
+			return out, err
 		}
 	}
 
 	// Handle authentication and session initialization
 	err = user.AuthenticateViaExternalProvider(*subject)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	app, err := i.AuthRepo.GetApplicationByID(uuid.MustParse(config.Env.ROOT_APP_ID))
 	if err != nil {
-		return nil, err
+		return out, err
 	} else if app == nil {
-		return nil, apperr.NewRequestError("root application not found", errcode.ApplicationNotFound)
+		return out, apperr.NewRequestError("root application not found", errcode.ApplicationNotFound)
 	}
 	input.Application = *app
 
 	access, refresh, err := user.InitSession(&input.SessionCreationFields)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
-	return &LoginOutput{
+	return LoginOutput{
 		UserID:       user.ID,
 		AccessToken:  access.String(),
 		RefreshToken: refresh.String(),

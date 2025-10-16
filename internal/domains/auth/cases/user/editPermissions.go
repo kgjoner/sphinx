@@ -18,12 +18,11 @@ type EditUserPermissionsInput struct {
 	Application  auth.Application `json:"-"`
 }
 
-func (i EditUserPermissions) Execute(input EditUserPermissionsInput) (bool, error) {
+func (i EditUserPermissions) Execute(input EditUserPermissionsInput) (out bool, err error) {
 	if !input.ShouldRemove.Valid {
-		return false, apperr.NewRequestError("Must inform whether permissions should be added or removed.")
+		return out, apperr.NewRequestError("Must inform whether permissions should be added or removed.")
 	}
 
-	var err error
 	targetAcc := &input.Target
 
 	if input.Roles != nil {
@@ -35,14 +34,14 @@ func (i EditUserPermissions) Execute(input EditUserPermissionsInput) (bool, erro
 			}
 
 			if err != nil {
-				return false, err
+				return out, err
 			}
 		}
 	}
 
 	err = i.AuthRepo.UpsertLinks(targetAcc.LinksToPersist()...)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	return true, nil

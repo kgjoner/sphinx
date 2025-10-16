@@ -9,20 +9,20 @@ import (
 )
 
 type Session struct {
-	InternalID                     int             `json:"-"`
-	ID                             uuid.UUID       `json:"id" validate:"required"`
-	UserID                         int             `json:"userID" validate:"required"`
-	Application                    Application     `json:"application" validate:"required"`
-	RefreshToken                   string          `json:"refreshToken" validate:"required"`
-	RefreshedAt                    htypes.NullTime `json:"refreshedAt"`
-	ElapsedMinutesBetweenRefreshes []int           `json:"elapsedMinutesBetweenRefreshes"`
-	RefreshesCount                 int             `json:"refreshesCount"`
-	Device                         string          `json:"device" validate:"required"`
-	Ip                             string          `json:"ip"`
-	IsActive                       bool            `json:"isActive"`
-	TerminatedAt                   htypes.NullTime `json:"terminatedAt"`
-	CreatedAt                      time.Time       `json:"createdAt" validate:"required"`
-	UpdatedAt                      time.Time       `json:"updatedAt" validate:"required"`
+	InternalID                     int
+	ID                             uuid.UUID   `validate:"required"`
+	UserID                         int         `validate:"required"`
+	Application                    Application `validate:"required"`
+	RefreshToken                   string      `validate:"required"`
+	RefreshedAt                    htypes.NullTime
+	ElapsedMinutesBetweenRefreshes []int
+	RefreshesCount                 int
+	Device                         string `validate:"required"`
+	Ip                             string
+	IsActive                       bool
+	TerminatedAt                   htypes.NullTime
+	CreatedAt                      time.Time `validate:"required"`
+	UpdatedAt                      time.Time `validate:"required"`
 }
 
 /* ==============================================================================
@@ -108,4 +108,38 @@ func (a SessionSortableByAge) Less(i, j int) bool {
 
 func (a SessionSortableByAge) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
+}
+
+/* ==============================================================================
+	VIEWS
+============================================================================== */
+
+type SessionView struct {
+	ID                             uuid.UUID       `json:"id"`
+	Application                    ApplicationView `json:"application"`
+	RefreshedAt                    htypes.NullTime `json:"refreshedAt"`
+	ElapsedMinutesBetweenRefreshes []int           `json:"elapsedMinutesBetweenRefreshes"`
+	RefreshesCount                 int             `json:"refreshesCount"`
+	Device                         string          `json:"device"`
+	Ip                             string          `json:"ip"`
+	IsActive                       bool            `json:"isActive"`
+	TerminatedAt                   htypes.NullTime `json:"terminatedAt"`
+	CreatedAt                      time.Time       `json:"createdAt"`
+	UpdatedAt                      time.Time       `json:"updatedAt"`
+}
+
+func (s Session) View() SessionView {
+	return SessionView{
+		ID:                             s.ID,
+		Application:                    s.Application.View(),
+		RefreshedAt:                    s.RefreshedAt,
+		ElapsedMinutesBetweenRefreshes: s.ElapsedMinutesBetweenRefreshes,
+		RefreshesCount:                 s.RefreshesCount,
+		Device:                         s.Device,
+		Ip:                             s.Ip,
+		IsActive:                       s.IsActive,
+		TerminatedAt:                   s.TerminatedAt,
+		CreatedAt:                      s.CreatedAt,
+		UpdatedAt:                      s.UpdatedAt,
+	}
 }

@@ -13,18 +13,18 @@ type RefreshInput struct {
 	Actor auth.User `json:"-"`
 }
 
-func (i Refresh) Execute(input RefreshInput) (*LoginOutput, error) {
+func (i Refresh) Execute(input RefreshInput) (out LoginOutput, err error) {
 	accessToken, refreshToken, err := input.Actor.IssueNewTokens()
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpsertSessions(input.Actor.SessionsToPersist()...)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
-	return &LoginOutput{
+	return LoginOutput{
 		UserID:       input.Actor.ID,
 		AccessToken:  accessToken.String(),
 		RefreshToken: refreshToken.String(),

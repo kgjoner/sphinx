@@ -13,24 +13,24 @@ type CreateApplicationInput struct {
 	Actor auth.User `json:"-"`
 }
 
-func (i CreateApplication) Execute(input CreateApplicationInput) (*CreateApplicationOutput, error) {
+func (i CreateApplication) Execute(input CreateApplicationInput) (out CreateApplicationOutput, err error) {
 	app, secret, err := auth.NewApplication(&input.ApplicationCreationFields, input.Actor)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	err = i.AuthRepo.InsertApplication(app)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
-	return &CreateApplicationOutput{
-		Application: *app,
+	return CreateApplicationOutput{
+		Application: app.View(),
 		Secret:      secret,
 	}, nil
 }
 
 type CreateApplicationOutput struct {
-	Application auth.Application `json:"application"`
-	Secret      string           `json:"secret"`
+	Application auth.ApplicationView `json:"application"`
+	Secret      string               `json:"secret"`
 }

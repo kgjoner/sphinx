@@ -23,10 +23,10 @@ type IssueGrantInput struct {
 	Actor          auth.User `json:"-"`
 }
 
-func (i IssueGrant) Execute(input IssueGrantInput) (*IssueGrantOutput, error) {
-	err := validator.Validate(input)
+func (i IssueGrant) Execute(input IssueGrantInput) (out IssueGrantOutput, err error) {
+	err = validator.Validate(input)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
 	// Create authorization grant
@@ -36,24 +36,24 @@ func (i IssueGrant) Execute(input IssueGrantInput) (*IssueGrantOutput, error) {
 		if errors.As(err, &appErr) && appErr.Code == errcode.NoConsent {
 			actorWithConsent, err := i.CreateConsentIfGranted(input)
 			if err != nil {
-				return nil, err
+				return out, err
 			}
 			grant, err = actorWithConsent.IssueAuthorizationGrant(&input.AuthorizationGrantCreationFields, input.ClientID)
 			if err != nil {
-				return nil, err
+				return out, err
 			}
 		} else {
-			return nil, err
+			return out, err
 		}
 	}
 
 	// Cache the grant with TTL
 	err = i.CacheRepo.CacheJSON("grant:"+grant.Code, grant, time.Duration(config.Env.AUTH_GRANT_LIFETIME_IN_SEC)*time.Second)
 	if err != nil {
-		return nil, err
+		return out, err
 	}
 
-	return &IssueGrantOutput{
+	return IssueGrantOutput{
 		Code:        grant.Code,
 		RedirectUri: grant.RedirectUri,
 		ExpiresAt:   grant.ExpiresAt,

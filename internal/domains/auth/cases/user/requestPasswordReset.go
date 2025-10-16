@@ -22,22 +22,22 @@ type RequestPasswordResetInput struct {
 	Languages []string `json:"-"`
 }
 
-func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, error) {
+func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (out bool, err error) {
 	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
 	if err != nil {
-		return false, err
+		return out, err
 	} else if user == nil {
-		return false, apperr.NewRequestError("User does not exist", errcode.UserNotFound)
+		return out, apperr.NewRequestError("User does not exist", errcode.UserNotFound)
 	}
 
 	code, err := user.RequestPasswordReset()
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpdateUser(*user)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	// Send email
@@ -61,7 +61,7 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (bool, er
 		Languages: input.Languages,
 	})
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	return true, nil

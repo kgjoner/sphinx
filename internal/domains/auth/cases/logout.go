@@ -12,15 +12,15 @@ type LogoutInput struct {
 	Actor auth.User `json:"-"`
 }
 
-func (i Logout) Execute(input LogoutInput) (bool, error) {
-	_, err := input.Actor.TerminateAuthedSession()
+func (i Logout) Execute(input LogoutInput) (out bool, err error) {
+	_, err = input.Actor.TerminateAuthedSession()
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpsertSessions(input.Actor.SessionsToPersist()...)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	return true, nil

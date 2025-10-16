@@ -15,13 +15,13 @@ type GetAppInput struct {
 	ApplicationID uuid.UUID
 }
 
-func (i GetApp) Execute(input GetAppInput) (*auth.Application, error) {
+func (i GetApp) Execute(input GetAppInput) (out auth.ApplicationView, err error) {
 	app, err := i.AuthRepo.GetApplicationByID(input.ApplicationID)
 	if err != nil {
-		return nil, err
+		return out, err
 	} else if app == nil {
-		return nil, apperr.NewRequestError("Application does not exist", errcode.ApplicationNotFound)
+		return out, apperr.NewRequestError("Application does not exist", errcode.ApplicationNotFound)
 	}
 
-	return app, nil
+	return app.View(), nil
 }

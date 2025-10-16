@@ -21,41 +21,41 @@ import (
 )
 
 type User struct {
-	InternalID int                `json:"-"`
-	ID         uuid.UUID          `json:"id" validate:"required"`
-	Email      htypes.Email       `json:"-" validate:"required"`
-	Phone      htypes.PhoneNumber `json:"-"`
-	Password   string             `json:"-" validate:"required"`
-	Username   string             `json:"username" validate:"wordID,atLeastOne=letter"`
-	Document   htypes.Document    `json:"-"`
-	ExtraData  `json:"extraData,omitempty"`
+	InternalID int
+	ID         uuid.UUID    `validate:"required"`
+	Email      htypes.Email `validate:"required"`
+	Phone      htypes.PhoneNumber
+	Password   string `validate:"required"`
+	Username   string `validate:"wordID,atLeastOne=letter"`
+	Document   htypes.Document
+	ExtraData
 
-	IsActive             bool                        `json:"isActive"`
-	PendingEmail         htypes.Email                `json:"-"`
-	HasEmailBeenVerified bool                        `json:"-"`
-	PendingPhone         htypes.PhoneNumber          `json:"-"`
-	HasPhoneBeenVerified bool                        `json:"-"`
-	VerificationCodes    map[VerificationKind]string `json:"-"`
-	Links                []Link                      `json:"-"`
-	ActiveSessions       []Session                   `json:"-"`
+	IsActive             bool
+	PendingEmail         htypes.Email
+	HasEmailBeenVerified bool
+	PendingPhone         htypes.PhoneNumber
+	HasPhoneBeenVerified bool
+	VerificationCodes    map[VerificationKind]string
+	Links                []Link
+	ActiveSessions       []Session
 	// Maps provider name to subject ID. Used only if external auth is enabled.
-	ExternalAuthIDs map[string]string `json:"-"`
+	ExternalAuthIDs map[string]string
 
-	justTerminatedSessions []Session  `json:"-"`
-	hasValidCredentials    bool       `json:"-"`
-	AuthedSession          *Session   `json:"-"`
-	AuthToken              *authToken `json:"-"`
+	justTerminatedSessions []Session
+	hasValidCredentials    bool
+	AuthedSession          *Session
+	AuthToken              *authToken
 
-	PasswordUpdatedAt htypes.NullTime `json:"-"`
-	UsernameUpdatedAt htypes.NullTime `json:"-"`
-	CreatedAt         time.Time       `json:"createdAt" validate:"required"`
-	UpdatedAt         time.Time       `json:"updatedAt" validate:"required"`
+	PasswordUpdatedAt htypes.NullTime
+	UsernameUpdatedAt htypes.NullTime
+	CreatedAt         time.Time `validate:"required"`
+	UpdatedAt         time.Time `validate:"required"`
 }
 
 type ExtraData struct {
-	Name    string         `json:"name,omitempty"`
-	Surname string         `json:"surname,omitempty"`
-	Address htypes.Address `json:"-"`
+	Name    string
+	Surname string
+	Address htypes.Address
 }
 
 /* ==============================================================================
@@ -839,6 +839,29 @@ func (a *User) sessionsByApp(app Application) []Session {
 	VIEWS
 ============================================================================== */
 
+type UserView struct {
+	ID       uuid.UUID `json:"id" validate:"required"`
+	Username string    `json:"username,omitempty"`
+	Name     string    `json:"name,omitempty"`
+	Surname  string    `json:"surname,omitempty"`
+
+	IsActive  bool      `json:"isActive"`
+	CreatedAt time.Time `json:"createdAt" validate:"required"`
+	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
+}
+
+func (a User) View() UserView {
+	return UserView{
+		a.ID,
+		a.Username,
+		a.ExtraData.Name,
+		a.ExtraData.Surname,
+		a.IsActive,
+		a.CreatedAt,
+		a.UpdatedAt,
+	}
+}
+
 type UserPrivateView struct {
 	ID       uuid.UUID          `json:"id" validate:"required"`
 	Email    htypes.Email       `json:"email" validate:"required"`
@@ -854,25 +877,34 @@ type UserPrivateView struct {
 	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
 	PendingPhone         htypes.PhoneNumber `json:"pendingPhone,omitempty"`
 	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
-	Link                 *Link              `json:"link,omitempty"`
+	Link                 *LinkView          `json:"link,omitempty"`
 }
 
-func (a User) PrivateView(actor User) (*UserPrivateView, error) {
+func (a User) PrivateView(actor User) (view UserPrivateView, err error) {
 	if !(a.ID == actor.ID || actor.HasRoleOnAuth(RoleAdmin)) {
-		return nil, apperr.NewForbiddenError("Does not have permission to view this user information.")
+		return view, apperr.NewForbiddenError("Does not have permission to view this user information.")
 	}
 
-	link := actor.authedLink()
-	if a.ID != actor.ID {
-		link = a.link(link.Application.ID)
-	}
+	linkView := func() *LinkView {
+		link := actor.authedLink()
+		if a.ID != actor.ID {
+			link = a.link(link.Application.ID)
+		}
+
+		if link == nil {
+			return nil
+		}
+
+		v := link.View()
+		return &v
+	}()
 
 	var address *htypes.Address
 	if a.ExtraData.Address != (htypes.Address{}) {
 		address = &a.ExtraData.Address
 	}
 
-	return &UserPrivateView{
+	return UserPrivateView{
 		a.ID,
 		a.Email,
 		a.Phone,
@@ -886,6 +918,6 @@ func (a User) PrivateView(actor User) (*UserPrivateView, error) {
 		a.HasEmailBeenVerified,
 		a.PendingPhone,
 		a.HasPhoneBeenVerified,
-		link,
+		linkView,
 	}, nil
 }

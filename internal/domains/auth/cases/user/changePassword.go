@@ -18,11 +18,11 @@ type ChangePasswordInput struct {
 	Actor       auth.User `json:"-"`
 }
 
-func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
+func (i ChangePassword) Execute(input ChangePasswordInput) (out bool, err error) {
 	user := input.Actor
-	err := user.ChangePassword(input.OldPassword, input.NewPassword)
+	err = user.ChangePassword(input.OldPassword, input.NewPassword)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	// Send email
@@ -35,18 +35,18 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (bool, error) {
 		Languages:   input.Languages,
 	})
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	// Save only after assuring notification email was sent
 	err = i.AuthRepo.UpdateUser(user)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	err = i.AuthRepo.UpsertSessions(user.SessionsToPersist()...)
 	if err != nil {
-		return false, err
+		return out, err
 	}
 
 	return true, nil
