@@ -96,7 +96,8 @@ func (e Entry) IsValid() error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("invalid entry, identified like %v: %v", kind, err)
+		msg := fmt.Sprintf("invalid entry, identified like %v: %v", kind, err)
+		return apperr.NewValidationError(msg)
 	}
 
 	return nil
