@@ -57,7 +57,7 @@ func (m Middlewares) TryAuthenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		m.Authenticate(next)
+		m.Authenticate(next).ServeHTTP(w, r)
 	})
 }
 
