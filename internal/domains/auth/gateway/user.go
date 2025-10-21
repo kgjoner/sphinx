@@ -13,7 +13,7 @@ import (
 func (g AuthGateway) userHandler(r chi.Router) {
 	r.Post("/", g.createUser)
 	r.Post("/password/request", g.requestPasswordReset)
-	r.Patch("/{id}/password", g.resetPassword)
+	r.Post("/{id}/password", g.resetPassword)
 
 	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateUser)
 	r.With(g.mid.Authenticate, g.mid.Target).Patch("/", g.updateExtraData)
