@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -142,9 +141,11 @@ func (a User) Name() string {
 		return a.Username
 	}
 
-	pattern := regexp.MustCompile("^(.+)@")
-	matches := pattern.FindStringSubmatch(a.Email.String())
-	return matches[1]
+	email := a.Email.String()
+	if at := strings.IndexByte(email, '@'); at > 0 {
+		return email[:at]
+	}
+	return email
 }
 
 func (a *User) VerifyUser(kind VerificationKind, code string) error {
