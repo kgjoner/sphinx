@@ -2,6 +2,7 @@ package sphinx
 
 import (
 	"encoding/base64"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
@@ -40,10 +41,26 @@ type User struct {
 	Surname  string             `json:"surname,omitempty"`
 	Address  htypes.Address     `json:"address,omitempty"`
 
-	IsActive             bool       `json:"isActive"`
-	HasEmailBeenVerified bool       `json:"hasEmailBeenVerified"`
-	HasPhoneBeenVerified bool       `json:"hasPhoneBeenVerified"`
-	Link                 *auth.Link `json:"link"`
+	IsActive             bool           `json:"isActive"`
+	HasEmailBeenVerified bool           `json:"hasEmailBeenVerified"`
+	HasPhoneBeenVerified bool           `json:"hasPhoneBeenVerified"`
+	Link                 *auth.LinkView `json:"link"`
+}
+
+func (a User) DisplayName() string {
+	if a.Name != "" {
+		return a.Name
+	}
+
+	if a.Username != "" {
+		return a.Username
+	}
+
+	email := a.Email.String()
+	if at := strings.IndexByte(email, '@'); at > 0 {
+		return email[:at]
+	}
+	return email
 }
 
 func (a User) IsAdmin() bool {
