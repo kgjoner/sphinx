@@ -92,7 +92,7 @@ func (s *Server) Setup() *Server {
 	}
 
 	baseR := chi.NewRouter()
-	baseR.Use(middleware.RealIP)
+	baseR.Use(realIP())
 	baseR.Use(middleware.Timeout(60 * time.Second))
 	baseR.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   allowedOrigins,

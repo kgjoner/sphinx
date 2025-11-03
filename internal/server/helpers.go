@@ -2,12 +2,47 @@ package server
 
 import (
 	"context"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
+
+/* =====================================================================
+	Setup
+===================================================================== */
+
+func realIP() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var ip string
+
+			if cfIP := r.Header.Get("CF-Connecting-IP"); cfIP != "" {
+				ip = cfIP
+			} else if tcIP := r.Header.Get("True-Client-IP"); tcIP != "" {
+				ip = tcIP
+			} else if xrIP := r.Header.Get("X-Real-IP"); xrIP != "" {
+				ip = xrIP
+			} else if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+				i := strings.Index(xff, ",")
+				if i == -1 {
+					i = len(xff)
+				}
+				ip = xff[:i]
+			}
+
+			if ip == "" || net.ParseIP(ip) == nil {
+				next.ServeHTTP(w, r)
+			}
+			
+			r.RemoteAddr = ip
+			next.ServeHTTP(w, r)
+		})
+	}
+}
 
 /* =====================================================================
 	Metrics
