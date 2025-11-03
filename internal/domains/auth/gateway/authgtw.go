@@ -95,7 +95,7 @@ func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		AddActor()
+		AddFromContext(common.ActorCtxKey, "actor")
 
 	var input authcase.LogoutInput
 	err := c.Write(&input)
@@ -135,7 +135,7 @@ func (g AuthGateway) logout(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddActor()
+		AddFromContext(common.ActorCtxKey, "actor")
 
 	var input oauthcase.IssueGrantInput
 	err := c.Write(&input)
@@ -215,7 +215,7 @@ func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		AddActor()
+		AddFromContext(common.ActorCtxKey, "actor")
 
 	var input authcase.RefreshInput
 	err := c.Write(&input)

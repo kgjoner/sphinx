@@ -126,8 +126,8 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 //	@Failure		500			{object}	apperr.AppError
 func (g AuthGateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		AddActor().
-		AddTarget()
+		AddFromContext(common.ActorCtxKey, "actor").
+		AddFromContext(common.TargetCtxKey, "target")
 
 	var input usercase.GetPrivateUserInput
 	err := c.Write(&input)
@@ -207,7 +207,7 @@ func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddActor().
+		AddFromContext(common.ActorCtxKey, "actor").
 		AddLanguages()
 
 	var input usercase.ChangePasswordInput
@@ -335,8 +335,8 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddApplication().
-		AddTarget()
+		AddFromContext(common.ApplicationCtxKey, "application").
+		AddFromContext(common.TargetCtxKey, "target")
 
 	var input usercase.EditUserPermissionsInput
 	err := c.Write(&input)
@@ -378,8 +378,8 @@ func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request)
 func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddTarget().
-		AddActor()
+		AddFromContext(common.ActorCtxKey, "actor").
+		AddFromContext(common.TargetCtxKey, "target")
 
 	var input usercase.UpdateExtraDataInput
 	err := c.Write(&input)
@@ -422,8 +422,8 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddTarget().
-		AddActor().
+		AddFromContext(common.ActorCtxKey, "actor").
+		AddFromContext(common.TargetCtxKey, "target").
 		AddLanguages()
 
 	var input usercase.UpdateUniqueFieldsInput
@@ -546,7 +546,7 @@ func (g AuthGateway) getUserID(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500			{object}	apperr.AppError
 func (g AuthGateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		AddTarget()
+		AddFromContext(common.TargetCtxKey, "target")
 
 	var input usercase.GetUserEmailInput
 	err := c.Write(&input)

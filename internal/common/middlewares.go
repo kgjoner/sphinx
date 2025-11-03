@@ -8,10 +8,18 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
+)
+
+type ctxKey string
+
+const (
+	ActorCtxKey ctxKey = "sphinx_actor"
+	TokenCtxKey ctxKey = "sphinx_token"
+	ApplicationCtxKey ctxKey = "sphinx_application"
+	TargetCtxKey ctxKey = "sphinx_target"
 )
 
 type Middlewares struct {
@@ -56,15 +64,15 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		authRepo.UpsertSessions(user.SessionsToPersist()...)
 		if err != nil {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, controller.ActorKey, *user)
+			ctx = context.WithValue(ctx, ActorCtxKey, *user)
 			r = r.WithContext(ctx)
 			presenter.HTTPError(err, w, r)
 			return
 		}
 
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, controller.ActorKey, *user)
-		ctx = context.WithValue(ctx, controller.TokenKey, tokenStr)
+		ctx = context.WithValue(ctx, ActorCtxKey, *user)
+		ctx = context.WithValue(ctx, TokenCtxKey, tokenStr)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
@@ -111,7 +119,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 
 		err = application.Authenticate(appSecret)
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, controller.ApplicationKey, *application)
+		ctx = context.WithValue(ctx, ApplicationCtxKey, *application)
 		r = r.WithContext(ctx)
 		if err != nil {
 			presenter.HTTPError(err, w, r)
@@ -125,7 +133,7 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 func (m Middlewares) Target(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		actor := ctx.Value(controller.ActorKey)
+		actor := ctx.Value(ActorCtxKey)
 
 		targetEntry := r.Header.Get("x-target")
 		if targetEntry == "" {
@@ -135,13 +143,13 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx = context.WithValue(ctx, controller.TargetKey, actor)
+			ctx = context.WithValue(ctx, TargetCtxKey, actor)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		app := ctx.Value(controller.ApplicationKey)
+		app := ctx.Value(ApplicationCtxKey)
 		isAdmin := actor != nil && actor.(auth.User).HasRoleOnAuth(auth.RoleAdmin)
 		isAuthedApp := app != nil && app.(auth.Application).IsAuthenticated()
 		if !isAdmin && !isAuthedApp {
@@ -172,7 +180,7 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, controller.TargetKey, *target)
+		ctx = context.WithValue(ctx, TargetCtxKey, *target)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/sphinx/internal/common"
 	appcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/application"
 )
 
@@ -34,7 +35,7 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddActor()
+		AddFromContext(common.ActorCtxKey, "actor")
 
 	var input appcase.CreateApplicationInput
 	err := c.Write(&input)
@@ -77,7 +78,7 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		ParseURLParam("id", "applicationID").
-		AddActor()
+		AddFromContext(common.ActorCtxKey, "actor")
 
 	var input appcase.EditAppInput
 	err := c.Write(&input)
