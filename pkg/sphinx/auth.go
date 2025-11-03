@@ -25,7 +25,7 @@ type ExternalAuthBody struct {
 	Email           string
 }
 
-func (s Service) ExternalAuth(authorization string, body ExternalAuthBody, languages ...string) (*LoginOutput, error) {
+func (s Service) ExternalAuth(authorization string, body ExternalAuthBody, clientIP string, userAgent string, languages ...string) (*LoginOutput, error) {
 	mapBody := structop.New(body).Map()
 
 	var respData presenter.Success[LoginOutput]
@@ -33,6 +33,8 @@ func (s Service) ExternalAuth(authorization string, body ExternalAuthBody, langu
 		Headers: map[string]string{
 			"Authorization":   authorization,
 			"Accept-Language": strings.Join(languages, ","),
+			"X-Forwarded-For": clientIP,
+			"User-Agent":      userAgent,
 		},
 	})(&respData)
 
