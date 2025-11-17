@@ -41,6 +41,7 @@ var Env struct {
 		API_KEY  string `envconfig:"default=topsecret"`
 	}
 
+	SWAGGER_AUTH map[string]string `envconfig:"-" json:",omitempty"`
 	// Used for integrating with third-party identity providers.
 	// It is OPTIONAL, so if not provided, no external auth will be possible.
 	// Each provider must have a unique name.
@@ -56,6 +57,13 @@ var BASE_PATH string
 func Must() {
 	if err := envconfig.Init(&Env); err != nil {
 		panic(err)
+	}
+
+	// Handle SWAGGER_AUTH JSON parsing manually
+	if swaggerAuthJSON := os.Getenv("SWAGGER_AUTH"); swaggerAuthJSON != "" {
+		if err := json.Unmarshal([]byte(swaggerAuthJSON), &Env.SWAGGER_AUTH); err != nil {
+			panic("failed to parse SWAGGER_AUTH JSON: " + err.Error())
+		}
 	}
 
 	// Handle EXTERNAL_AUTH_PROVIDERS JSON parsing manually

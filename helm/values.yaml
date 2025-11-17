@@ -28,7 +28,9 @@ secret:
   redisURL: redis://redis:redis@rdb:6379/0
   rootAppID: 80cadd74-5ccd-41c4-9938-3c8961be04db
   jwtSecret: mysecret
-  hermesApiKey: mysecret
+  hermesAPIKey: mysecret
+  swaggerAuth:
+    admin: topsecret
   # Use the following with caution, only with trusted providers, as this may open security vulnerabilities.
   # externalAuthProviders:
   # - name: myprovider
@@ -41,8 +43,8 @@ secret:
 
 configMap:
   appName: Sphinx
-  # appStyleUrl:
-  # appLogoUrl:
+  # appStyleURL:
+  # appLogoURL:
   supportEmail: support@example.com
   maxConcurrentSessions: 0
   fallbackLanguage: pt-br

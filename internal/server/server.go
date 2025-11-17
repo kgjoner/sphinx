@@ -134,9 +134,16 @@ func (s *Server) Setup() *Server {
 	docs.SwaggerInfo.Host = config.Env.HOST
 	docs.SwaggerInfo.Schemes = []string{config.Env.SCHEME}
 	docs.SwaggerInfo.BasePath = config.BASE_PATH + "/api"
-	r.Get("/docs/*", httpSwagger.Handler(
-		httpSwagger.URL(config.BASE_PATH+"/docs/doc.json"),
-	))
+
+	r.Route("/docs", func(r chi.Router) {
+		if len(config.Env.SWAGGER_AUTH) > 0 {
+			r.Use(middleware.BasicAuth("Swagger", config.Env.SWAGGER_AUTH))
+		}
+		r.Get("/*", httpSwagger.Handler(
+			httpSwagger.URL(config.BASE_PATH+"/docs/doc.json"),
+		))
+	})
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, config.BASE_PATH+"/docs/", http.StatusTemporaryRedirect)
 	})
