@@ -12,21 +12,25 @@ import (
 
 func (g AuthGateway) userHandler(r chi.Router) {
 	r.Post("/", g.createUser)
-	r.Post("/password/request", g.requestPasswordReset)
-	r.Post("/{id}/password", g.resetPassword)
-
-	r.With(g.mid.Authenticate, g.mid.Target).Get("/", g.getPrivateUser)
-	r.With(g.mid.Authenticate, g.mid.Target).Patch("/", g.updateExtraData)
-	r.With(g.mid.Authenticate, g.mid.Target).Patch("/unique", g.updateUniqueFields)
-	r.With(g.mid.Authenticate).Patch("/password", g.changePassword)
-
-	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/permission", g.editUserPermissions)
-	r.With(g.mid.AuthenticateApp, g.mid.Target).Get("/email", g.getUserEmail)
-	r.With(g.mid.AuthenticateApp).Get("/id", g.getUserID)
-
 	r.Get("/existence", g.checkEntryExistence)
-	r.Patch("/{id}/verification", g.verifyUser)
-	r.Delete("/{id}/pending/{field}", g.cancelPendingField)
+	r.Post("/request-password", g.requestPasswordReset)
+	r.Post("/{id}/password", g.resetPassword)
+	r.Post("/{id}/{field}/verification", g.verifyUser)
+
+	r.With(g.mid.Authenticate, g.mid.Target).Get("/me", g.getMe)
+	r.With(g.mid.Authenticate, g.mid.Target).Patch("/me", g.updateMyExtraData)
+	r.With(g.mid.Authenticate, g.mid.Target).Post("/me/password", g.changeMyPassword)
+	r.With(g.mid.Authenticate, g.mid.Target).Post("/me/{field}", g.updateMyUniqueFields)
+	r.With(g.mid.Authenticate, g.mid.Target).Delete("/me/{field}/verification", g.cancelMyPendingField)
+
+	r.With(g.mid.Authenticate, g.mid.Target).Get("/{id}", g.getPrivateUser)
+	r.With(g.mid.Authenticate, g.mid.Target).Patch("/{id}", g.updateExtraData)
+	r.With(g.mid.Authenticate, g.mid.Target).Post("/{id}/{field}", g.updateUniqueFields)
+	r.With(g.mid.AuthenticateApp, g.mid.Target).Patch("/{id}/permission", g.editUserPermissions)
+	r.With(g.mid.AuthenticateApp, g.mid.Target).Get("/{id}/email", g.getUserEmail)
+
+	// Utility endpoint to get user ID by its entry. Passed on X-Entry header.
+	r.With(g.mid.AuthenticateApp).Get("/id", g.getUserID)
 }
 
 // CreateUser godoc
@@ -39,9 +43,9 @@ func (g AuthGateway) userHandler(r chi.Router) {
 //	@Produce		json
 //	@Param			accept-language	header		string					false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		auth.UserCreationFields	true	"Email and password are mandatory."
-//	@Success		200				{object}	presenter.Success[auth.User]
+//	@Success		201				{object}	presenter.Success[auth.UserView]
 //	@Failure		400				{object}	apperr.AppError
-//	@Failure		401				{object}	apperr.AppError
+//	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
 func (g AuthGateway) createUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
@@ -109,21 +113,38 @@ func (g AuthGateway) checkEntryExistence(w http.ResponseWriter, r *http.Request)
 	presenter.HTTPSuccess(output, w, r)
 }
 
-// GetPrivateAccounnt godoc
+// GetMe godoc
 //
-//	@Summary		Get user private data
-//	@Description	Retrieve private data associated with logged user or target one, if x-target header is informed. The latter require special permission.
-//	@Router			/user [get]
+//	@Summary		Get authenticated user data
+//	@Description	Retrieve private data associated with logged user
+//	@Router			/user/me [get]
 //	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
-//	@Success		200			{object}	presenter.Success[auth.UserPrivateView]
-//	@Failure		400			{object}	apperr.AppError
-//	@Failure		401			{object}	apperr.AppError
-//	@Failure		403			{object}	apperr.AppError
-//	@Failure		500			{object}	apperr.AppError
+//	@Success		200	{object}	presenter.Success[auth.UserPrivateView]
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
+func (g AuthGateway) getMe(w http.ResponseWriter, r *http.Request) {
+	g.getPrivateUser(w, r)
+}
+
+// GetPrivateUser godoc
+//
+//	@Summary		Get user private data
+//	@Description	Retrieve private data associated with a target user. Require special permission.
+//	@Router			/user/{id} [get]
+//	@Tags			User
+//	@Security		Bearer
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		string	true	"User ID"
+//	@Success		200	{object}	presenter.Success[auth.UserPrivateView]
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		403	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(common.ActorCtxKey, "actor").
@@ -150,23 +171,25 @@ func (g AuthGateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r)
 }
 
-// VerifyAccounnt godoc
+// VerifyUser godoc
 //
 //	@Summary		Verify user data
 //	@Description	Verify email or phone of target user
-//	@Router			/user/{id}/verification [patch]
+//	@Router			/user/{id}/{field}/verification [post]
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path	string						true	"User ID"
-//	@Param			payload	body	usercase.VerifyUserInput	true	"Verification kind must be email or phone."
+//	@Param			field	path	string						true	"Verification field (email or phone)"
+//	@Param			payload	body	usercase.VerifyUserInput	true	"Code is required."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		ParseURLParam("id", "userID")
+		ParseURLParam("id", "userID").
+		ParseURLParam("field", "verificationKind")
 
 	var input usercase.VerifyUserInput
 	err := c.Write(&input)
@@ -189,11 +212,11 @@ func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
-// ChangePassword godoc
+// ChangeMyPassword godoc
 //
-//	@Summary		Update password of logged user.
-//	@Description	Update password of logged user. It must provide the current password.
-//	@Router			/user/password [patch]
+//	@Summary		Update password of authenticated user.
+//	@Description	Update password of authenticated user. It must provide the current password.
+//	@Router			/user/me/password [post]
 //	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
@@ -203,8 +226,9 @@ func (g AuthGateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
+//	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		AddFromContext(common.ActorCtxKey, "actor").
@@ -237,7 +261,7 @@ func (g AuthGateway) changePassword(w http.ResponseWriter, r *http.Request) {
 //
 //	@Summary		Request for a password reset.
 //	@Description	Request for a password reset. An email is sent with instructions.
-//	@Router			/user/password/request [post]
+//	@Router			/user/request-password [post]
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
@@ -286,6 +310,7 @@ func (g AuthGateway) requestPasswordReset(w http.ResponseWriter, r *http.Request
 //	@Param			payload			body	usercase.ResetPasswordInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
+//	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
@@ -318,19 +343,20 @@ func (g AuthGateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 
 // EditUserPermissions godoc
 //
-//	@Summary		Add or remove roles and grantings
-//	@Description	Add or remove roles and/or grantings of the target user.
-//	@Router			/user/permission [patch]
+//	@Summary		Add or remove roles
+//	@Description	Add or remove roles of the target user. Must be used by authenticated applications with proper permissions.
+//	@Router			/user/{id}/permission [patch]
 //	@Tags			User
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header	string								false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
-//	@Param			payload		body	usercase.EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
+//	@Param			id		path	string								true	"User ID"
+//	@Param			payload	body	usercase.EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		403	{object}	apperr.AppError
+//	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
@@ -359,22 +385,42 @@ func (g AuthGateway) editUserPermissions(w http.ResponseWriter, r *http.Request)
 	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
-// UpdateExtraData godoc
+// UpdateMyExtraData godoc
 //
-//	@Summary		Update extra data of target user
-//	@Description	Update non unique data like name, surname and address of target user
-//	@Router			/user [patch]
+//	@Summary		Update extra data of authenticated user
+//	@Description	Update non unique data like name, surname and address of authenticated user
+//	@Router			/user/me [patch]
 //	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string			false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
-//	@Param			payload		body		auth.ExtraData	true	"At least one data must be defined.""
-//	@Success		200			{object}	presenter.Success[auth.UserPrivateView]
-//	@Failure		400			{object}	apperr.AppError
-//	@Failure		401			{object}	apperr.AppError
-//	@Failure		403			{object}	apperr.AppError
-//	@Failure		500			{object}	apperr.AppError
+//	@Param			payload	body		auth.ExtraData	true	"At least one data must be defined.""
+//	@Success		200		{object}	presenter.Success[auth.UserPrivateView]
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		422		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
+func (g AuthGateway) updateMyExtraData(w http.ResponseWriter, r *http.Request) {
+	g.updateExtraData(w, r)
+}
+
+// UpdateExtraData godoc
+//
+//	@Summary		Update extra data of target user
+//	@Description	Update non unique data like name, surname and address of target user
+//	@Router			/user/{id} [patch]
+//	@Tags			User
+//	@Security		Bearer
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		string			true	"User ID"
+//	@Param			payload	body		auth.ExtraData	true	"At least one data must be defined.""
+//	@Success		200		{object}	presenter.Success[auth.UserPrivateView]
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		403		{object}	apperr.AppError
+//	@Failure		422		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
@@ -402,26 +448,50 @@ func (g AuthGateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r)
 }
 
-// UpdateUniqueFields godoc
+// UpdateMyUniqueFields godoc
 //
-//	@Summary		Update unique fields of target user
-//	@Description	Update unique data like email, phone, username and document of target user. Email and phone updates require verification.
-//	@Router			/user/unique [patch]
+//	@Summary		Update an unique field of authenticated user
+//	@Description	Update one unique data of authenticated user: email, phone, username or document. Email and phone updates require verification.
+//	@Router			/user/me/{field} [post]
 //	@Tags			User
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target		header		string					false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
-//	@Param			accept-language	header		string					false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body		auth.UserUniqueFields	true	"At least one field must be defined."
+//	@Param			accept-language	header		string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			field			path		string								true	"Must be: email, phone, username or document"
+//	@Param			payload			body		usercase.UpdateUniqueFieldsInput	true	"Value is required."
+//	@Success		200				{object}	presenter.Success[auth.UserPrivateView]
+//	@Failure		400				{object}	apperr.AppError
+//	@Failure		401				{object}	apperr.AppError
+//	@Failure		422				{object}	apperr.AppError
+//	@Failure		500				{object}	apperr.AppError
+func (g AuthGateway) updateMyUniqueFields(w http.ResponseWriter, r *http.Request) {
+	g.updateUniqueFields(w, r)
+}
+
+// UpdateUniqueFields godoc
+//
+//	@Summary		Update an unique field of target user
+//	@Description	Update one unique data of target user: email, phone, username or document. Email and phone updates require verification.
+//	@Router			/user/{id}/{field} [post]
+//	@Tags			User
+//	@Security		Bearer
+//	@Accept			json
+//	@Produce		json
+//	@Param			accept-language	header		string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			id				path		string								true	"User ID"
+//	@Param			field			path		string								true	"Must be: email, phone, username or document"
+//	@Param			payload			body		usercase.UpdateUniqueFieldsInput	true	"Value is required."
 //	@Success		200				{object}	presenter.Success[auth.UserPrivateView]
 //	@Failure		400				{object}	apperr.AppError
 //	@Failure		401				{object}	apperr.AppError
 //	@Failure		403				{object}	apperr.AppError
+//	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
 func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
+		ParseURLParam("field").
 		AddFromContext(common.ActorCtxKey, "actor").
 		AddFromContext(common.TargetCtxKey, "target").
 		AddLanguages()
@@ -452,8 +522,9 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //
 //	@Summary		Cancel pending unique field update
 //	@Description	Cancel a pending email or phone update for the target user
-//	@Router			/user/{id}/pending/{field} [delete]
+//	@Router			/user/me/{field}/verification [delete]
 //	@Tags			User
+//	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
 //	@Param			id		path	string	true	"User ID"
@@ -461,9 +532,8 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
-//	@Failure		403	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) {
+func (g AuthGateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("id", "userID").
 		ParseURLParam("field")
@@ -489,7 +559,7 @@ func (g AuthGateway) cancelPendingField(w http.ResponseWriter, r *http.Request) 
 	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
-// GetAccounntID godoc
+// GetUserID godoc
 //
 //	@Summary		Get user id
 //	@Description	Retrieve user id by its entry. Return nil if entry does not exist.
@@ -532,18 +602,18 @@ func (g AuthGateway) getUserID(w http.ResponseWriter, r *http.Request) {
 // GetUserEmail godoc
 //
 //	@Summary		Get target user email
-//	@Description	Retrieve email of the target user.
-//	@Router			/user/email [get]
+//	@Description	Retrieve email of the target user. Require proper permission.
+//	@Router			/user/{id}/email [get]
 //	@Tags			User
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			x-target	header		string	false	"Beyond common entries (email, username, phone and document), it accepts ID as well. It is recommended use ID or username whenever possible. If not informed, it will use the logged user."
-//	@Success		200			{object}	presenter.Success[string]
-//	@Failure		400			{object}	apperr.AppError
-//	@Failure		401			{object}	apperr.AppError
-//	@Failure		403			{object}	apperr.AppError
-//	@Failure		500			{object}	apperr.AppError
+//	@Param			id	path		string	true	"User ID"
+//	@Success		200	{object}	presenter.Success[string]
+//	@Failure		400	{object}	apperr.AppError
+//	@Failure		401	{object}	apperr.AppError
+//	@Failure		403	{object}	apperr.AppError
+//	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(common.TargetCtxKey, "target")

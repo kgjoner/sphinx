@@ -13,7 +13,7 @@ type VerifyUser struct {
 
 type VerifyUserInput struct {
 	UserID           uuid.UUID             `json:"-"`
-	VerificationKind auth.VerificationKind `json:"kind" validate:"required,oneof=email phone"`
+	VerificationKind auth.VerificationKind `json:"-" validate:"required,oneof=email phone"`
 	VerificationCode string                `json:"code" validate:"required"`
 }
 

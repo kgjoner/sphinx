@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/i18n"
 	"github.com/kgjoner/sphinx/internal/common"
@@ -21,7 +22,8 @@ type UpdateUniqueFields struct {
 }
 
 type UpdateUniqueFieldsInput struct {
-	auth.UserUniqueFields
+	Field     string    `json:"-" validate:"required,oneof=email phone username document"`
+	Value     string    `json:"value" validate:"required"`
 	Target    auth.User `json:"-"`
 	Actor     auth.User `json:"-"`
 	Languages []string  `json:"-"`
@@ -30,15 +32,38 @@ type UpdateUniqueFieldsInput struct {
 func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (out auth.UserPrivateView, err error) {
 	targetAcc := &input.Target
 
-	if !input.Email.IsZero() && input.Email == targetAcc.Email {
-		return out, apperr.NewRequestError("email is already set to the same value")
+	uniqueFields := auth.UserUniqueFields{}
+	switch input.Field {
+	case "email":
+		uniqueFields.Email, err = htypes.ParseEmail(input.Value)
+		if err != nil {
+			return out, err
+		}
+
+		if uniqueFields.Email == targetAcc.Email {
+			return out, apperr.NewRequestError("email is already set to the same value")
+		}
+	case "phone":
+		uniqueFields.Phone, err = htypes.ParsePhoneNumber(input.Value)
+		if err != nil {
+			return out, err
+		}
+
+		if uniqueFields.Phone == targetAcc.Phone {
+			return out, apperr.NewRequestError("phone is already set to the same value")
+		}
+	case "username":
+		uniqueFields.Username = input.Value
+	case "document":
+		uniqueFields.Document, err = htypes.ParseDocument(input.Value)
+		if err != nil {
+			return out, err
+		}
+	default:
+		return out, apperr.NewRequestError("invalid field to update")
 	}
 
-	if !input.Phone.IsZero() && input.Phone == targetAcc.Phone {
-		return out, apperr.NewRequestError("phone is already set to the same value")
-	}
-
-	err = targetAcc.UpdateUniqueFields(input.UserUniqueFields)
+	err = targetAcc.UpdateUniqueFields(uniqueFields)
 	if err != nil {
 		return out, err
 	}
@@ -54,11 +79,8 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (out auth.Use
 		return out, err
 	}
 
-	// Check if email is being updated
-	emailBeingUpdated := !input.UserUniqueFields.Email.IsZero()
-
 	// Send email notice and confirmation if email was updated
-	if emailBeingUpdated {
+	if input.Field == "email" {
 		mail := common.Mail{
 			MailService: i.MailService,
 		}

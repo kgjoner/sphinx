@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
@@ -16,10 +17,10 @@ import (
 type ctxKey string
 
 const (
-	ActorCtxKey ctxKey = "sphinx_actor"
-	TokenCtxKey ctxKey = "sphinx_token"
+	ActorCtxKey       ctxKey = "sphinx_actor"
+	TokenCtxKey       ctxKey = "sphinx_token"
 	ApplicationCtxKey ctxKey = "sphinx_application"
-	TargetCtxKey ctxKey = "sphinx_target"
+	TargetCtxKey      ctxKey = "sphinx_target"
 )
 
 type Middlewares struct {
@@ -130,15 +131,20 @@ func (m Middlewares) AuthenticateApp(next http.Handler) http.Handler {
 	})
 }
 
+// Target middleware resolves the target user from "id" URL parameter, or
+// defaults to the actor if no parameter is given.
+// Only admin users or authenticated applications can specify a target other than the actor.
+//
+// Must be used after Authenticate or AuthenticateApp middlewares.
 func (m Middlewares) Target(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		actor := ctx.Value(ActorCtxKey)
 
-		targetEntry := r.Header.Get("x-target")
-		if targetEntry == "" {
+		targetId := chi.URLParam(r, "id")
+		if targetId == "" {
 			if actor == nil {
-				err := apperr.NewRequestError("must provide a target header", errcode.InvalidAccess)
+				err := apperr.NewInternalError("target middleware must have a target ID or an actor", errcode.InvalidAccess)
 				presenter.HTTPError(err, w, r)
 				return
 			}
@@ -159,18 +165,13 @@ func (m Middlewares) Target(next http.Handler) http.Handler {
 		}
 
 		authRepo := m.BasePool.NewDAO(r.Context())
-		var err error
-		var target *auth.User
-		var entry auth.Entry
-		if id, errif := uuid.Parse(targetEntry); errif == nil {
-			target, err = authRepo.GetUserByID(id)
-		} else {
-			entry, err = auth.ParseEntry(targetEntry)
-			if err == nil {
-				target, err = authRepo.GetUserByEntry(entry)
-			}
+		id, err := uuid.Parse(targetId)
+		if err != nil {
+			presenter.HTTPError(err, w, r)
+			return
 		}
 
+		target, err := authRepo.GetUserByID(id)
 		if err != nil {
 			presenter.HTTPError(err, w, r)
 			return

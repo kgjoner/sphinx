@@ -39,7 +39,7 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		}
 
 		tokenStr := authHeaderParts[1]
-		user, err := m.sphinx.User(tokenStr)
+		user, err := m.sphinx.Me(tokenStr)
 		if err != nil {
 			presenter.HTTPError(err, w, r)
 			return

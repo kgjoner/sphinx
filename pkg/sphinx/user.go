@@ -10,7 +10,7 @@ import (
 )
 
 // Get token owner's data.
-func (s Service) User(token string) (*User, error) {
+func (s Service) Me(token string) (*User, error) {
 	var respData presenter.Success[User]
 	_, err := s.httpApi.Get("/user", &httputil.Options{
 		Headers: map[string]string{
@@ -25,15 +25,14 @@ func (s Service) User(token string) (*User, error) {
 	return &respData.Data, nil
 }
 
-// Get target user's data. Target value can be any user entry, including ID. Return error if target user does not exist.
+// Get target user's data. Return error if target user does not exist.
 //
 // Token owner must be an admin.
-func (s Service) UserOf(target string, token string) (*User, error) {
+func (s Service) User(userID uuid.UUID, token string) (*User, error) {
 	var respData presenter.Success[User]
-	_, err := s.httpApi.Get("/user", &httputil.Options{
+	_, err := s.httpApi.Get("/user/"+userID.String(), &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
-			"X-Target":      target,
 		},
 	})(&respData)
 
@@ -44,13 +43,12 @@ func (s Service) UserOf(target string, token string) (*User, error) {
 	return &respData.Data, nil
 }
 
-// Get target user's email. Target value can be their ID or other entry. Return error if target user does not exist.
-func (s Service) EmailOf(target string) (htypes.Email, error) {
+// Get target user's email. Return error if target user does not exist.
+func (s Service) EmailOf(userID uuid.UUID) (htypes.Email, error) {
 	var respData presenter.Success[htypes.Email]
-	_, err := s.httpApi.Get("/user/email", &httputil.Options{
+	_, err := s.httpApi.Get("/user/"+userID.String()+"/email", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
-			"X-Target":      target,
 		},
 	})(&respData)
 
@@ -69,11 +67,7 @@ func (s Service) NewUser(email htypes.Email, password string) (userID uuid.UUID,
 	}
 
 	var respData presenter.Success[User]
-	_, err = s.httpApi.Post("/user", body, &httputil.Options{
-		Headers: map[string]string{
-			"X-App": s.appID,
-		},
-	})(&respData)
+	_, err = s.httpApi.Post("/user", body, nil)(&respData)
 
 	if err != nil {
 		return uuid.Nil, err
@@ -116,7 +110,7 @@ func (s Service) UserIDByEntry(entry string) (*uuid.UUID, error) {
 }
 
 // Add roles and/or grantings to target user.
-func (s Service) GrantPermissions(target string, roles []string) (bool, error) {
+func (s Service) GrantPermissions(userID uuid.UUID, roles []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
 			Valid: true,
@@ -129,10 +123,9 @@ func (s Service) GrantPermissions(target string, roles []string) (bool, error) {
 	}
 
 	var respData presenter.Success[bool]
-	_, err := s.httpApi.Patch("/user/permission", body, &httputil.Options{
+	_, err := s.httpApi.Patch("/user/"+userID.String()+"/permission", body, &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
-			"X-Target":      target,
 		},
 	})(&respData)
 
@@ -144,7 +137,7 @@ func (s Service) GrantPermissions(target string, roles []string) (bool, error) {
 }
 
 // Remove roles and/or grantings from target user.
-func (s Service) RevokePermissions(target string, roles []string) (bool, error) {
+func (s Service) RevokePermissions(userID uuid.UUID, roles []string) (bool, error) {
 	body := map[string]any{
 		"shouldRemove": sql.NullBool{
 			Valid: true,
@@ -157,10 +150,9 @@ func (s Service) RevokePermissions(target string, roles []string) (bool, error) 
 	}
 
 	var respData presenter.Success[bool]
-	_, err := s.httpApi.Patch("/user/permission", body, &httputil.Options{
+	_, err := s.httpApi.Patch("/user/"+userID.String()+"/permission", body, &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
-			"X-Target":      target,
 		},
 	})(&respData)
 
