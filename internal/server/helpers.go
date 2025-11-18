@@ -36,6 +36,7 @@ func realIP() func(http.Handler) http.Handler {
 
 			if ip == "" || net.ParseIP(ip) == nil {
 				next.ServeHTTP(w, r)
+				return
 			}
 			
 			r.RemoteAddr = ip
