@@ -56,7 +56,7 @@ func Raise(router chi.Router, pools common.Pools, services common.Services) {
 func (g AuthGateway) login(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddIp().
+		AddIP().
 		AddHeader("user-agent", "device")
 
 	var input authcase.LoginInput
@@ -175,7 +175,7 @@ func (g AuthGateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddIp().
+		AddIP().
 		AddHeader("user-agent", "device")
 
 	var input oauthcase.ExchangeGrantInput
@@ -255,7 +255,7 @@ func (g AuthGateway) refresh(w http.ResponseWriter, r *http.Request) {
 func (g AuthGateway) externalAuth(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddIp().
+		AddIP().
 		AddHeader("user-agent", "device").
 		AddHeader("authorization", "authorizationHeader").
 		AddLanguages()

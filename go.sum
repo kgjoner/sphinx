@@ -38,6 +38,8 @@ github.com/kgjoner/cornucopia/v2 v2.0.1 h1:SDlmaKXGbrEGCayOsCtx1K5jwpOJ7luU8BhMJ
 github.com/kgjoner/cornucopia/v2 v2.0.1/go.mod h1:ZsXrTHoK6+ry67mCXFsxddZvWVBuN+u7q+9NTRojD50=
 github.com/kgjoner/cornucopia/v2 v2.1.0 h1:3a9yIkMNTxQbBKkCopSL1LguxARuc/gySiKDCxXlza4=
 github.com/kgjoner/cornucopia/v2 v2.1.0/go.mod h1:ZsXrTHoK6+ry67mCXFsxddZvWVBuN+u7q+9NTRojD50=
+github.com/kgjoner/cornucopia/v2 v2.1.2 h1:zszV1okeRsFiQ/580zQ/epgtkk0wWYJcqOGfPSI7+8Y=
+github.com/kgjoner/cornucopia/v2 v2.1.2/go.mod h1:ZsXrTHoK6+ry67mCXFsxddZvWVBuN+u7q+9NTRojD50=
 github.com/kgjoner/hermes v0.5.2 h1:sSda/69HhwRbzVX9ZmrdXUmtf4+tmHYhcQ0qFm9jbFE=
 github.com/kgjoner/hermes v0.5.2/go.mod h1:WJ8fHh/5cFAlueJbHQBhmH0s0QC4LUqyrk6umpQsLgM=
 github.com/kgjoner/hermes v0.5.3 h1:emzufxcLQ4HlJw7okWZKg4CvgqI0fkANtP/ZxA8kILk=
