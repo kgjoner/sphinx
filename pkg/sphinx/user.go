@@ -12,7 +12,7 @@ import (
 // Get token owner's data.
 func (s Service) Me(token string) (*User, error) {
 	var respData presenter.Success[User]
-	_, err := s.httpApi.Get("/user", &httputil.Options{
+	_, err := s.httpApi.Get("/user/me", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
 		},
