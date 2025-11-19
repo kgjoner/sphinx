@@ -92,9 +92,9 @@ func (s Service) DoesEntryExist(entry string) (bool, error) {
 	return respData.Data, nil
 }
 
-// Get user id by their entry. Return nil if entry is not found.
-func (s Service) UserIDByEntry(entry string) (*uuid.UUID, error) {
-	var respData presenter.Success[*uuid.UUID]
+// Get user id by their entry. Return zero value if entry is not found.
+func (s Service) UserIDByEntry(entry string) (uuid.UUID, error) {
+	var respData presenter.Success[uuid.UUID]
 	_, err := s.httpApi.Get("/user/id", &httputil.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
@@ -103,7 +103,7 @@ func (s Service) UserIDByEntry(entry string) (*uuid.UUID, error) {
 	})(&respData)
 
 	if err != nil {
-		return nil, err
+		return uuid.Nil, err
 	}
 
 	return respData.Data, nil
