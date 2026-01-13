@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/hermes/pkg/hermes"
-	"github.com/kgjoner/sphinx/internal/assets/i18n"
-	"github.com/kgjoner/sphinx/internal/common"
+	"github.com/kgjoner/sphinx/internal/assets/email"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
+	"github.com/kgjoner/sphinx/internal/common/mailer"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/sirupsen/logrus"
@@ -72,16 +72,16 @@ func (i CreateUser) ExecuteEntity(input CreateUserInput) (*auth.User, error) {
 	}
 
 	// Send email
-	mail := common.Mail{
+	mail := mailer.Mail{
 		MailService: i.MailService,
 	}
-	_, err = mail.Execute(common.MailInput{
-		TemplateKey: "welcome",
+	err = mail.Execute(mailer.MailInput{
+		TemplateKey: email.Welcome,
 		Target:      *user,
-		Links: []i18n.CustomLink{
+		Links: []email.Link{
 			{
-				Key: "email-verification",
-				Link: fmt.Sprintf(
+				Key: email.VerificationLink,
+				URL: fmt.Sprintf(
 					"%v?kind=email&id=%v&code=%v",
 					config.Env.CLIENT.DATA_VERIFICATION,
 					user.ID,

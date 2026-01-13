@@ -15,12 +15,12 @@
         },
         {
           "kind": "button",
-          "key": "email-verification",
+          "key": "verification_link",
           "content": "Confirm email"
         }
       ]
     },
-    "passwordReset": {
+    "password_reset": {
       "subject": {
         "content": "Password reset"
       },
@@ -35,12 +35,12 @@
         },
         {
           "kind": "button",
-          "key": "password-reset",
+          "key": "reset_link",
           "content": "Reset password"
         }
       ]
     },
-    "passwordChange": {
+    "password_update_notice": {
       "subject": {
         "content": "Your password has been changed"
       },
@@ -59,7 +59,7 @@
         }
       ]
     },
-    "emailUpdateNotice": {
+    "email_update_notice": {
       "subject": {
         "content": "Email update notice"
       },
@@ -74,7 +74,7 @@
         },
         {
           "kind": "button",
-          "key": "email-cancel-update",
+          "key": "cancel_link",
           "content": "Cancel update"
         },
         {
@@ -83,7 +83,7 @@
         }
       ]
     },
-    "emailUpdateConfirmation": {
+    "email_update_confirmation": {
       "subject": {
         "content": "Email update"
       },
@@ -98,7 +98,7 @@
         },
         {
           "kind": "button",
-          "key": "email-verification",
+          "key": "verification_link",
           "content": "Confirm email"
         },
         {

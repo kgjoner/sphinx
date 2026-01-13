@@ -15,12 +15,12 @@
         },
         {
           "kind": "button",
-          "key": "email-verification",
+          "key": "verification_link",
           "content": "Confirmar email"
         }
       ]
     },
-    "passwordReset": {
+    "password_reset": {
       "subject": {
         "content": "Redefinição de senha"
       },
@@ -35,7 +35,7 @@
         },
         {
           "kind": "button",
-          "key": "password-reset",
+          "key": "reset_link",
           "content": "Redefinir senha"
         },
         {
@@ -44,7 +44,7 @@
         }
       ]
     },
-    "passwordChange": {
+    "password_update_notice": {
       "subject": {
         "content": "Senha alterada"
       },
@@ -63,7 +63,7 @@
         }
       ]
     },
-    "emailUpdateNotice": {
+    "email_update_notice": {
       "subject": {
         "content": "Aviso de atualização de Email"
       },
@@ -78,7 +78,7 @@
         },
         {
           "kind": "button",
-          "key": "email-cancel-update",
+          "key": "cancel_link",
           "content": "Cancelar atualização"
         },
         {
@@ -87,7 +87,7 @@
         }
       ]
     },
-    "emailUpdateConfirmation": {
+    "email_update_confirmation": {
       "subject": {
         "content": "Atualização de Email"
       },
@@ -102,7 +102,7 @@
         },
         {
           "kind": "button",
-          "key": "email-verification",
+          "key": "verification_link",
           "content": "Confirmar email"
         },
         {

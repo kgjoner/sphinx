@@ -2,7 +2,8 @@ package usercase
 
 import (
 	"github.com/kgjoner/hermes/pkg/hermes"
-	"github.com/kgjoner/sphinx/internal/common"
+	"github.com/kgjoner/sphinx/internal/assets/email"
+	"github.com/kgjoner/sphinx/internal/common/mailer"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
 
@@ -26,11 +27,11 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (out bool, err error)
 	}
 
 	// Send email
-	mail := common.Mail{
+	mail := mailer.Mail{
 		MailService: i.MailService,
 	}
-	_, err = mail.Execute(common.MailInput{
-		TemplateKey: "passwordChange",
+	err = mail.Execute(mailer.MailInput{
+		TemplateKey: email.PasswordUpdateNotice,
 		Target:      user,
 		Languages:   input.Languages,
 	})

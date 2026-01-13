@@ -8,8 +8,8 @@ import (
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
 	"github.com/kgjoner/hermes/pkg/hermes"
-	"github.com/kgjoner/sphinx/internal/assets/i18n"
-	"github.com/kgjoner/sphinx/internal/common"
+	"github.com/kgjoner/sphinx/internal/assets/email"
+	"github.com/kgjoner/sphinx/internal/common/mailer"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -81,16 +81,16 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (out auth.Use
 
 	// Send email notice and confirmation if email was updated
 	if input.Field == "email" {
-		mail := common.Mail{
+		mail := mailer.Mail{
 			MailService: i.MailService,
 		}
-		_, err = mail.Execute(common.MailInput{
-			TemplateKey: "emailUpdateNotice",
+		err = mail.Execute(mailer.MailInput{
+			TemplateKey: email.EmailUpdateNotice,
 			Target:      *targetAcc,
-			Links: []i18n.CustomLink{
+			Links: []email.Link{
 				{
-					Key: "email-cancel-update",
-					Link: fmt.Sprintf(
+					Key: email.CancelLink,
+					URL: fmt.Sprintf(
 						"%v?kind=email&action=cancel&id=%v",
 						config.Env.CLIENT.DATA_VERIFICATION,
 						targetAcc.ID,
@@ -103,17 +103,17 @@ func (i UpdateUniqueFields) Execute(input UpdateUniqueFieldsInput) (out auth.Use
 			i.handleError(err, *targetAcc, "notice")
 		}
 
-		secondMail := common.Mail{
+		secondMail := mailer.Mail{
 			MailService: i.MailService,
 		}
-		_, err = secondMail.Execute(common.MailInput{
-			TemplateKey: "emailUpdateConfirmation",
+		err = secondMail.Execute(mailer.MailInput{
+			TemplateKey: email.EmailUpdateConfirmation,
 			Target:      *targetAcc,
 			ToPending:   true,
-			Links: []i18n.CustomLink{
+			Links: []email.Link{
 				{
-					Key: "email-verification",
-					Link: fmt.Sprintf(
+					Key: email.VerificationLink,
+					URL: fmt.Sprintf(
 						"%v?kind=email&id=%v&code=%v",
 						config.Env.CLIENT.DATA_VERIFICATION,
 						targetAcc.ID,

@@ -5,8 +5,8 @@ import (
 
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/hermes/pkg/hermes"
-	"github.com/kgjoner/sphinx/internal/assets/i18n"
-	"github.com/kgjoner/sphinx/internal/common"
+	"github.com/kgjoner/sphinx/internal/assets/email"
+	"github.com/kgjoner/sphinx/internal/common/mailer"
 	"github.com/kgjoner/sphinx/internal/common/errcode"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -41,16 +41,16 @@ func (i RequestPasswordReset) Execute(input RequestPasswordResetInput) (out bool
 	}
 
 	// Send email
-	mail := common.Mail{
+	mail := mailer.Mail{
 		MailService: i.MailService,
 	}
-	_, err = mail.Execute(common.MailInput{
-		TemplateKey: "passwordReset",
+	err = mail.Execute(mailer.MailInput{
+		TemplateKey: email.PasswordReset,
 		Target:      *user,
-		Links: []i18n.CustomLink{
+		Links: []email.Link{
 			{
-				Key: "password-reset",
-				Link: fmt.Sprintf(
+				Key: email.ResetLink,
+				URL: fmt.Sprintf(
 					"%v?id=%v&code=%v",
 					config.Env.CLIENT.PASSWORD_RESET,
 					user.ID,
