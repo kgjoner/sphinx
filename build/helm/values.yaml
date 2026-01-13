@@ -55,6 +55,14 @@ configMap:
   clientBaseURL: sphinx.com.br
   clientDataVerification: /verification
   clientPasswordReset: /password/reset
+  # emailTemplates:
+  #   - pt-br: 
+  #       welcome:
+  #         subject:
+  #           content: "Boas-vindas, {{ .UserName }}"
+  #         body:
+  #           - kind: text
+  #             content: "E aí, preparado para o desafio?"
 
 prometheus:
   # Only enable if there is a running instance of prometheus

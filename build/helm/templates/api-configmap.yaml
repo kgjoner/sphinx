@@ -31,3 +31,4 @@ data:
   CLIENT_BASE_URL: {{ .Values.configMap.clientBaseURL }}
   CLIENT_DATA_VERIFICATION: {{ .Values.configMap.clientDataVerification }}
   CLIENT_PASSWORD_RESET: {{ .Values.configMap.clientPasswordReset }}
+  EMAIL_TEMPLATES: {{ .Values.configMap.emailTemplates | toJson | quote }}
