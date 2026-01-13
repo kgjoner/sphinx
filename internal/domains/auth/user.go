@@ -52,9 +52,9 @@ type User struct {
 }
 
 type ExtraData struct {
-	Name    string
-	Surname string
-	Address htypes.Address
+	Name    string         `json:"name"`
+	Surname string         `json:"surname"`
+	Address htypes.Address `json:"address"`
 }
 
 /* ==============================================================================
@@ -878,6 +878,7 @@ type UserPrivateView struct {
 	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
 	PendingPhone         htypes.PhoneNumber `json:"pendingPhone,omitempty"`
 	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
+	UsernameUpdatedAt    htypes.NullTime    `json:"usernameUpdatedAt"`
 	Link                 *LinkView          `json:"link,omitempty"`
 }
 
@@ -919,6 +920,7 @@ func (a User) PrivateView(actor User) (view UserPrivateView, err error) {
 		a.HasEmailBeenVerified,
 		a.PendingPhone,
 		a.HasPhoneBeenVerified,
+		a.UsernameUpdatedAt,
 		linkView,
 	}, nil
 }

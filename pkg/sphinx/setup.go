@@ -41,10 +41,13 @@ type User struct {
 	Surname  string             `json:"surname,omitempty"`
 	Address  htypes.Address     `json:"address,omitempty"`
 
-	IsActive             bool           `json:"isActive"`
-	HasEmailBeenVerified bool           `json:"hasEmailBeenVerified"`
-	HasPhoneBeenVerified bool           `json:"hasPhoneBeenVerified"`
-	Link                 *auth.LinkView `json:"link"`
+	IsActive             bool               `json:"isActive"`
+	PendingEmail         htypes.Email       `json:"pendingEmail,omitempty"`
+	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
+	PendingPhone         htypes.PhoneNumber `json:"pendingPhone,omitempty"`
+	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
+	UsernameUpdatedAt    htypes.NullTime    `json:"usernameUpdatedAt"`
+	Link                 *auth.LinkView     `json:"link,omitempty"`
 }
 
 func (a User) DisplayName() string {
