@@ -17,9 +17,9 @@ else
   done;
 fi
 export DATABASE_URL=postgres://postgres:postgres@localhost:5432/sphinx?sslmode=disable
-migrate -path postgres/migrations \
+migrate -path internal/repositories/base/migrations \
   -database $DATABASE_URL up
-go test ./cmd
-migrate -path postgres/migrations \
+go test ./test/server_test.go -v -count=1
+migrate -path internal/repositories/base/migrations \
   -database $DATABASE_URL down -all
-# docker stop test
+docker stop test

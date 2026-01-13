@@ -45,4 +45,4 @@ spec:
         - configMapRef:
             name: {{ template "sphinx.configMapName" . }} 
       imagePullSecrets:
-      - name: {{ .Values.api.imagePullSecretName }} 
+      - name: {{ .Values.api.imagePullSecretName }}

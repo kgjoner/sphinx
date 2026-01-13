@@ -10,13 +10,18 @@ metadata:
     app.kubernetes.io/part-of: {{ .Chart.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 data:
-  SCHEME: {{ if (not empty .Values.ingress.tls.issuer) }}https{{ else }}http{{ end }}
+  SCHEME: {{ if not (empty .Values.ingress.tls.issuer) }}https{{ else }}http{{ end }}
+  {{- if not (empty .Values.ingress.className) }}
   {{- with (first .Values.ingress.rules) }}
   HOST: {{ .host }}
   {{- end }}
+  {{- else }}
+  HOST: {{ template "sphinx.serviceName" . }}
+  {{- end }}
   APP_NAME: {{ .Values.configMap.appName }}
-  APP_STYLE_URL: {{ .Values.configMap.appStyleUrl }}
-  APP_LOGO_URL: {{ .Values.configMap.appLogoUrl }}
+  APP_STYLE_URL: {{ .Values.configMap.appStyleURL }}
+  APP_LOGO_URL: {{ .Values.configMap.appLogoURL }}
+  SUPPORT_EMAIL: {{ .Values.configMap.supportEmail }}
   MAX_CONCURRENT_SESSIONS: {{ .Values.configMap.maxConcurrentSessions | quote }}
   FALLBACK_LANGUAGE: {{ .Values.configMap.fallbackLanguage }}
   AUTH_GRANT_LIFETIME_IN_SEC: {{ .Values.configMap.authGrantLifetimeInSec | quote }}

@@ -77,7 +77,7 @@ db:
     accessMode: ReadWriteOnce
     size: 10Gi
   migration:
-    enabled: true
+    enabled: false
     version: v4.17.0 # golang-migrate
     imagePullPolicy: IfNotPresent
     # imagePullSecretName: regcred  # Uncomment if using private registry
@@ -88,11 +88,6 @@ db:
       requests:
         cpu: 50m
         memory: 64Mi  
-    # Manual migration job configuration
-    manual:
-      enabled: false
-      command: "version"  # Options: up, down 1, goto 5, version, etc.
-      ttlSecondsAfterFinished: 600  # Clean up job after 10 minutes
 
 redis:
   enabled: false
