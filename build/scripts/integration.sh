@@ -108,12 +108,17 @@ if [ -n "$PLATFORM" ]; then
   PLATFORM_ARG="--platform $PLATFORM"
 fi
 
-docker build -f Dockerfile.release . \
+PUSH_ARG=""
+if [ -n "$DOCKER_REGISTRY" ]; then
+  PUSH_ARG="--push"
+fi
+
+docker build -f Dockerfile.release ../ \
   --build-arg APP_VERSION="$LATEST_TAG" \
   $DOCKER_TAGS \
   --ssh default=$SSH_AUTH_SOCK \
   $PLATFORM_ARG \
-  --push
+  $PUSH_ARG
 
 #########################################################################################################
 # PUSH HELM CHART

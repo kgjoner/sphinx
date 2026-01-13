@@ -12,20 +12,24 @@ test: test-server test-e2e test-unit
 doc:
 	bash scripts/swag.sh
 
-dev:		
+artifact: doc
+	bash scripts/tag.sh --canary
+	bash scripts/integration.sh --canary
+
+dev: build
 	bash scripts/dev.sh
 
-integration: doc
-	bash scripts/integration.sh
+arm-ci: doc
+	bash scripts/tag.sh
+	bash scripts/integration.sh --registry ${DOCKER_REGISTRY:-docker.kgjoner.com.br} --platform linux/arm64
 
-vela-ci: doc
-	bash scripts/integration.sh --registry docker.kgjoner.com.br --platform linux/arm64
+amd-ci: doc
+	bash scripts/tag.sh
+	bash scripts/integration.sh --registry=${DOCKER_REGISTRY}
 
-ed-ci: doc
-	bash scripts/integration.sh --registry docker.elevendragons.com
+ci: doc
+	bash scripts/tag.sh
+	bash scripts/integration.sh --registry=${DOCKER_REGISTRY} --platform linux/amd64,linux/arm64
 
-publish: doc
-	bash scripts/publish.sh
-
-logs:
-	bash scripts/logs.sh
+cd: doc
+	bash scripts/deploy.sh
