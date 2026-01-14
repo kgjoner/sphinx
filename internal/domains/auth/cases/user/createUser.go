@@ -53,7 +53,8 @@ func (i CreateUser) ExecuteEntity(input CreateUserInput) (*auth.User, error) {
 	err = i.AuthRepo.InsertUser(user)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
-			pattern := regexp.MustCompile("user_(.+)_key")
+			// TODO: rename unique constants to use "user"
+			pattern := regexp.MustCompile("account_(.+)_key")
 			matches := pattern.FindStringSubmatch(err.Error())
 			msg := fmt.Sprintf("%v has already registered", matches[1])
 			return nil, apperr.NewConflictError(msg, errcode.DuplicateKey)
