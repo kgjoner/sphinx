@@ -11,9 +11,13 @@ until docker exec sphinx-pg pg_isready -U postgres > /dev/null 2>&1; do
 done;
 echo "Database is ready!"
 
-set -a
-source .env
-set +a
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+else
+  echo ".env not found — continuing with default environment variables"
+fi
 
 go run cmd/migrate/main.go
 go run cmd/sphinx/main.go

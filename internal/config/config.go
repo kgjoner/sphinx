@@ -12,9 +12,9 @@ import (
 var Env struct {
 	SCHEME       string `envconfig:"default=http"`
 	HOST         string `envconfig:"default=localhost:8080"`
-	APP_VERSION  string `envconfig:"default=v0.1.0"`
-	DATABASE_URL string `envconfig:"default=postgres://postgres:postgres@db:5432/sphinx?sslmode=disable&pool_max_conns=20"`
-	REDIS_URL    string `envconfig:"default=redis://redis:redis@rdb:6379/0"`
+	APP_VERSION  string `envconfig:"default=v1.0.0"`
+	DATABASE_URL string `envconfig:"default=postgres://postgres:postgres@localhost:5432/sphinx?sslmode=disable"`
+	REDIS_URL    string `envconfig:"default=redis://localhost:6379/0"`
 	ROOT_APP_ID  string `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
 
 	//Set 0 for disabling concurrent sessions control
@@ -27,7 +27,7 @@ var Env struct {
 	}
 
 	CLIENT struct {
-		BASE_URL          string `envconfig:"default=localhost:8080"`
+		BASE_URL          string `envconfig:"default=localhost:3000"`
 		DATA_VERIFICATION string `envconfig:"default=/verification"`
 		PASSWORD_RESET    string `envconfig:"default=/password/reset"`
 	}
@@ -38,7 +38,7 @@ var Env struct {
 	SUPPORT_EMAIL     string `envconfig:"default=support@example.com"`
 	FALLBACK_LANGUAGE string `envconfig:"default=pt-br"`
 	HERMES            struct {
-		BASE_URL string `envconfig:"default=https://hermes.example.com"`
+		BASE_URL string `envconfig:"default=http://localhost:8081/v1"`
 		API_KEY  string `envconfig:"default=topsecret"`
 	}
 
