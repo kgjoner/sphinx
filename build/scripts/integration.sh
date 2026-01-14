@@ -113,7 +113,7 @@ if [ -n "$DOCKER_REGISTRY" ]; then
   PUSH_ARG="--push"
 fi
 
-docker build -f Dockerfile.release ../ \
+docker build -f build/Dockerfile . \
   --build-arg APP_VERSION="$LATEST_TAG" \
   $DOCKER_TAGS \
   --ssh default=$SSH_AUTH_SOCK \
@@ -138,18 +138,18 @@ echo "Packaging Helm chart..."
 
 # 1. Prepare Helm chart
 # Replace app version in Helm chart
-sed -i -E "s/appVersion:.+/appVersion: \"$LATEST_TAG\"/g" helm/Chart.yaml
+sed -i -E "s/appVersion:.+/appVersion: \"$LATEST_TAG\"/g" build/helm/Chart.yaml
 
 # Copy migration files
 echo "Copying migration files"
-mkdir -p helm/migrations
-cp internal/repositories/base/migrations/*.sql helm/migrations/
+mkdir -p build/helm/migrations
+cp internal/repositories/base/migrations/*.sql build/helm/migrations/
 
 # 2. Package it
 # Create temporary directory for chart packaging
 TEMP_DIR=$(mktemp -d)
 
-helm package helm/ --destination "$TEMP_DIR"
+helm package build/helm/ --destination "$TEMP_DIR"
 
 # 3. Push to OCI registry
 CHART_FILE=$(ls "$TEMP_DIR"/*.tgz | head -n1)
