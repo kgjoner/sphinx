@@ -4,17 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/repositories/base/migrations"
 )
 
 func main() {
-	config.Must()
-	dbURL := config.Env.DATABASE_URL
+	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL environment variable is required")
 	}
