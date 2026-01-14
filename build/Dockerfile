@@ -1,7 +1,10 @@
-# syntax=docker/dockerfile:experimental
-FROM golang:1.22.0 as development
-
+#################################################
+# BUILDER
+#################################################
+FROM golang:1.25.5 AS builder
 WORKDIR /app
+
+RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 RUN export GOPRIVATE=github.com/kgjoner/cornucopia
 RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -11,7 +14,23 @@ COPY go.mod go.sum ./
 RUN --mount=type=ssh go mod download
 
 COPY . ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o /sphinx ./cmd
+RUN swag init -g server.go --dir internal/server,internal/domains/auth/gateway --parseDependency --parseInternal
+
+RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/sphinx
+RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/migrate
+
+############################
+# FINAL
+############################
+FROM alpine:3.17 AS final
+
+ARG APP_VERSION=unknown
+ENV APP_VERSION=${APP_VERSION}
+
+WORKDIR /
+
+COPY --from=builder /app/sphinx /sphinx
+COPY --from=builder /app/migrate /migrate
 
 EXPOSE 8080
 
