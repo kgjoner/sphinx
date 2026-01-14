@@ -80,7 +80,7 @@ func (e ExternalAuthProvider) Authenticate(input ExternalAuthInput) (subject *Ex
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, apperr.NewUnauthorizedError("authentication failed: %s")
+		return nil, apperr.NewUnauthorizedError("authentication failed")
 	}
 
 	var responseBody map[string]interface{}
