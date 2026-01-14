@@ -527,7 +527,6 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path	string	true	"User ID"
 //	@Param			field	path	string	true	"Field must be 'email' or 'phone'."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
@@ -535,7 +534,6 @@ func (g AuthGateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) 
 //	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		ParseURLParam("id", "userID").
 		ParseURLParam("field")
 
 	var input usercase.CancelPendingFieldInput

@@ -27,7 +27,7 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		auth.ApplicationCreationFields	true	"Name and possible grantings."
-//	@Success		200		{object}	presenter.Success[auth.Application]
+//	@Success		200		{object}	presenter.Success[auth.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
@@ -69,7 +69,7 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			id		path		string							true	"ID of target application"
 //	@Param			payload	body		auth.ApplicationEditableFields	true	"If grantings are passed, the new ones (even if empty array) will overwrite old ones."
-//	@Success		200		{object}	presenter.Success[auth.Application]
+//	@Success		200		{object}	presenter.Success[auth.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
@@ -109,7 +109,7 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Application
 //	@Produce		json
 //	@Param			id	path		string	true	"ID of target application"
-//	@Success		200	{object}	presenter.Success[auth.Application]
+//	@Success		200	{object}	presenter.Success[auth.ApplicationView]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
