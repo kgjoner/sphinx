@@ -115,6 +115,10 @@ func (s *Server) Setup() *Server {
 	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(config.Env.APP_VERSION))
 	})
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
 	r.Mount("/metrics", promhttp.Handler())
 
 	// Root app files
