@@ -1,115 +1,113 @@
 {
-  "mails": {
-    "welcome": {
-      "subject": {
-        "content": "Bem-vindo à {{ .AppName }}"
-      },
-      "body": [
-        {
-          "kind": "subtitle",
-          "content": "Saudações, {{ .UserName }}"
-        },
-        {
-          "kind": "text",
-          "content": "É bom te ver por aqui. Esperamos que goste dos nossos serviços. Clique no botão abaixo para validar o seu email."
-        },
-        {
-          "kind": "button",
-          "key": "verification_link",
-          "content": "Confirmar email"
-        }
-      ]
+  "welcome": {
+    "subject": {
+      "content": "Bem-vindo à {{ .AppName }}"
     },
-    "password_reset": {
-      "subject": {
-        "content": "Redefinição de senha"
+    "body": [
+      {
+        "kind": "subtitle",
+        "content": "Saudações, {{ .UserName }}"
       },
-      "body": [
-        {
-          "kind": "text",
-          "content": "Olá, {{ .UserName }}!"
-        },
-        {
-          "kind": "text",
-          "content": "Recebemos uma solicitação para redefinir a senha da sua conta. Para prosseguir, clique no botão abaixo."
-        },
-        {
-          "kind": "button",
-          "key": "reset_link",
-          "content": "Redefinir senha"
-        },
-        {
-          "kind": "text",
-          "content": "Se você não fez esta solicitação, basta ignorar esse email."
-        }
-      ]
+      {
+        "kind": "text",
+        "content": "É bom te ver por aqui. Esperamos que goste dos nossos serviços. Clique no botão abaixo para validar o seu email."
+      },
+      {
+        "kind": "button",
+        "key": "verification_link",
+        "content": "Confirmar email"
+      }
+    ]
+  },
+  "password_reset": {
+    "subject": {
+      "content": "Redefinição de senha"
     },
-    "password_update_notice": {
-      "subject": {
-        "content": "Senha alterada"
+    "body": [
+      {
+        "kind": "text",
+        "content": "Olá, {{ .UserName }}!"
       },
-      "body": [
-        {
-          "kind": "text",
-          "content": "Olá, {{ .UserName }}!"
-        },
-        {
-          "kind": "text",
-          "content": "A senha da sua conta acabou de ser alterada. Agora você pode entrar em nossas aplicações com sua nova senha."
-        },
-        {
-          "kind": "text",
-          "content": "Se não foi você quem fez esta alteração, certifique-se de que ainda consegue entrar em sua conta. Então reporte a situação para o nosso suporte através do email: {{ .SupportEmail }}."
-        }
-      ]
+      {
+        "kind": "text",
+        "content": "Recebemos uma solicitação para redefinir a senha da sua conta. Para prosseguir, clique no botão abaixo."
+      },
+      {
+        "kind": "button",
+        "key": "reset_link",
+        "content": "Redefinir senha"
+      },
+      {
+        "kind": "text",
+        "content": "Se você não fez esta solicitação, basta ignorar esse email."
+      }
+    ]
+  },
+  "password_update_notice": {
+    "subject": {
+      "content": "Senha alterada"
     },
-    "email_update_notice": {
-      "subject": {
-        "content": "Aviso de atualização de Email"
+    "body": [
+      {
+        "kind": "text",
+        "content": "Olá, {{ .UserName }}!"
       },
-      "body": [
-        {
-          "kind": "subtitle",
-          "content": "Olá, {{ .UserName }}"
-        },
-        {
-          "kind": "text",
-          "content": "Recebemos um pedido para atualizar o email da sua conta para {{ .NewEmail }}. Caso você não reconheça este pedido, clique no botão abaixo para cancelá-lo:"
-        },
-        {
-          "kind": "button",
-          "key": "cancel_link",
-          "content": "Cancelar atualização"
-        },
-        {
-          "kind": "text",
-          "content": "Se o email já tiver sido atualizado sem o seu consentimento, por favor entre em contato com o nosso suporte através do email: {{ .SupportEmail }}."
-        }
-      ]
+      {
+        "kind": "text",
+        "content": "A senha da sua conta acabou de ser alterada. Agora você pode entrar em nossas aplicações com sua nova senha."
+      },
+      {
+        "kind": "text",
+        "content": "Se não foi você quem fez esta alteração, certifique-se de que ainda consegue entrar em sua conta. Então reporte a situação para o nosso suporte através do email: {{ .SupportEmail }}."
+      }
+    ]
+  },
+  "email_update_notice": {
+    "subject": {
+      "content": "Aviso de atualização de Email"
     },
-    "email_update_confirmation": {
-      "subject": {
-        "content": "Atualização de Email"
+    "body": [
+      {
+        "kind": "subtitle",
+        "content": "Olá, {{ .UserName }}"
       },
-      "body": [
-        {
-          "kind": "subtitle",
-          "content": "Olá, {{ .UserName }}"
-        },
-        {
-          "kind": "text",
-          "content": "Recebemos um pedido para atualizar o email da sua conta. Ao confirmar, o email atual será substituído por este, {{ .NewEmail }}. A partir de então, nossa comunicação será toda destinada ao novo email, incluindo futuras recuperações de conta. Para prosseguir com a alteração, clique no botão abaixo."
-        },
-        {
-          "kind": "button",
-          "key": "verification_link",
-          "content": "Confirmar email"
-        },
-        {
-          "kind": "text",
-          "content": "Se você não fez essa solicitação, por favor ignore este email."
-        }
-      ]
-    }
+      {
+        "kind": "text",
+        "content": "Recebemos um pedido para atualizar o email da sua conta para {{ .NewEmail }}. Caso você não reconheça este pedido, clique no botão abaixo para cancelá-lo:"
+      },
+      {
+        "kind": "button",
+        "key": "cancel_link",
+        "content": "Cancelar atualização"
+      },
+      {
+        "kind": "text",
+        "content": "Se o email já tiver sido atualizado sem o seu consentimento, por favor entre em contato com o nosso suporte através do email: {{ .SupportEmail }}."
+      }
+    ]
+  },
+  "email_update_confirmation": {
+    "subject": {
+      "content": "Atualização de Email"
+    },
+    "body": [
+      {
+        "kind": "subtitle",
+        "content": "Olá, {{ .UserName }}"
+      },
+      {
+        "kind": "text",
+        "content": "Recebemos um pedido para atualizar o email da sua conta. Ao confirmar, o email atual será substituído por este, {{ .NewEmail }}. A partir de então, nossa comunicação será toda destinada ao novo email, incluindo futuras recuperações de conta. Para prosseguir com a alteração, clique no botão abaixo."
+      },
+      {
+        "kind": "button",
+        "key": "verification_link",
+        "content": "Confirmar email"
+      },
+      {
+        "kind": "text",
+        "content": "Se você não fez essa solicitação, por favor ignore este email."
+      }
+    ]
   }
 }
