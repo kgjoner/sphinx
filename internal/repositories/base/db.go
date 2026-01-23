@@ -82,7 +82,7 @@ func (p Pool) WithTransaction(ctx context.Context, opts *sql.TxOptions, fn func(
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return nil, fmt.Errorf("baserepo: transaction rollback failed: %v, original error: %v", rollbackErr, err)
 		}
-		return nil, fmt.Errorf("baserepo: transaction failed: %v", err)
+		return nil, err
 	}
 
 	return output, tx.Commit()
