@@ -25,7 +25,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 	factory := NewTestDataFactory()
 
 	// First, login to get an access token for the issueGrant endpoint
-	loginData := factory.SimpleUserLoginData()
+	loginData := factory.AdminUserLoginData()
 	loginResp, err := ts.Request("POST", "/auth/login", loginData, nil)
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
@@ -80,7 +80,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 
 			assert.NotEmpty(t, tokenResp.Data.AccessToken)
 			assert.NotEmpty(t, tokenResp.Data.RefreshToken)
-			assert.Equal(t, mocks.SimpleUserUser.ID, tokenResp.Data.UserID)
+			assert.Equal(t, mocks.AdminUser.ID, tokenResp.Data.UserID)
 			assert.Equal(t, config.Env.JWT.ACCESS_LIFETIME_IN_SEC, tokenResp.Data.ExpiresIn)
 		})
 

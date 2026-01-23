@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -39,7 +40,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 		// Test 2: Get User Info with Token
 		t.Run("should get user info with valid token", func(t *testing.T) {
-			resp, err := ts.AuthenticatedRequest("GET", "/user", nil, respData.Data.AccessToken)
+			resp, err := ts.AuthenticatedRequest("GET", "/user/me", nil, respData.Data.AccessToken)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
@@ -49,10 +50,12 @@ func TestFullAuthenticationFlow(t *testing.T) {
 			err = json.NewDecoder(resp.Body).Decode(&userInfo)
 			require.NoError(t, err)
 
-			assert.Equal(t, mocks.SimpleUserUser.Email.String(), userInfo.Data.Email.String())
-			assert.Equal(t, mocks.SimpleUserUser.Username, userInfo.Data.Username)
-			assert.Equal(t, mocks.SimpleUserUser.Phone.String(), userInfo.Data.Phone.String())
-			assert.Equal(t, mocks.SimpleUserUser.Document.String(), userInfo.Data.Document.String())
+			// Verify against seeded data
+			seedData := ts.GetSeedData()
+			assert.Equal(t, seedData.SimpleUser.Email.String(), userInfo.Data.Email.String())
+			assert.Equal(t, seedData.SimpleUser.Username, userInfo.Data.Username)
+			assert.Equal(t, seedData.SimpleUser.Phone.String(), userInfo.Data.Phone.String())
+			assert.Equal(t, seedData.SimpleUser.Document.String(), userInfo.Data.Document.String())
 		})
 
 		// Test 3: Logout
@@ -63,7 +66,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-			resp2, err := ts.AuthenticatedRequest("GET", "/user", nil, respData.Data.AccessToken)
+			resp2, err := ts.AuthenticatedRequest("GET", "/user/me", nil, respData.Data.AccessToken)
 			require.NoError(t, err)
 			defer resp2.Body.Close()
 
@@ -78,7 +81,7 @@ func TestAuthenticationErrors(t *testing.T) {
 
 	t.Run("should reject invalid credentials", func(t *testing.T) {
 		loginData := map[string]interface{}{
-			"entry":    "nonexistent@example.com",
+			"entry":    "nonexistent@sphinx.test",
 			"password": "wrongpassword",
 		}
 
@@ -89,21 +92,8 @@ func TestAuthenticationErrors(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 	})
 
-	t.Run("should reject requests without app header", func(t *testing.T) {
-		loginData := map[string]interface{}{
-			"entry":    "test@example.com",
-			"password": "password",
-		}
-
-		resp, err := ts.Request("POST", "/auth/login", loginData, nil)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-
-		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-	})
-
 	t.Run("should reject requests with invalid token", func(t *testing.T) {
-		resp, err := ts.AuthenticatedRequest("GET", "/user", nil, "invalid-token")
+		resp, err := ts.AuthenticatedRequest("GET", "/user/me", nil, "invalid-token")
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -183,12 +173,12 @@ func TestSessionManagement(t *testing.T) {
 		assert.NotEqual(t, token1, token2)
 
 		// Both tokens should work
-		resp1, err := ts.AuthenticatedRequest("GET", "/user", nil, token1)
+		resp1, err := ts.AuthenticatedRequest("GET", "/user/me", nil, token1)
 		require.NoError(t, err)
 		defer resp1.Body.Close()
 		assert.Equal(t, http.StatusOK, resp1.StatusCode)
 
-		resp2, err := ts.AuthenticatedRequest("GET", "/user", nil, token2)
+		resp2, err := ts.AuthenticatedRequest("GET", "/user/me", nil, token2)
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 		assert.Equal(t, http.StatusOK, resp2.StatusCode)
@@ -206,7 +196,7 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 	defer mockAuthManager.Close()
 
 	// Create a test provider
-	testEmail := "external@example.com"
+	testEmail := "externalprovider@sphinx.test"
 	testProvider := mockAuthManager.SetupTestProvider(
 		"test-provider",
 		"valid-token-123",
@@ -266,8 +256,9 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 		assert.NotEmpty(t, respData.Data.RefreshToken)
 		assert.NotEmpty(t, respData.Data.UserID)
 
-		// Verify user was created
-		user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.UserID)
+		// Verify user was created in database
+		dao := ts.server.GetBasePool().NewDAO(context.Background())
+		user, err := dao.GetUserByID(respData.Data.UserID)
 		require.NoError(t, err)
 		require.NotNil(t, user)
 
@@ -388,7 +379,7 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 		externalAuthData := map[string]interface{}{
 			"providerName":        "test-provider",
 			"consentCreation":     true,
-			"email":               "test@example.com",
+			"email":               "externalprovider2@sphinx.test",
 			"authorizationHeader": "Bearer invalid-token",
 		}
 
@@ -407,7 +398,7 @@ func TestExternalAuthenticationWithMockProvider(t *testing.T) {
 		externalAuthData := map[string]interface{}{
 			"providerName":        "test-provider",
 			"consentCreation":     true,
-			"email":               "test@example.com",
+			"email":               "externalprovider2@sphinx.test",
 			"authorizationHeader": "Bearer valid-token-123",
 		}
 

@@ -9,26 +9,32 @@ import (
 
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/test/testserver"
+	"github.com/kgjoner/sphinx/test/testutils"
 )
 
 // TestSuite provides a structured approach to E2E testing
 type TestSuite struct {
-	server *testserver.TestServer
-	client *http.Client
-	t      *testing.T
+	server   *testserver.TestServer
+	client   *http.Client
+	t        *testing.T
+	seedData *testutils.SeedData
 }
 
 func NewTestSuite(t *testing.T) *TestSuite {
 	// Load test configuration
 	config.Must()
 
-	// Create test server with the actual server setup
+	// Create test server using the real server
 	server := testserver.New()
 
+	// Load seed data info (assumes data is already seeded by Makefile)
+	seedData := testutils.GetSeedDataInfo()
+
 	return &TestSuite{
-		server: server,
-		client: &http.Client{},
-		t:      t,
+		server:   server,
+		client:   &http.Client{},
+		t:        t,
+		seedData: seedData,
 	}
 }
 
@@ -39,6 +45,11 @@ func (ts *TestSuite) Close() {
 	}
 }
 
+// GetSeedData returns the seeded test data
+func (ts *TestSuite) GetSeedData() *testutils.SeedData {
+	return ts.seedData
+}
+
 // Helper method to make requests
 func (ts *TestSuite) Request(method, endpoint string, body interface{}, headers map[string]string) (*http.Response, error) {
 	var reqBody bytes.Buffer
@@ -46,7 +57,7 @@ func (ts *TestSuite) Request(method, endpoint string, body interface{}, headers 
 		json.NewEncoder(&reqBody).Encode(body)
 	}
 
-	req, err := http.NewRequest(method, ts.server.URL()+"/api"+endpoint, &reqBody)
+	req, err := http.NewRequest(method, ts.server.URL()+config.BASE_PATH+"/api"+endpoint, &reqBody)
 	if err != nil {
 		return nil, err
 	}
@@ -73,14 +84,6 @@ func (ts *TestSuite) AuthenticatedAppRequest(method, endpoint string, body inter
 	encodedToken := base64.StdEncoding.EncodeToString([]byte(token))
 	headers := map[string]string{
 		"Authorization": "Basic " + encodedToken,
-	}
-	return ts.Request(method, endpoint, body, headers)
-}
-
-// Deprecated: There is no need of x-app anymore. Helper method to make app-authenticated requests
-func (ts *TestSuite) AppRequest(method, endpoint string, body interface{}, appID string) (*http.Response, error) {
-	headers := map[string]string{
-		"x-app": appID,
 	}
 	return ts.Request(method, endpoint, body, headers)
 }

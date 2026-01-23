@@ -16,14 +16,20 @@ func NewTestDataFactory() *TestDataFactory {
 	return &TestDataFactory{}
 }
 
-// Return a prefilled user with all fields
-func (f *TestDataFactory) FullUser() map[string]interface{} {
+func (f *TestDataFactory) RandomUser() map[string]interface{} {
 	return map[string]interface{}{
-		"email":    "test@example.com",
-		"password": "TestPassword123!",
-		"username": "testuser",
-		"phone":    "+5511999999999",
-		"document": "cpf:02496946031",
+		"email":    GenerateEmail(),
+		"password": GenerateStrongPassword(),
+	}
+}
+
+func (f *TestDataFactory) RandomFullUser() map[string]interface{} {
+	return map[string]interface{}{
+		"email":    GenerateEmail(),
+		"password": GenerateStrongPassword(),
+		"username": GenerateUsername(),
+		"phone":    GeneratePhone(),
+		"document": "cpf:" + GenerateCPF(),
 		"name":     "Test",
 		"surname":  "User",
 		"address": map[string]interface{}{
@@ -37,13 +43,6 @@ func (f *TestDataFactory) FullUser() map[string]interface{} {
 	}
 }
 
-func (f *TestDataFactory) RandomUser() map[string]interface{} {
-	return map[string]interface{}{
-		"email":    GenerateEmail(),
-		"password": GenerateStrongPassword(),
-	}
-}
-
 func (f *TestDataFactory) CreateLoginData(email, password string) map[string]interface{} {
 	return map[string]interface{}{
 		"entry":    email,
@@ -51,10 +50,19 @@ func (f *TestDataFactory) CreateLoginData(email, password string) map[string]int
 	}
 }
 
+// SimpleUserLoginData returns login credentials for the seeded simple user
 func (f *TestDataFactory) SimpleUserLoginData() map[string]interface{} {
 	return map[string]interface{}{
-		"entry":    mocks.SimpleUserUser.Email.String(),
+		"entry":    mocks.SimpleUser.Email.String(),
 		"password": mocks.SimpleUserPassword,
+	}
+}
+
+// AdminUserLoginData returns login credentials for the seeded admin user
+func (f *TestDataFactory) AdminUserLoginData() map[string]interface{} {
+	return map[string]interface{}{
+		"entry":    mocks.AdminUser.Email.String(),
+		"password": mocks.AdminPassword,
 	}
 }
 
@@ -67,7 +75,7 @@ func (f *TestDataFactory) CreateApplicationData() map[string]interface{} {
 }
 
 func GenerateEmail() string {
-	return "test-" + uuid.New().String()[:8] + "@example.com"
+	return "test-" + uuid.New().String()[:8] + "@spghinx.test"
 }
 
 func GenerateUsername() string {

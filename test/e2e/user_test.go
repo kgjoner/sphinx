@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"github.com/kgjoner/cornucopia/v2/utils/sanitizer"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	authcase "github.com/kgjoner/sphinx/internal/domains/auth/cases"
-	"github.com/kgjoner/sphinx/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +21,7 @@ func TestUserCreation(t *testing.T) {
 
 	factory := NewTestDataFactory()
 	t.Run("should create a new user", func(t *testing.T) {
-		userData := factory.FullUser()
+		userData := factory.RandomFullUser()
 
 		resp, err := ts.Request("POST", "/user", userData, nil)
 		require.NoError(t, err)
@@ -45,7 +45,9 @@ func TestUserCreation(t *testing.T) {
 		assert.Empty(t, respData.Data.Password)
 		assert.Zero(t, respData.Data.ExtraData.Address)
 
-		user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
+		// Query the database to verify user was created
+		dao := ts.server.GetBasePool().NewDAO(context.Background())
+		user, err := dao.GetUserByID(respData.Data.ID)
 		require.NoError(t, err)
 		require.NotNil(t, user)
 
@@ -63,7 +65,7 @@ func TestUserCreation(t *testing.T) {
 		assert.False(t, user.HasEmailBeenVerified)
 
 		t.Run("should verify email", func(t *testing.T) {
-			resp, err := ts.Request("PATCH", "/user/"+respData.Data.ID.String()+"/verification", map[string]string{
+			resp, err := ts.Request("POST", "/user/"+respData.Data.ID.String()+"/email/verification", map[string]string{
 				"code": user.VerificationCodes[auth.VerificationEmail],
 				"kind": string(auth.VerificationEmail),
 			}, nil)
@@ -72,7 +74,9 @@ func TestUserCreation(t *testing.T) {
 
 			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-			user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
+			// Verify email was verified in database
+			dao := ts.server.GetBasePool().NewDAO(context.Background())
+			user, err := dao.GetUserByID(respData.Data.ID)
 			require.NoError(t, err)
 			require.NotNil(t, user)
 			assert.True(t, user.HasEmailBeenVerified)
@@ -95,7 +99,9 @@ func TestUserCreation(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
-		user, err := ts.server.GetMockQueries().GetUserByID(respData.Data.ID)
+		// Query the database to verify user data
+		dao := ts.server.GetBasePool().NewDAO(context.Background())
+		user, err := dao.GetUserByID(respData.Data.ID)
 		require.NoError(t, err)
 		require.NotNil(t, user)
 
@@ -139,10 +145,7 @@ func TestUserCreation(t *testing.T) {
 	})
 
 	t.Run("should reject duplicate email", func(t *testing.T) {
-		userData := map[string]interface{}{
-			"email":    "duplicate@example.com",
-			"password": "TestPassword123!",
-		}
+		userData := factory.RandomUser()
 
 		// Create first user
 		resp1, err := ts.Request("POST", "/user", userData, nil)
@@ -157,7 +160,7 @@ func TestUserCreation(t *testing.T) {
 		assert.Equal(t, http.StatusConflict, resp2.StatusCode)
 
 		// Try to create duplicate with different case
-		userData["email"] = "Duplicate@EXAMPLE.COM"
+		userData["email"] = strings.ToUpper(userData["email"].(string))
 		resp3, err := ts.Request("POST", "/user", userData, nil)
 		require.NoError(t, err)
 		defer resp3.Body.Close()
@@ -186,12 +189,12 @@ func TestUserManagement(t *testing.T) {
 		"surname": "Updated Surname",
 	}
 
-	updateUniqueData := map[string]interface{}{
-		"username": "updated.username",
+	updateUsernameData := map[string]interface{}{
+		"value": "updated.username",
 	}
 
 	t.Run("should update user information", func(t *testing.T) {
-		resp, err := ts.AuthenticatedRequest("PATCH", "/user", updateData, token)
+		resp, err := ts.AuthenticatedRequest("PATCH", "/user/me", updateData, token)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -207,7 +210,7 @@ func TestUserManagement(t *testing.T) {
 	})
 
 	t.Run("should update unique user information", func(t *testing.T) {
-		resp, err := ts.AuthenticatedRequest("PATCH", "/user/unique", updateUniqueData, token)
+		resp, err := ts.AuthenticatedRequest("POST", "/user/me/username", updateUsernameData, token)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -217,11 +220,11 @@ func TestUserManagement(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&accData)
 		require.NoError(t, err)
 
-		assert.Equal(t, updateUniqueData["username"], accData.Data.Username)
+		assert.Equal(t, updateUsernameData["value"], accData.Data.Username)
 	})
 
 	t.Run("should retrieve user information", func(t *testing.T) {
-		resp, err := ts.AuthenticatedRequest("GET", "/user", nil, token)
+		resp, err := ts.AuthenticatedRequest("GET", "/user/me", nil, token)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
@@ -231,12 +234,15 @@ func TestUserManagement(t *testing.T) {
 		err = json.NewDecoder(resp.Body).Decode(&accData)
 		require.NoError(t, err)
 
-		assert.Equal(t, updateUniqueData["username"], accData.Data.Username)
+		assert.Equal(t, updateUsernameData["value"], accData.Data.Username)
 		assert.Equal(t, updateData["name"], accData.Data.Name)
 		assert.Equal(t, updateData["surname"], accData.Data.Surname)
-		assert.Equal(t, mocks.SimpleUserUser.Email.String(), accData.Data.Email.String())
-		assert.Equal(t, mocks.SimpleUserUser.Phone.String(), accData.Data.Phone.String())
-		assert.Equal(t, mocks.SimpleUserUser.Document.String(), accData.Data.Document.String())
+
+		// Verify that original data (email, phone, document) remains unchanged
+		seedData := ts.GetSeedData()
+		assert.Equal(t, seedData.SimpleUser.Email.String(), accData.Data.Email.String())
+		assert.Equal(t, seedData.SimpleUser.Phone.String(), accData.Data.Phone.String())
+		assert.Equal(t, seedData.SimpleUser.Document.String(), accData.Data.Document.String())
 	})
 }
 
@@ -272,7 +278,7 @@ func TestPasswordChange(t *testing.T) {
 			"newPassword": newPassword,
 		}
 
-		resp, err := ts.AuthenticatedRequest("PATCH", "/user/password", changePassword, loginRespData.Data.AccessToken)
+		resp, err := ts.AuthenticatedRequest("POST", "/user/me/password", changePassword, loginRespData.Data.AccessToken)
 		require.NoError(t, err)
 		resp.Body.Close()
 
@@ -329,14 +335,16 @@ func TestPasswordReset(t *testing.T) {
 			"entry": userData["email"],
 		}
 
-		resp, err := ts.Request("POST", "/user/password/request", resetRequest, nil)
+		resp, err := ts.Request("POST", "/user/request-password", resetRequest, nil)
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 		t.Run("should reset password", func(t *testing.T) {
-			user, err := ts.server.GetMockQueries().GetUserByID(accData.Data.ID)
+			// Query database to get verification code
+			dao := ts.server.GetBasePool().NewDAO(context.Background())
+			user, err := dao.GetUserByID(accData.Data.ID)
 			require.NoError(t, err)
 			require.NotNil(t, user)
 
@@ -345,7 +353,7 @@ func TestPasswordReset(t *testing.T) {
 				"newPassword": newPassword,
 			}
 
-			resp, err := ts.Request("PATCH", "/user/"+user.ID.String()+"/password", resetData, nil)
+			resp, err := ts.Request("POST", "/user/"+user.ID.String()+"/password", resetData, nil)
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
@@ -386,7 +394,7 @@ func TestUserExistence(t *testing.T) {
 
 	t.Run("should handle different entry types, even not normalized", func(t *testing.T) {
 		factory := NewTestDataFactory()
-		userData := factory.FullUser()
+		userData := factory.RandomFullUser()
 
 		resp, err := ts.Request("POST", "/user", userData, nil)
 		require.NoError(t, err)

@@ -55,6 +55,11 @@ func New() *Server {
 	}
 }
 
+// BasePool returns the database pool (useful for testing)
+func (s *Server) BasePool() *baserepo.Pool {
+	return s.basePool
+}
+
 //	@title			Sphinx API
 //	@version		{{ .Version }}
 //	@description	An authentication and authorization server.
