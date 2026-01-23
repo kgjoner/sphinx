@@ -89,6 +89,7 @@ func (a emailTemplate) Descriptors(links ...Link) []hermes.CustomTemplateDescrip
 			for _, customLink := range links {
 				if customLink.Key == desc.LinkKey {
 					desc.Link = customLink.URL
+					break
 				}
 			}
 		}

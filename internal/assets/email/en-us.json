@@ -14,7 +14,7 @@
       },
       {
         "kind": "button",
-        "key": "verification_link",
+        "link_key": "verification_link",
         "content": "Confirm email"
       }
     ]
@@ -34,7 +34,7 @@
       },
       {
         "kind": "button",
-        "key": "reset_link",
+        "link_key": "reset_link",
         "content": "Reset password"
       }
     ]
@@ -73,7 +73,7 @@
       },
       {
         "kind": "button",
-        "key": "cancel_link",
+        "link_key": "cancel_link",
         "content": "Cancel update"
       },
       {
@@ -97,7 +97,7 @@
       },
       {
         "kind": "button",
-        "key": "verification_link",
+        "link_key": "verification_link",
         "content": "Confirm email"
       },
       {
