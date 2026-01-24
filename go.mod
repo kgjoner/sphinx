@@ -5,7 +5,7 @@ go 1.25.5
 require github.com/google/uuid v1.6.0
 
 require (
-	github.com/kgjoner/cornucopia/v2 v2.1.2
+	github.com/kgjoner/cornucopia/v2 v2.1.3
 	github.com/lib/pq v1.10.9
 	golang.org/x/crypto v0.45.0
 )
@@ -13,7 +13,7 @@ require (
 require (
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/kgjoner/hermes v0.5.3
+	github.com/kgjoner/hermes v0.6.1
 	github.com/prometheus/client_golang v1.19.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0

@@ -28,7 +28,7 @@ func (s Server) runJobs(ctx context.Context) {
 func updateHermesStyle(hms *hermes.Service) error {
 	logoURL := config.Env.APP_LOGO_URL
 	if logoURL == "" {
-		logoURL = config.Env.SCHEME + "://" + config.Env.HOST + "/root/logo.svg"
+		logoURL = config.Env.SCHEME + "://" + config.Env.HOST + config.BASE_PATH + "/assets/logo.svg"
 	}
 
 	if config.Env.APP_STYLE_URL == "" {
@@ -50,7 +50,7 @@ func updateHermesStyle(hms *hermes.Service) error {
 				Text  string       "json:\"text\""
 				Style template.CSS "json:\"style\""
 			}{
-				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundDark)),
+				Style: template.CSS(fmt.Sprintf("background-color: %v; color: #fff", style.Root.Colors.BackgroundDark)),
 			},
 			Alias: struct {
 				Address htypes.Email "json:\"address\""
@@ -72,6 +72,10 @@ func updateHermesStyle(hms *hermes.Service) error {
 	hms.UpdateDefaultOptions(hermes.Options{
 		PrimaryColor:      appStyle.Colors.PrimaryPure,
 		PrimaryHoverColor: appStyle.Colors.PrimaryLight,
+		PrimaryLinkColor:  appStyle.Colors.PrimaryPure,
+		PrimaryBackgroundColor: appStyle.Colors.Neutral50,
+		SecondaryBackgroundColor: appStyle.Colors.BackgroundLight,
+		DividerColor: appStyle.Colors.Neutral200,
 		Header: struct {
 			Logo      string       "json:\"logo\""
 			Title     string       "json:\"title\""
