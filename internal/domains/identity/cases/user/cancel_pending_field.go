@@ -2,13 +2,11 @@ package usercase
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/sphinx/internal/common/errcode"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/domains/identity"
 )
 
 type CancelPendingField struct {
-	AuthRepo auth.Repo
+	IdentityRepo identity.Repo
 }
 
 type CancelPendingFieldInput struct {
@@ -17,11 +15,11 @@ type CancelPendingFieldInput struct {
 }
 
 func (i CancelPendingField) Execute(input CancelPendingFieldInput) (out bool, err error) {
-	user, err := i.AuthRepo.GetUserByID(input.UserID)
+	user, err := i.IdentityRepo.GetUserByID(input.UserID)
 	if err != nil {
 		return out, err
 	} else if user == nil {
-		return out, apperr.NewRequestError("User does not exit", errcode.UserNotFound)
+		return out, identity.ErrUserNotFound
 	}
 
 	err = user.CancelPendingField(input.Field)
@@ -29,7 +27,7 @@ func (i CancelPendingField) Execute(input CancelPendingFieldInput) (out bool, er
 		return out, err
 	}
 
-	err = i.AuthRepo.UpdateUser(*user)
+	err = i.IdentityRepo.UpdateUser(*user)
 	if err != nil {
 		return out, err
 	}

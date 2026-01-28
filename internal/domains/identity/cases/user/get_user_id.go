@@ -2,19 +2,20 @@ package usercase
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/domains/identity"
+	"github.com/kgjoner/sphinx/internal/shared"
 )
 
 type GetUserID struct {
-	AuthRepo auth.Repo
+	IdentityRepo identity.Repo
 }
 
 type GetUserIDInput struct {
-	Entry auth.Entry
+	Entry shared.Entry
 }
 
 func (i GetUserID) Execute(input GetUserIDInput) (out uuid.UUID, err error) {
-	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
+	user, err := i.IdentityRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return out, err
 	}

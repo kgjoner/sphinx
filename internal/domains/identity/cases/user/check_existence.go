@@ -1,19 +1,20 @@
 package usercase
 
 import (
-	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/domains/identity"
+	"github.com/kgjoner/sphinx/internal/shared"
 )
 
 type CheckEntryExistence struct {
-	AuthRepo auth.Repo
+	IdentityRepo identity.Repo
 }
 
 type CheckEntryExistenceInput struct {
-	Entry auth.Entry
+	Entry shared.Entry
 }
 
 func (i CheckEntryExistence) Execute(input CheckEntryExistenceInput) (out bool, err error) {
-	user, err := i.AuthRepo.GetUserByEntry(input.Entry)
+	user, err := i.IdentityRepo.GetUserByEntry(input.Entry)
 	if err != nil {
 		return out, err
 	}
