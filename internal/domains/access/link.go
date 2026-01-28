@@ -1,19 +1,17 @@
-package auth
+package access
 
 import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/cornucopia/v2/helpers/validator"
 	"github.com/kgjoner/cornucopia/v2/utils/sliceman"
-	"github.com/kgjoner/sphinx/internal/common/errcode"
 )
 
 type Link struct {
 	InternalID  int
 	ID          uuid.UUID   `validate:"required"`
-	UserID      int         `validate:"required"`
+	UserID      uuid.UUID   `validate:"required"`
 	Application Application `validate:"required"`
 	Roles       []Role
 	HasConsent  bool
@@ -26,26 +24,26 @@ type Link struct {
 	CONSTRUCTORS
 ============================================================================== */
 
-func newLink(user *User, app Application) *Link {
+func (a *Application) NewLink(userID uuid.UUID) (*Link, error) {
 	now := time.Now()
 	consent := &Link{
 		ID:          uuid.New(),
-		UserID:      user.InternalID,
-		Application: app,
+		UserID:      userID,
+		Application: *a,
 		HasConsent:  true,
 
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	return consent
+	return consent, nil
 }
 
 /* ==============================================================================
 	METHODS
 ============================================================================== */
 
-func (c Link) hasRole(roles ...Role) bool {
+func (c Link) HasRole(roles ...Role) bool {
 	for _, existingRole := range c.Roles {
 		for _, allowedRole := range roles {
 			if existingRole == allowedRole {
@@ -56,13 +54,13 @@ func (c Link) hasRole(roles ...Role) bool {
 	return false
 }
 
-func (c *Link) addRole(r Role) error {
-	if sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
-		return apperr.NewRequestError("Application does not support the desired role.", errcode.InvalidRole)
+func (c *Link) AddRole(r Role) error {
+	if r != Admin && r != Manager && sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
+		return ErrInvalidRole
 	}
 
 	if sliceman.IndexOf(c.Roles, r) != -1 {
-		return apperr.NewRequestError("Role has already been added.")
+		return ErrRedundantRequest
 	}
 
 	c.Roles = append(c.Roles, r)
@@ -70,14 +68,14 @@ func (c *Link) addRole(r Role) error {
 	return validator.Validate(c)
 }
 
-func (c *Link) removeRole(r Role) error {
-	if sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
-		return apperr.NewRequestError("Application does not support the desired role.", errcode.InvalidRole)
+func (c *Link) RemoveRole(r Role) error {
+	if r != Admin && r != Manager && sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
+		return ErrInvalidRole
 	}
 
 	index := sliceman.IndexOf(c.Roles, r)
 	if index == -1 {
-		return apperr.NewRequestError("Role has not been added.")
+		return ErrRedundantRequest
 	}
 
 	c.Roles = sliceman.Remove(c.Roles, index)
@@ -85,13 +83,13 @@ func (c *Link) removeRole(r Role) error {
 	return validator.Validate(c)
 }
 
-func (c *Link) revokeConsent() error {
+func (c *Link) RevokeConsent() error {
 	c.HasConsent = false
 	c.UpdatedAt = time.Now()
 	return validator.Validate(c)
 }
 
-func (c *Link) restoreConsent() error {
+func (c *Link) RestoreConsent() error {
 	c.HasConsent = true
 	c.UpdatedAt = time.Now()
 	return validator.Validate(c)
@@ -111,9 +109,11 @@ type LinkView struct {
 }
 
 func (l Link) View() LinkView {
+	app := l.Application.View()
+
 	return LinkView{
 		ID:          l.ID,
-		Application: l.Application.View(),
+		Application: app,
 		Roles:       l.Roles,
 		HasConsent:  l.HasConsent,
 		CreatedAt:   l.CreatedAt,

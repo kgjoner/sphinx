@@ -1,4 +1,4 @@
-package authgtw
+package accesshttp
 
 import (
 	"net/http"
@@ -6,11 +6,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/common"
-	appcase "github.com/kgjoner/sphinx/internal/domains/auth/cases/application"
+	appcase "github.com/kgjoner/sphinx/internal/domains/access/cases/application"
+	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
 )
 
-func (g AuthGateway) applicationHandler(r chi.Router) {
+func (g Gateway) applicationHandler(r chi.Router) {
 	r.Get("/{id}", g.getApplication)
 
 	r.With(g.mid.Authenticate).Post("/", g.createApplication)
@@ -32,10 +32,10 @@ func (g AuthGateway) applicationHandler(r chi.Router) {
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
-func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
+func (g Gateway) createApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
-		AddFromContext(common.ActorCtxKey, "actor")
+		AddFromContext(sharedhttp.ActorCtxKey, "actor")
 
 	var input appcase.CreateApplicationInput
 	err := c.Write(&input)
@@ -44,9 +44,9 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
+	queries := g.AccessPool.NewDAO(r.Context())
 	i := appcase.CreateApplication{
-		AuthRepo: queries,
+		AccessRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -74,11 +74,11 @@ func (g AuthGateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
-func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
+func (g Gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		ParseURLParam("id", "applicationID").
-		AddFromContext(common.ActorCtxKey, "actor")
+		AddFromContext(sharedhttp.ActorCtxKey, "actor")
 
 	var input appcase.EditAppInput
 	err := c.Write(&input)
@@ -87,9 +87,9 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
+	queries := g.AccessPool.NewDAO(r.Context())
 	i := appcase.EditApp{
-		AuthRepo: queries,
+		AccessRepo: queries,
 	}
 
 	output, err := i.Execute(input)
@@ -112,7 +112,7 @@ func (g AuthGateway) editApplication(w http.ResponseWriter, r *http.Request) {
 //	@Success		200	{object}	presenter.Success[auth.ApplicationView]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
+func (g Gateway) getApplication(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("id", "applicationID")
 
@@ -123,9 +123,9 @@ func (g AuthGateway) getApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
+	queries := g.AccessPool.NewDAO(r.Context())
 	i := appcase.GetApp{
-		AuthRepo: queries,
+		AccessRepo: queries,
 	}
 
 	output, err := i.Execute(input)
