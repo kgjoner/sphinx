@@ -31,4 +31,8 @@ var (
 		"this action does not accept provided proof of authentication; this is likely a programming error",
 		"shared.invalid_proof",
 	)
+	ErrInvalidExternalSubject = apperr.NewInternalError(
+		"external subject does not contain required information",
+		"shared.invalid_external_subject",
+	)
 )

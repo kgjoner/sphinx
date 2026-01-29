@@ -26,7 +26,7 @@ func (i SignUp) Execute(input SignUpInput) (out identity.UserLeanView, err error
 	if err != nil {
 		return out, err
 	} else if extSubject == nil || extSubject.ID == "" || extSubject.Email.IsZero() || extSubject.ProviderName == "" {
-		return out, identity.ErrInvalidExternalSubject
+		return out, shared.ErrInvalidExternalSubject
 	}
 
 	user, err := i.IdentityRepo.GetUserByExternalCredential(extSubject.ProviderName, extSubject.ID)

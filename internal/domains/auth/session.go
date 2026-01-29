@@ -6,23 +6,33 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
 	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/sphinx/internal/shared"
 )
 
 type Session struct {
-	InternalID                     int
-	ID                             uuid.UUID   `validate:"required"`
-	UserID                         int         `validate:"required"`
-	Application                    Application `validate:"required"`
-	RefreshToken                   string      `validate:"required"`
+	InternalID int
+	ID         uuid.UUID `validate:"required"`
+
+	SubjectID    uuid.UUID    `validate:"required"`
+	SubjectEmail htypes.Email `validate:"required"`
+	SubjectName  string       `validate:"required"`
+
+	AudienceID uuid.UUID `validate:"required"`
+	Roles      []string  `validate:"required"`
+
+	IP                             string `validate:"required"`
+	Device                         string `validate:"required"`
+	RefreshToken                   shared.HashedData
 	RefreshedAt                    htypes.NullTime
 	ElapsedMinutesBetweenRefreshes []int
 	RefreshesCount                 int
-	Device                         string `validate:"required"`
-	Ip                             string
-	IsActive                       bool
-	TerminatedAt                   htypes.NullTime
-	CreatedAt                      time.Time `validate:"required"`
-	UpdatedAt                      time.Time `validate:"required"`
+
+	IsActive        bool
+	isAuthenticated bool
+
+	TerminatedAt htypes.NullTime
+	CreatedAt    time.Time `validate:"required"`
+	UpdatedAt    time.Time `validate:"required"`
 }
 
 /* ==============================================================================
@@ -30,33 +40,76 @@ type Session struct {
 ============================================================================== */
 
 type SessionCreationFields struct {
-	Application Application `json:"application" validate:"required"`
-	Device      string      `json:"device" validate:"required"`
-	Ip          string      `json:"ip" validate:"required"`
+	Device string
+	IP     string
 }
 
-func newSession(user User, f *SessionCreationFields) *Session {
+func NewSession(f SessionCreationFields, p Principal, proof shared.AuthProof) (*Session, error) {
+	switch proofTyped := proof.(type) {
+	case *shared.PasswordProof:
+		if !proofTyped.ValidFor(p.Password) {
+			return nil, shared.ErrInvalidCredentials
+		}
+	case *GrantProof:
+		if !proofTyped.ValidFor(p) {
+			return nil, shared.ErrInvalidCredentials
+		}
+	case *ExternalLoginProof:
+		if !proofTyped.ValidFor(p) {
+			return nil, shared.ErrInvalidCredentials
+		}
+	default:
+		return nil, shared.ErrInvalidProof
+	}
+
 	now := time.Now()
 	s := &Session{
 		ID:                             uuid.New(),
-		UserID:                         user.InternalID,
-		Application:                    f.Application,
+		SubjectID:                      p.ID,
+		SubjectEmail:                   p.Email,
+		SubjectName:                    p.Name,
+		AudienceID:                     p.AudienceID,
+		Roles:                          p.Roles,
 		Device:                         f.Device,
-		Ip:                             f.Ip,
+		IP:                             f.IP,
 		IsActive:                       true,
 		CreatedAt:                      now,
 		UpdatedAt:                      now,
 		ElapsedMinutesBetweenRefreshes: []int{},
+		isAuthenticated:                true,
 	}
 
-	return s
+	return s, validator.Validate(s)
 }
 
 /* ==============================================================================
 	METHODS
 ============================================================================== */
 
-func (s *Session) terminate() error {
+// Validate checks if the session is still active and matches the provided actor's details.
+func (s *Session) Validate(actor *shared.Actor) error {
+	if !s.IsActive || actor.SessionID != s.ID || actor.ID != s.SubjectID || actor.AudienceID != s.AudienceID {
+		return ErrInvalidSession
+	}
+
+	return nil
+}
+
+func (s *Session) Authenticate(proof shared.AuthProof) error {
+	switch proofTyped := proof.(type) {
+	case *shared.DataProof:
+		if !proofTyped.ValidFor(s.RefreshToken) {
+			return shared.ErrInvalidCredentials
+		}
+	default:
+		return shared.ErrInvalidProof
+	}
+
+	s.isAuthenticated = true
+	return nil
+}
+
+func (s *Session) Terminate() error {
 	now := time.Now()
 	s.IsActive = false
 	s.TerminatedAt = htypes.NullTime{Time: now}
@@ -64,7 +117,13 @@ func (s *Session) terminate() error {
 	return validator.Validate(s)
 }
 
-func (s *Session) updateRefreshToken(token authToken) {
+func (s *Session) UpdateRefreshToken(token shared.HashedData) {
+	// First time setting the refresh token
+	if s.RefreshToken.IsZero() {
+		s.RefreshToken = token
+		return
+	}
+
 	if len(s.ElapsedMinutesBetweenRefreshes) >= 1000 {
 		sum := 0
 		for _, minutes := range s.ElapsedMinutesBetweenRefreshes {
@@ -81,15 +140,11 @@ func (s *Session) updateRefreshToken(token authToken) {
 	}
 	elapsedTime := now.Sub(lastRefreshTime)
 
-	s.RefreshToken = hashData(token.String())
+	s.RefreshToken = token
 	s.ElapsedMinutesBetweenRefreshes = append(s.ElapsedMinutesBetweenRefreshes, int(elapsedTime.Minutes()))
 	s.RefreshesCount += 1
 	s.RefreshedAt = htypes.NullTime{Time: now}
 	s.UpdatedAt = now
-}
-
-func (s Session) doesRefreshTokenMatch(signedString string) bool {
-	return s.RefreshToken == hashData(signedString)
 }
 
 /* ==============================================================================
@@ -116,12 +171,14 @@ func (a SessionSortableByAge) Swap(i, j int) {
 
 type SessionView struct {
 	ID                             uuid.UUID       `json:"id"`
-	Application                    ApplicationView `json:"application"`
+	SubjectID                      uuid.UUID       `json:"subjectId"`
+	SubjectEmail                   htypes.Email    `json:"subjectEmail"`
+	AudienceID                     uuid.UUID       `json:"audienceId"`
 	RefreshedAt                    htypes.NullTime `json:"refreshedAt"`
 	ElapsedMinutesBetweenRefreshes []int           `json:"elapsedMinutesBetweenRefreshes"`
 	RefreshesCount                 int             `json:"refreshesCount"`
 	Device                         string          `json:"device"`
-	Ip                             string          `json:"ip"`
+	IP                             string          `json:"ip"`
 	IsActive                       bool            `json:"isActive"`
 	TerminatedAt                   htypes.NullTime `json:"terminatedAt"`
 	CreatedAt                      time.Time       `json:"createdAt"`
@@ -131,15 +188,33 @@ type SessionView struct {
 func (s Session) View() SessionView {
 	return SessionView{
 		ID:                             s.ID,
-		Application:                    s.Application.View(),
+		SubjectID:                      s.SubjectID,
+		SubjectEmail:                   s.SubjectEmail,
+		AudienceID:                     s.AudienceID,
 		RefreshedAt:                    s.RefreshedAt,
 		ElapsedMinutesBetweenRefreshes: s.ElapsedMinutesBetweenRefreshes,
 		RefreshesCount:                 s.RefreshesCount,
 		Device:                         s.Device,
-		Ip:                             s.Ip,
+		IP:                             s.IP,
 		IsActive:                       s.IsActive,
 		TerminatedAt:                   s.TerminatedAt,
 		CreatedAt:                      s.CreatedAt,
 		UpdatedAt:                      s.UpdatedAt,
 	}
+}
+
+func (s Session) ToSubject() (*Subject, error) {
+	if !s.isAuthenticated {
+		return nil, ErrInvalidSession
+	}
+
+	return &Subject{
+		Kind:       shared.KindUser,
+		ID:         s.SubjectID,
+		Email:      s.SubjectEmail,
+		Name:       s.SubjectName,
+		AudienceID: s.AudienceID,
+		Roles:      s.Roles,
+		SessionID:  s.ID,
+	}, nil
 }

@@ -31,10 +31,6 @@ var (
 		"user already exists",
 		"identity.duplicate_entry",
 	)
-	ErrInvalidExternalSubject = apperr.NewInternalError(
-		"external subject does not contain required information",
-		"identity.invalid_external_subject",
-	)
 	ErrExistingExternalCredential = apperr.NewConflictError(
 		"external credential is already linked to another user",
 		"identity.existing_external_credential",
