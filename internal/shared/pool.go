@@ -5,9 +5,18 @@ import (
 	"database/sql"
 )
 
-type RepoPool[T any] interface {
-	NewDAO(context.Context) T
-	WithTransaction(context.Context, *sql.TxOptions, func(T) (any, error)) (any, error)
-	WithReadOnlyTransaction(context.Context, func(T) (any, error)) (any, error)
+type RepoPool interface {
+	Connection() *sql.DB
+	WithTx(context.Context, *sql.TxOptions, func(*sql.Tx) (any, error)) (any, error)
+	WithReadOnlyTx(context.Context, func(*sql.Tx) (any, error)) (any, error)
 	Close() error
+}
+
+type DBTX interface {
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
+type RepoFactory[T any] interface {
+	NewDAO(context.Context, DBTX) T
 }

@@ -44,9 +44,10 @@ func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AccessPool.NewDAO(r.Context())
+	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := accesscase.CreateApplication{
 		AccessRepo: repo,
+		PwHasher:   g.PwHasher,
 	}
 
 	output, err := i.Execute(input)
@@ -87,7 +88,7 @@ func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AccessPool.NewDAO(r.Context())
+	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := accesscase.EditApp{
 		AccessRepo: repo,
 	}
@@ -123,7 +124,7 @@ func (g gateway) getApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AccessPool.NewDAO(r.Context())
+	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := accesscase.GetApp{
 		AccessRepo: repo,
 	}

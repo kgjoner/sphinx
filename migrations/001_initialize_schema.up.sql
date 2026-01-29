@@ -9,9 +9,9 @@ CREATE TABLE IF NOT EXISTS account (
   extra_data jsonb,
 
   is_active bool NOT NULL,
-  has_email_been_verified bool NOT NULL,
-  has_phone_been_verified bool NOT NULL,
-  codes jsonb NOT NULL,
+  has_email_been_verified bool NOT NULL DEFAULT false,
+  has_phone_been_verified bool NOT NULL DEFAULT false,
+  codes jsonb NOT NULL DEFAULT '{}',
 
   password_updated_at timestamp,
   created_at timestamp NOT NULL DEFAULT NOW(),

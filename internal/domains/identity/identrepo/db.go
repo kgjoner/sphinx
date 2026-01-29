@@ -1,23 +1,48 @@
-package baserepo
+package identrepo
 
 import (
 	"bufio"
+	"context"
 	"embed"
 	"fmt"
 	"strings"
+
+	"github.com/kgjoner/sphinx/internal/domains/identity"
+	"github.com/kgjoner/sphinx/internal/shared"
+	_ "github.com/lib/pq"
 )
+
+type Factory struct{}
+
+func NewFactory() *Factory {
+	return &Factory{}
+}
+
+type DAO struct {
+	ctx  context.Context
+	dbtx shared.DBTX
+}
+
+func (f *Factory) NewDAO(ctx context.Context, dbtx shared.DBTX) identity.Repo {
+	return &DAO{
+		ctx,
+		dbtx,
+	}
+}
+
+/* =============================================================================
+	Raw Queries
+============================================================================= */
 
 //go:embed queries/*.sql
 var sqlFiles embed.FS
 
 var rawQueries = map[string]string{}
-var ErrNoQuery = fmt.Errorf("baserepo: raw query not found")
+var ErrNoQuery = fmt.Errorf("identrepo: raw query not found")
 
 func init() {
 	readAndParse("user.sql")
-	readAndParse("application.sql")
-	readAndParse("link.sql")
-	readAndParse("session.sql")
+	readAndParse("external_credential.sql")
 }
 
 func readAndParse(filename string) {

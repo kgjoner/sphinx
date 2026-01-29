@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authcase"
 	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
 )
@@ -47,7 +46,7 @@ func (g gateway) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AuthPool.NewDAO(r.Context())
+	repo := g.AuthFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := authcase.Login{
 		AuthRepo:      repo,
 		PwHasher:      g.PwHasher,
@@ -88,7 +87,7 @@ func (g gateway) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AuthPool.NewDAO(r.Context())
+	repo := g.AuthFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := authcase.Logout{
 		AuthRepo: repo,
 	}
@@ -126,9 +125,11 @@ func (g gateway) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AuthPool.NewDAO(r.Context())
+	repo := g.AuthFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := authcase.Refresh{
-		AuthRepo: repo,
+		AuthRepo:      repo,
+		DataHasher:    g.DataHasher,
+		TokenProvider: g.TokenProvider,
 	}
 
 	output, err := i.Execute(input)
@@ -172,17 +173,15 @@ func (g gateway) externalLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	output, err := g.AuthPool.WithTransaction(r.Context(), nil, func(tx auth.Repo) (any, error) {
-		i := authcase.ExternalLogin{
-			AuthRepo:         tx,
-			IdentityProvider: g.IdentityProvider,
-			TokenProvider:    g.TokenProvider,
-			DataHasher:       g.DataHasher,
-		}
+	repo := g.AuthFactory.NewDAO(r.Context(), g.PGPool.Connection())
+	i := authcase.ExternalLogin{
+		AuthRepo:         repo,
+		IdentityProvider: g.IdentityProvider,
+		DataHasher:       g.DataHasher,
+		TokenProvider:    g.TokenProvider,
+	}
 
-		return i.Execute(input)
-	})
-
+	output, err := i.Execute(input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return

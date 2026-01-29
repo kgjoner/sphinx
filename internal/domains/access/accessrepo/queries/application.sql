@@ -29,7 +29,6 @@ WHERE
 
 -- name: GetApplicationByID :one
 SELECT
-  internal_id,
   id,
   name,
   possible_roles,

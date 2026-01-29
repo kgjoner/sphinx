@@ -14,10 +14,11 @@ type gateway struct {
 }
 
 type Dependencies struct {
-	// Pools
-	IdentityPool shared.RepoPool[identity.Repo]
-	AccessPool   shared.RepoPool[access.Repo]
-	AuthPool     shared.RepoPool[auth.Repo]
+	// Repository
+	PGPool        shared.RepoPool
+	IdentFactory  shared.RepoFactory[identity.Repo]
+	AccessFactory shared.RepoFactory[access.Repo]
+	AuthFactory   shared.RepoFactory[auth.Repo]
 
 	// Services
 	IdentityProvider shared.IdentityProvider

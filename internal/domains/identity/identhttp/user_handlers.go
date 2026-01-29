@@ -1,12 +1,12 @@
 package identhttp
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/domains/identity/identcase"
 	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
 )
@@ -60,11 +60,12 @@ func (g gateway) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	identRepo := g.IdentityPool.NewDAO(r.Context())
-	accessRepo := g.AccessPool.NewDAO(r.Context())
+	identRepo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
+	accessRepo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.SignUp{
 		IdentityRepo: identRepo,
 		AccessRepo:   accessRepo,
+		PwHasher:     g.PwHasher,
 		Mailer:       g.Mailer,
 	}
 	output, err := i.Execute(input)
@@ -100,7 +101,7 @@ func (g gateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.CheckEntryExistence{
 		IdentityRepo: repo,
 	}
@@ -158,7 +159,7 @@ func (g gateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.GetPrivateUser{
 		IdentityRepo: repo,
 	}
@@ -199,7 +200,7 @@ func (g gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.VerifyUser{
 		IdentityRepo: repo,
 	}
@@ -243,11 +244,11 @@ func (g gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authRepo := g.AuthPool.NewDAO(r.Context())
-	output, err := g.IdentityPool.WithTransaction(r.Context(), nil, func(tx identity.Repo) (any, error) {
+	output, err := g.PGPool.WithTx(r.Context(), nil, func(tx *sql.Tx) (any, error) {
 		i := identcase.ChangePassword{
-			IdentityRepo: tx,
-			AuthRepo:     authRepo,
+			IdentityRepo: g.IdentFactory.NewDAO(r.Context(), tx),
+			AuthRepo:     g.AuthFactory.NewDAO(r.Context(), tx),
+			PwHasher:     g.PwHasher,
 			Mailer:       g.Mailer,
 		}
 
@@ -286,7 +287,7 @@ func (g gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.RequestPasswordReset{
 		IdentityRepo: repo,
 		Mailer:       g.Mailer,
@@ -329,11 +330,11 @@ func (g gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authRepo := g.AuthPool.NewDAO(r.Context())
-	output, err := g.IdentityPool.WithTransaction(r.Context(), nil, func(tx identity.Repo) (any, error) {
+	output, err := g.PGPool.WithTx(r.Context(), nil, func(tx *sql.Tx) (any, error) {
 		i := identcase.ResetPassword{
-			IdentityRepo: tx,
-			AuthRepo:     authRepo,
+			IdentityRepo: g.IdentFactory.NewDAO(r.Context(), tx),
+			AuthRepo:     g.AuthFactory.NewDAO(r.Context(), tx),
+			PwHasher:     g.PwHasher,
 			Mailer:       g.Mailer,
 		}
 
@@ -396,7 +397,7 @@ func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.UpdateExtraData{
 		IdentityRepo: repo,
 	}
@@ -465,7 +466,7 @@ func (g gateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.UpdateUniqueField{
 		IdentityRepo: repo,
 		Mailer:       g.Mailer,
@@ -505,7 +506,7 @@ func (g gateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.CancelPendingField{
 		IdentityRepo: repo,
 	}
@@ -545,7 +546,7 @@ func (g gateway) getUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.GetUserID{
 		IdentityRepo: repo,
 	}
@@ -585,7 +586,7 @@ func (g gateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.GetUserEmail{
 		IdentityRepo: repo,
 	}

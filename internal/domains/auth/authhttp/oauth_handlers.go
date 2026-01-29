@@ -41,10 +41,10 @@ func (g gateway) issueGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AuthPool.NewDAO(r.Context())
 	i := authcase.IssueGrant{
-		AuthRepo:  repo,
-		CacheRepo: g.CachePool.NewDAO(r.Context()),
+		AuthRepo:   g.AuthFactory.NewDAO(r.Context(), g.PGPool.Connection()),
+		AccessRepo: g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection()),
+		CacheRepo:  g.CachePool.NewDAO(r.Context()),
 	}
 
 	output, err := i.Execute(input)
@@ -82,10 +82,14 @@ func (g gateway) exchangeGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AuthPool.NewDAO(r.Context())
+	repo := g.AuthFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := authcase.ExchangeGrant{
-		AuthRepo:  repo,
-		CacheRepo: g.CachePool.NewDAO(r.Context()),
+		AuthRepo:      repo,
+		CacheRepo:     g.CachePool.NewDAO(r.Context()),
+		PwHasher:      g.PwHasher,
+		DataHasher:    g.DataHasher,
+		Challenger:    g.Challenger,
+		TokenProvider: g.TokenProvider,
 	}
 
 	output, err := i.Execute(input)

@@ -1,4 +1,4 @@
-package baserepo
+package identrepo
 
 import (
 	"database/sql"
@@ -6,16 +6,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/utils/datatransform"
 	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/domains/identity"
+	"github.com/kgjoner/sphinx/internal/shared"
 )
 
-func (q DAO) InsertUser(user *auth.User) error {
+func (q DAO) InsertUser(user *identity.User) error {
 	raw, exists := rawQueries["CreateUser"]
 	if !exists {
 		return ErrNoQuery
 	}
 
-	row := q.executor().QueryRowContext(q.ctx, raw,
+	q.dbtx.QueryRowContext(q.ctx, raw,
 		user.ID,
 		user.Email.String(),
 		user.Password,
@@ -29,19 +30,17 @@ func (q DAO) InsertUser(user *auth.User) error {
 		user.HasEmailBeenVerified,
 		user.HasPhoneBeenVerified,
 		datatransform.ToRawMessage(user.VerificationCodes),
-		datatransform.ToRawMessage(user.ExternalAuthIDs),
 	)
-	err := row.Scan(&user.InternalID)
-	return err
+	return nil
 }
 
-func (q DAO) UpdateUser(user auth.User) error {
+func (q DAO) UpdateUser(user identity.User) error {
 	raw, exists := rawQueries["UpdateUser"]
 	if !exists {
 		return ErrNoQuery
 	}
 
-	_, err := q.executor().ExecContext(q.ctx, raw,
+	_, err := q.dbtx.ExecContext(q.ctx, raw,
 		user.ID,
 		user.Email.String(),
 		user.Password,
@@ -55,23 +54,21 @@ func (q DAO) UpdateUser(user auth.User) error {
 		user.HasEmailBeenVerified,
 		user.HasPhoneBeenVerified,
 		datatransform.ToRawMessage(user.VerificationCodes),
-		datatransform.ToRawMessage(user.ExternalAuthIDs),
 		user.PasswordUpdatedAt,
 		user.UpdatedAt,
 	)
 	return err
 }
 
-func (q DAO) GetUserByID(id uuid.UUID) (*auth.User, error) {
+func (q DAO) GetUserByID(id uuid.UUID) (*identity.User, error) {
 	raw, exists := rawQueries["GetUserByID"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
-	row := q.executor().QueryRowContext(q.ctx, raw, id)
-	var item auth.User
+	row := q.dbtx.QueryRowContext(q.ctx, raw, id)
+	var item identity.User
 	err := row.Scan(
-		&item.InternalID,
 		&item.ID,
 		&item.Email,
 		&item.Phone,
@@ -85,9 +82,7 @@ func (q DAO) GetUserByID(id uuid.UUID) (*auth.User, error) {
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
 		dbhandler.Map(&item.VerificationCodes),
-		dbhandler.Map(&item.ExternalAuthIDs),
-		dbhandler.FromJSON(&item.Links),
-		dbhandler.FromJSON(&item.ActiveSessions),
+		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.PasswordUpdatedAt,
 		&item.CreatedAt,
 		&item.UpdatedAt,
@@ -101,16 +96,15 @@ func (q DAO) GetUserByID(id uuid.UUID) (*auth.User, error) {
 	return &item, nil
 }
 
-func (q DAO) GetUserByEntry(entry auth.Entry) (*auth.User, error) {
+func (q DAO) GetUserByEntry(entry shared.Entry) (*identity.User, error) {
 	raw, exists := rawQueries["GetUserByEntry"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
-	row := q.executor().QueryRowContext(q.ctx, raw, entry.String())
-	var item auth.User
+	row := q.dbtx.QueryRowContext(q.ctx, raw, entry.String())
+	var item identity.User
 	err := row.Scan(
-		&item.InternalID,
 		&item.ID,
 		&item.Email,
 		&item.Phone,
@@ -124,9 +118,7 @@ func (q DAO) GetUserByEntry(entry auth.Entry) (*auth.User, error) {
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
 		dbhandler.Map(&item.VerificationCodes),
-		dbhandler.Map(&item.ExternalAuthIDs),
-		dbhandler.FromJSON(&item.Links),
-		dbhandler.FromJSON(&item.ActiveSessions),
+		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.PasswordUpdatedAt,
 		&item.CreatedAt,
 		&item.UpdatedAt,
@@ -140,16 +132,15 @@ func (q DAO) GetUserByEntry(entry auth.Entry) (*auth.User, error) {
 	return &item, nil
 }
 
-func (q DAO) GetUserByLink(linkID uuid.UUID) (*auth.User, error) {
-	raw, exists := rawQueries["GetUserByLink"]
+func (q DAO) GetUserByExternalCredential(provider string, subjectID string) (*identity.User, error) {
+	raw, exists := rawQueries["GetUserByExternalCredential"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
-	row := q.executor().QueryRowContext(q.ctx, raw, linkID)
-	var item auth.User
+	row := q.dbtx.QueryRowContext(q.ctx, raw, provider, subjectID)
+	var item identity.User
 	err := row.Scan(
-		&item.InternalID,
 		&item.ID,
 		&item.Email,
 		&item.Phone,
@@ -163,48 +154,7 @@ func (q DAO) GetUserByLink(linkID uuid.UUID) (*auth.User, error) {
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
 		dbhandler.Map(&item.VerificationCodes),
-		dbhandler.Map(&item.ExternalAuthIDs),
-		dbhandler.FromJSON(&item.Links),
-		dbhandler.FromJSON(&item.ActiveSessions),
-		&item.PasswordUpdatedAt,
-		&item.CreatedAt,
-		&item.UpdatedAt,
-	)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	return &item, nil
-}
-
-func (q DAO) GetUserByExternalAuthID(provider string, id string) (*auth.User, error) {
-	raw, exists := rawQueries["GetUserByExternalAuthID"]
-	if !exists {
-		return nil, ErrNoQuery
-	}
-
-	row := q.executor().QueryRowContext(q.ctx, raw, provider, id)
-	var item auth.User
-	err := row.Scan(
-		&item.InternalID,
-		&item.ID,
-		&item.Email,
-		&item.Phone,
-		&item.Password,
-		&item.Username,
-		&item.Document,
-		dbhandler.FromJSON(&item.ExtraData),
-		&item.IsActive,
-		&item.PendingEmail,
-		&item.PendingPhone,
-		&item.HasEmailBeenVerified,
-		&item.HasPhoneBeenVerified,
-		dbhandler.Map(&item.VerificationCodes),
-		dbhandler.Map(&item.ExternalAuthIDs),
-		dbhandler.FromJSON(&item.Links),
-		dbhandler.FromJSON(&item.ActiveSessions),
+		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.PasswordUpdatedAt,
 		&item.CreatedAt,
 		&item.UpdatedAt,

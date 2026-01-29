@@ -49,7 +49,7 @@ func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AccessPool.NewDAO(r.Context())
+	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := accesscase.GetLink{
 		AccessRepo: repo,
 	}
@@ -95,7 +95,7 @@ func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AccessPool.NewDAO(r.Context())
+	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := accesscase.AddRole{
 		AccessRepo: repo,
 	}
@@ -141,7 +141,7 @@ func (g gateway) removeRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AccessPool.NewDAO(r.Context())
+	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := accesscase.RemoveRole{
 		AccessRepo: repo,
 	}

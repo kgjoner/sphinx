@@ -47,8 +47,8 @@ func (g gateway) externalSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	identRepo := g.IdentityPool.NewDAO(r.Context())
-	accessRepo := g.AccessPool.NewDAO(r.Context())
+	identRepo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
+	accessRepo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.ExternalSignUp{
 		IdentityRepo:     identRepo,
 		AccessRepo:       accessRepo,
@@ -94,7 +94,7 @@ func (g gateway) authorizeExternalCredential(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.AuthorizeExternalCredential{
 		IdentityRepo:     repo,
 		IdentityProvider: g.IdentityProvider,
@@ -136,7 +136,7 @@ func (g gateway) unauthorizeExternalCredential(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	repo := g.IdentityPool.NewDAO(r.Context())
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.UnauthorizeExternalCredential{
 		IdentityRepo: repo,
 	}

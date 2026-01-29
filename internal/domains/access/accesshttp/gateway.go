@@ -19,7 +19,9 @@ type gateway struct {
 }
 
 type Dependencies struct {
-	AccessPool shared.RepoPool[access.Repo]
+	PGPool        shared.RepoPool
+	AccessFactory shared.RepoFactory[access.Repo]
+	PwHasher      shared.PasswordHasher
 	*sharedhttp.Middleware
 }
 
@@ -69,7 +71,7 @@ func (g gateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repo := g.AccessPool.NewDAO(r.Context())
+	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	var output bool
 	if input.ShouldRemove.Bool {
 		i := accesscase.RemoveRole{

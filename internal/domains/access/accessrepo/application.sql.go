@@ -1,4 +1,4 @@
-package baserepo
+package accessrepo
 
 import (
 	"database/sql"
@@ -6,34 +6,33 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/utils/datatransform"
 	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/lib/pq"
 )
 
-func (q DAO) InsertApplication(app *auth.Application) error {
+func (q DAO) InsertApplication(app *access.Application) error {
 	raw, exists := rawQueries["CreateApplication"]
 	if !exists {
 		return ErrNoQuery
 	}
 
-	row := q.executor().QueryRowContext(q.ctx, raw,
+	q.dbtx.QueryRowContext(q.ctx, raw,
 		app.ID,
 		app.Name,
 		pq.Array(datatransform.ToStringArray(app.PossibleRoles)),
 		app.Secret,
 		pq.Array(app.AllowedRedirectUris),
 	)
-	err := row.Scan(&app.InternalID)
-	return err
+	return nil
 }
 
-func (q DAO) UpdateApplication(app auth.Application) error {
+func (q DAO) UpdateApplication(app access.Application) error {
 	raw, exists := rawQueries["UpdateApplication"]
 	if !exists {
 		return ErrNoQuery
 	}
 
-	_, err := q.executor().ExecContext(q.ctx, raw,
+	_, err := q.dbtx.ExecContext(q.ctx, raw,
 		app.ID,
 		app.Name,
 		pq.Array(datatransform.ToStringArray(app.PossibleRoles)),
@@ -42,16 +41,15 @@ func (q DAO) UpdateApplication(app auth.Application) error {
 	return err
 }
 
-func (q DAO) GetApplicationByID(id uuid.UUID) (*auth.Application, error) {
+func (q DAO) GetApplicationByID(id uuid.UUID) (*access.Application, error) {
 	raw, exists := rawQueries["GetApplicationByID"]
 	if !exists {
 		return nil, ErrNoQuery
 	}
 
-	row := q.executor().QueryRowContext(q.ctx, raw, id)
-	var item auth.Application
+	row := q.dbtx.QueryRowContext(q.ctx, raw, id)
+	var item access.Application
 	err := row.Scan(
-		&item.InternalID,
 		&item.ID,
 		&item.Name,
 		dbhandler.EnumArray(&item.PossibleRoles),
