@@ -1,4 +1,4 @@
-package usercase
+package identcase
 
 import (
 	"strings"
@@ -14,7 +14,7 @@ import (
 type SignUp struct {
 	IdentityRepo identity.Repo
 	AccessRepo   access.Repo
-	Hasher       shared.PasswordHasher
+	PwHasher     shared.PasswordHasher
 	Mailer       shared.Mailer
 }
 
@@ -25,7 +25,7 @@ type SignUpInput struct {
 }
 
 func (i SignUp) Execute(input SignUpInput) (out identity.UserLeanView, err error) {
-	user, err := i.ExecuteEntity(input)
+	user, err := i.executeEntity(input)
 	if err != nil {
 		return out, err
 	}
@@ -33,16 +33,16 @@ func (i SignUp) Execute(input SignUpInput) (out identity.UserLeanView, err error
 	return user.LeanView(), nil
 }
 
-// ExecuteEntity is application-internal: returns the entity for chaining.
+// executeEntity is application-internal: returns the entity for chaining.
 // Only used by internal application layer (e.g., ExternalAuth).
-func (i SignUp) ExecuteEntity(input SignUpInput) (*identity.User, error) {
-	hashPw, err := shared.NewHashedPassword(input.Password, i.Hasher)
+func (i SignUp) executeEntity(input SignUpInput) (*identity.User, error) {
+	hashPw, err := shared.NewHashedPassword(input.Password, i.PwHasher)
 	if err != nil {
 		return nil, err
 	}
 
 	input.UserCreationFields.Password = *hashPw
-	user, err := identity.NewUser(&input.UserCreationFields, i.Hasher)
+	user, err := identity.NewUser(&input.UserCreationFields)
 	if err != nil {
 		return nil, err
 	}

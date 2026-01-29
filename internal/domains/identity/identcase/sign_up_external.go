@@ -1,27 +1,26 @@
-package extcredcase
+package identcase
 
 import (
 	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
-	usercase "github.com/kgjoner/sphinx/internal/domains/identity/cases/user"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
-type SignUp struct {
+type ExternalSignUp struct {
 	IdentityRepo     identity.Repo
 	AccessRepo       access.Repo
 	IdentityProvider shared.IdentityProvider
-	Hasher           shared.PasswordHasher
+	PwHasher         shared.PasswordHasher
 	Mailer           shared.Mailer
 }
 
-type SignUpInput struct {
+type ExternalSignUpInput struct {
 	shared.IdentityProviderInput
 	Languages []string `json:"-"`
 }
 
-func (i SignUp) Execute(input SignUpInput) (out identity.UserLeanView, err error) {
+func (i ExternalSignUp) Execute(input ExternalSignUpInput) (out identity.UserLeanView, err error) {
 	extSubject, err := i.IdentityProvider.Authenticate(input.IdentityProviderInput)
 	if err != nil {
 		return out, err
@@ -39,7 +38,7 @@ func (i SignUp) Execute(input SignUpInput) (out identity.UserLeanView, err error
 	}
 
 	// TODO: move pwdgen to external layer
-	signUpInput := usercase.SignUpInput{
+	signUpInput := SignUpInput{
 		UserCreationFields: identity.UserCreationFields{
 			Email: extSubject.Email,
 		},
@@ -47,14 +46,14 @@ func (i SignUp) Execute(input SignUpInput) (out identity.UserLeanView, err error
 		Languages: input.Languages,
 	}
 
-	userCase := usercase.SignUp{
+	userCase := SignUp{
 		IdentityRepo: i.IdentityRepo,
 		AccessRepo:   i.AccessRepo,
-		Hasher:       i.Hasher,
+		PwHasher:     i.PwHasher,
 		Mailer:       i.Mailer,
 	}
 
-	user, err = userCase.ExecuteEntity(signUpInput)
+	user, err = userCase.executeEntity(signUpInput)
 	if err != nil {
 		return out, err
 	}

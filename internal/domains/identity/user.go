@@ -56,7 +56,7 @@ type UserCreationFields struct {
 	UserExtraFields
 }
 
-func NewUser(f *UserCreationFields, hasher shared.PasswordHasher) (*User, error) {
+func NewUser(f *UserCreationFields) (*User, error) {
 	if f.Password.IsZero() {
 		return nil, shared.ErrEmptyPassword
 	}

@@ -1,4 +1,4 @@
-package usercase
+package identcase
 
 import (
 	"github.com/google/uuid"

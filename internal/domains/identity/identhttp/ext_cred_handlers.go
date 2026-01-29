@@ -6,14 +6,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	extcredcase "github.com/kgjoner/sphinx/internal/domains/identity/cases/extcred"
+	"github.com/kgjoner/sphinx/internal/domains/identity/identcase"
 	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
 )
 
-func (g Gateway) externalCredentialHandler(r chi.Router) {
+func (g gateway) externalCredentialHandler(r chi.Router) {
 	r.Post("/external/{provider}", g.externalSignup)
 
-	authedR := r.With(g.mid.Authenticate)
+	authedR := r.With(g.Authenticate)
 	authedR.Put("/me/external/{provider}", g.authorizeExternalCredential)
 	authedR.Delete("/me/external/{provider}/{subjectID}", g.unauthorizeExternalCredential)
 }
@@ -34,29 +34,30 @@ func (g Gateway) externalCredentialHandler(r chi.Router) {
 //		@Failure		409				{object}	apperr.AppError
 //		@Failure		422				{object}	apperr.AppError
 //		@Failure		500				{object}	apperr.AppError
-func (g Gateway) externalSignup(w http.ResponseWriter, r *http.Request) {
+func (g gateway) externalSignup(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("provider", "providerName").
 		JSONBody().
 		AddLanguages()
 
-	var input extcredcase.SignUpInput
+	var input identcase.ExternalSignUpInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx Repo) (any, error) {
-		i := extcredcase.SignUp{
-			IdentityRepo:     tx,
-			AccessRepo:       tx,
-			IdentityProvider: g.IdentityProvider,
-			Hasher:           g.Services.Hasher,
-			Mailer:           g.Services.Mailer,
-		}
-		return i.Execute(input)
-	})
+	identRepo := g.IdentityPool.NewDAO(r.Context())
+	accessRepo := g.AccessPool.NewDAO(r.Context())
+	i := identcase.ExternalSignUp{
+		IdentityRepo:     identRepo,
+		AccessRepo:       accessRepo,
+		IdentityProvider: g.IdentityProvider,
+		PwHasher:         g.PwHasher,
+		Mailer:           g.Mailer,
+	}
+
+	output, err := i.Execute(input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
@@ -75,31 +76,31 @@ func (g Gateway) externalSignup(w http.ResponseWriter, r *http.Request) {
 //		@Accept			json
 //		@Produce		json
 //	 @Param			provider		path		string					true	"External identity provider name."
-//		@Param			payload			body		extcredcase.AuthorizeExternalCredentialInput	true	"Parameters to authenticate with external identity provider."
+//		@Param			payload			body		identcase.AuthorizeExternalCredentialInput	true	"Parameters to authenticate with external identity provider."
 //		@Success		200				{object}	presenter.Success[identity.ExternalCredentialView]
 //		@Failure		400				{object}	apperr.AppError
 //		@Failure		422				{object}	apperr.AppError
 //		@Failure		500				{object}	apperr.AppError
-func (g Gateway) authorizeExternalCredential(w http.ResponseWriter, r *http.Request) {
+func (g gateway) authorizeExternalCredential(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("provider", "providerName").
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		JSONBody()
 
-	var input extcredcase.AuthorizeExternalCredentialInput
+	var input identcase.AuthorizeExternalCredentialInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx Repo) (any, error) {
-		i := extcredcase.AuthorizeExternalCredential{
-			IdentityRepo:     tx,
-			IdentityProvider: g.IdentityProvider,
-		}
-		return i.Execute(input)
-	})
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.AuthorizeExternalCredential{
+		IdentityRepo:     repo,
+		IdentityProvider: g.IdentityProvider,
+	}
+
+	output, err := i.Execute(input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
@@ -122,25 +123,24 @@ func (g Gateway) authorizeExternalCredential(w http.ResponseWriter, r *http.Requ
 //		@Failure		400				{object}	apperr.AppError
 //		@Failure		422				{object}	apperr.AppError
 //		@Failure		500				{object}	apperr.AppError
-func (g Gateway) unauthorizeExternalCredential(w http.ResponseWriter, r *http.Request) {
+func (g gateway) unauthorizeExternalCredential(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("provider", "providerName").
 		ParseURLParam("subjectID", "providerSubjectID").
 		AddFromContext(sharedhttp.ActorCtxKey, "actor")
 
-	var input extcredcase.UnauthorizeExternalCredentialInput
+	var input identcase.UnauthorizeExternalCredentialInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx Repo) (any, error) {
-		i := extcredcase.UnauthorizeExternalCredential{
-			IdentityRepo: tx,
-		}
-		return i.Execute(input)
-	})
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.UnauthorizeExternalCredential{
+		IdentityRepo: repo,
+	}
+	output, err := i.Execute(input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return

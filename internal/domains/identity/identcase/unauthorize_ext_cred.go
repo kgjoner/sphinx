@@ -1,4 +1,4 @@
-package extcredcase
+package identcase
 
 import (
 	"github.com/kgjoner/sphinx/internal/domains/identity"

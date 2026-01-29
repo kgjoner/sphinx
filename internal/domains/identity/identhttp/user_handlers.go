@@ -6,30 +6,31 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	usercase "github.com/kgjoner/sphinx/internal/domains/identity/cases/user"
+	"github.com/kgjoner/sphinx/internal/domains/identity"
+	"github.com/kgjoner/sphinx/internal/domains/identity/identcase"
 	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
 )
 
-func (g Gateway) userHandler(r chi.Router) {
+func (g gateway) userHandler(r chi.Router) {
 	r.Post("/", g.createUser)
 	r.Get("/existence", g.checkEntryExistence)
 	r.Post("/request-password", g.requestPasswordReset)
 	r.Post("/{id}/password", g.resetPassword)
 	r.Post("/{id}/{field}/verification", g.verifyUser)
 
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Get("/me", g.getMe)
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Patch("/me", g.updateMyExtraData)
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Post("/me/password", g.changeMyPassword)
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Post("/me/{field}", g.updateMyUniqueFields)
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Delete("/me/{field}/verification", g.cancelMyPendingField)
+	r.With(g.Authenticate, g.TargetUser).Get("/me", g.getMe)
+	r.With(g.Authenticate, g.TargetUser).Patch("/me", g.updateMyExtraData)
+	r.With(g.Authenticate, g.TargetUser).Post("/me/password", g.changeMyPassword)
+	r.With(g.Authenticate, g.TargetUser).Post("/me/{field}", g.updateMyUniqueFields)
+	r.With(g.Authenticate, g.TargetUser).Delete("/me/{field}/verification", g.cancelMyPendingField)
 
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Get("/{userID}", g.getPrivateUser)
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Patch("/{userID}", g.updateExtraData)
-	r.With(g.mid.Authenticate, g.mid.TargetUser).Post("/{userID}/{field}", g.updateUniqueFields)
-	r.With(g.mid.AuthenticateApp, g.mid.TargetUser).Get("/{userID}/email", g.getUserEmail)
+	r.With(g.Authenticate, g.TargetUser).Get("/{userID}", g.getPrivateUser)
+	r.With(g.Authenticate, g.TargetUser).Patch("/{userID}", g.updateExtraData)
+	r.With(g.Authenticate, g.TargetUser).Post("/{userID}/{field}", g.updateUniqueFields)
+	r.With(g.AuthenticateApp, g.TargetUser).Get("/{userID}/email", g.getUserEmail)
 
 	// Utility endpoint to get user ID by its entry. Passed on X-Entry header.
-	r.With(g.mid.AuthenticateApp).Get("/id", g.getUserID)
+	r.With(g.AuthenticateApp).Get("/id", g.getUserID)
 }
 
 // SignUp godoc
@@ -47,27 +48,26 @@ func (g Gateway) userHandler(r chi.Router) {
 //	@Failure		409				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
-func (g Gateway) createUser(w http.ResponseWriter, r *http.Request) {
+func (g gateway) createUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		AddLanguages()
 
-	var input usercase.SignUpInput
+	var input identcase.SignUpInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx Repo) (any, error) {
-		i := usercase.SignUp{
-			IdentityRepo: tx,
-			AccessRepo:   tx,
-			Mailer:       g.Services.Mailer,
-		}
-
-		return i.Execute(input)
-	})
+	identRepo := g.IdentityPool.NewDAO(r.Context())
+	accessRepo := g.AccessPool.NewDAO(r.Context())
+	i := identcase.SignUp{
+		IdentityRepo: identRepo,
+		AccessRepo:   accessRepo,
+		Mailer:       g.Mailer,
+	}
+	output, err := i.Execute(input)
 
 	if err != nil {
 		presenter.HTTPError(err, w, r)
@@ -89,20 +89,20 @@ func (g Gateway) createUser(w http.ResponseWriter, r *http.Request) {
 //	@Success		200		{object}	presenter.Success[bool]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
-func (g Gateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
+func (g gateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddHeader("X-Entry", "entry")
 
-	var input usercase.CheckEntryExistenceInput
+	var input identcase.CheckEntryExistenceInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.CheckEntryExistence{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.CheckEntryExistence{
+		IdentityRepo: repo,
 	}
 
 	output, err := i.Execute(input)
@@ -127,7 +127,7 @@ func (g Gateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) getMe(w http.ResponseWriter, r *http.Request) {
+func (g gateway) getMe(w http.ResponseWriter, r *http.Request) {
 	g.getPrivateUser(w, r)
 }
 
@@ -146,21 +146,21 @@ func (g Gateway) getMe(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		403	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
+func (g gateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID")
 
-	var input usercase.GetPrivateUserInput
+	var input identcase.GetPrivateUserInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.GetPrivateUser{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.GetPrivateUser{
+		IdentityRepo: repo,
 	}
 
 	output, err := i.Execute(input)
@@ -182,26 +182,26 @@ func (g Gateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			id		path	string						true	"User ID"
 //	@Param			field	path	string						true	"Verification field (email or phone)"
-//	@Param			payload	body	usercase.VerifyUserInput	true	"Code is required."
+//	@Param			payload	body	identcase.VerifyUserInput	true	"Code is required."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
+func (g gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		ParseURLParam("id", "userID").
 		ParseURLParam("field", "verificationKind")
 
-	var input usercase.VerifyUserInput
+	var input identcase.VerifyUserInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.VerifyUser{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.VerifyUser{
+		IdentityRepo: repo,
 	}
 
 	output, err := i.Execute(input)
@@ -223,30 +223,31 @@ func (g Gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			accept-language	header	string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body	usercase.ChangePasswordInput	true	"Old password and new one."
+//	@Param			payload			body	identcase.ChangePasswordInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
+func (g gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID").
 		AddLanguages()
 
-	var input usercase.ChangePasswordInput
+	var input identcase.ChangePasswordInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx Repo) (any, error) {
-		i := usercase.ChangePassword{
+	authRepo := g.AuthPool.NewDAO(r.Context())
+	output, err := g.IdentityPool.WithTransaction(r.Context(), nil, func(tx identity.Repo) (any, error) {
+		i := identcase.ChangePassword{
 			IdentityRepo: tx,
-			AuthRepo:     tx,
+			AuthRepo:     authRepo,
 			Mailer:       g.Mailer,
 		}
 
@@ -269,25 +270,25 @@ func (g Gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			accept-language	header	string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			payload			body	usercase.RequestPasswordResetInput	true	"Old password and new one."
+//	@Param			payload			body	identcase.RequestPasswordResetInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
+func (g gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		AddLanguages()
 
-	var input usercase.RequestPasswordResetInput
+	var input identcase.RequestPasswordResetInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.RequestPasswordReset{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.RequestPasswordReset{
+		IdentityRepo: repo,
 		Mailer:       g.Mailer,
 	}
 
@@ -310,29 +311,30 @@ func (g Gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			accept-language	header	string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			id				path	string						true	"User ID"
-//	@Param			payload			body	usercase.ResetPasswordInput	true	"Old password and new one."
+//	@Param			payload			body	identcase.ResetPasswordInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
+func (g gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		ParseURLParam("id", "userID").
 		AddLanguages()
 
-	var input usercase.ResetPasswordInput
+	var input identcase.ResetPasswordInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	output, err := g.BasePool.WithTransaction(r.Context(), nil, func(tx Repo) (any, error) {
-		i := usercase.ResetPassword{
+	authRepo := g.AuthPool.NewDAO(r.Context())
+	output, err := g.IdentityPool.WithTransaction(r.Context(), nil, func(tx identity.Repo) (any, error) {
+		i := identcase.ResetPassword{
 			IdentityRepo: tx,
-			AuthRepo:     tx,
-			Mailer:       g.Services.Mailer,
+			AuthRepo:     authRepo,
+			Mailer:       g.Mailer,
 		}
 
 		return i.Execute(input)
@@ -360,7 +362,7 @@ func (g Gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		422		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
-func (g Gateway) updateMyExtraData(w http.ResponseWriter, r *http.Request) {
+func (g gateway) updateMyExtraData(w http.ResponseWriter, r *http.Request) {
 	g.updateExtraData(w, r)
 }
 
@@ -381,22 +383,22 @@ func (g Gateway) updateMyExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		422		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
-func (g Gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
+func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID")
 
-	var input usercase.UpdateExtraDataInput
+	var input identcase.UpdateExtraDataInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.UpdateExtraData{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.UpdateExtraData{
+		IdentityRepo: repo,
 	}
 
 	output, err := i.Execute(input)
@@ -419,13 +421,13 @@ func (g Gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			accept-language	header		string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			field			path		string								true	"Must be: email, phone, username or document"
-//	@Param			payload			body		usercase.UpdateUniqueFieldsInput	true	"Value is required."
+//	@Param			payload			body		identcase.UpdateUniqueFieldsInput	true	"Value is required."
 //	@Success		200				{object}	presenter.Success[identity.UserView]
 //	@Failure		400				{object}	apperr.AppError
 //	@Failure		401				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
-func (g Gateway) updateMyUniqueFields(w http.ResponseWriter, r *http.Request) {
+func (g gateway) updateMyUniqueFields(w http.ResponseWriter, r *http.Request) {
 	g.updateUniqueFields(w, r)
 }
 
@@ -441,14 +443,14 @@ func (g Gateway) updateMyUniqueFields(w http.ResponseWriter, r *http.Request) {
 //	@Param			accept-language	header		string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			id				path		string								true	"User ID"
 //	@Param			field			path		string								true	"Must be: email, phone, username or document"
-//	@Param			payload			body		usercase.UpdateUniqueFieldInput	true	"Value is required."
+//	@Param			payload			body		identcase.UpdateUniqueFieldInput	true	"Value is required."
 //	@Success		200				{object}	presenter.Success[identity.UserView]
 //	@Failure		400				{object}	apperr.AppError
 //	@Failure		401				{object}	apperr.AppError
 //	@Failure		403				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
-func (g Gateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
+func (g gateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		ParseURLParam("field").
@@ -456,16 +458,16 @@ func (g Gateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID").
 		AddLanguages()
 
-	var input usercase.UpdateUniqueFieldInput
+	var input identcase.UpdateUniqueFieldInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.UpdateUniqueField{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.UpdateUniqueField{
+		IdentityRepo: repo,
 		Mailer:       g.Mailer,
 	}
 
@@ -492,20 +494,20 @@ func (g Gateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
+func (g gateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("field")
 
-	var input usercase.CancelPendingFieldInput
+	var input identcase.CancelPendingFieldInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.CancelPendingField{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.CancelPendingField{
+		IdentityRepo: repo,
 	}
 
 	output, err := i.Execute(input)
@@ -532,20 +534,20 @@ func (g Gateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
-func (g Gateway) getUserID(w http.ResponseWriter, r *http.Request) {
+func (g gateway) getUserID(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddHeader("X-Entry", "entry")
 
-	var input usercase.GetUserIDInput
+	var input identcase.GetUserIDInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.GetUserID{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.GetUserID{
+		IdentityRepo: repo,
 	}
 
 	output, err := i.Execute(input)
@@ -572,20 +574,20 @@ func (g Gateway) getUserID(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		403	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
+func (g gateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID")
 
-	var input usercase.GetUserEmailInput
+	var input identcase.GetUserEmailInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.BasePool.NewDAO(r.Context())
-	i := usercase.GetUserEmail{
-		IdentityRepo: queries,
+	repo := g.IdentityPool.NewDAO(r.Context())
+	i := identcase.GetUserEmail{
+		IdentityRepo: repo,
 	}
 
 	output, err := i.Execute(input)
