@@ -6,15 +6,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	linkcase "github.com/kgjoner/sphinx/internal/domains/access/cases/link"
+	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
 	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
 )
 
-func (g Gateway) linkHandler(r chi.Router) {
-	authedUserR := r.With(g.mid.Authenticate, g.mid.TargetUser)
+func (g gateway) linkHandler(r chi.Router) {
+	authedUserR := r.With(g.Authenticate, g.TargetUser)
 	authedUserR.Get("/", g.getLink)
 
-	authedAppR := r.With(g.mid.AuthenticateApp, g.mid.TargetUser)
+	authedAppR := r.With(g.AuthenticateApp, g.TargetUser)
 	authedAppR.Put("/role/{role}", g.addRole)
 	authedAppR.Delete("/role/{role}", g.removeRole)
 }
@@ -36,22 +36,22 @@ func (g Gateway) linkHandler(r chi.Router) {
 //	@Failure		403	{object}	apperr.AppError
 //	@Failure		404	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) getLink(w http.ResponseWriter, r *http.Request) {
+func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
 		ParseURLParam("appID", "applicationID")
 
-	var input linkcase.GetLinkInput
+	var input accesscase.GetLinkInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.AccessPool.NewDAO(r.Context())
-	i := linkcase.GetLink{
-		AccessRepo: queries,
+	repo := g.AccessPool.NewDAO(r.Context())
+	i := accesscase.GetLink{
+		AccessRepo: repo,
 	}
 	out, err := i.Execute(input)
 
@@ -81,23 +81,23 @@ func (g Gateway) getLink(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403	{object}	apperr.AppError
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) addRole(w http.ResponseWriter, r *http.Request) {
+func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
 		ParseURLParam("appID", "applicationID").
 		ParseURLParam("role", "role")
 
-	var input linkcase.AddRoleInput
+	var input accesscase.AddRoleInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.AccessPool.NewDAO(r.Context())
-	i := linkcase.AddRole{
-		AccessRepo: queries,
+	repo := g.AccessPool.NewDAO(r.Context())
+	i := accesscase.AddRole{
+		AccessRepo: repo,
 	}
 	_, err = i.Execute(input)
 
@@ -127,23 +127,23 @@ func (g Gateway) addRole(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403	{object}	apperr.AppError
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
-func (g Gateway) removeRole(w http.ResponseWriter, r *http.Request) {
+func (g gateway) removeRole(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
 		ParseURLParam("appID", "applicationID").
 		ParseURLParam("role", "role")
 
-	var input linkcase.RemoveRoleInput
+	var input accesscase.RemoveRoleInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	queries := g.AccessPool.NewDAO(r.Context())
-	i := linkcase.RemoveRole{
-		AccessRepo: queries,
+	repo := g.AccessPool.NewDAO(r.Context())
+	i := accesscase.RemoveRole{
+		AccessRepo: repo,
 	}
 	_, err = i.Execute(input)
 

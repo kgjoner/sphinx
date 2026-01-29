@@ -1,4 +1,4 @@
-package linkcase
+package accesscase
 
 import (
 	"github.com/google/uuid"

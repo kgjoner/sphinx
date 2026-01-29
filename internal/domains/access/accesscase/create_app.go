@@ -1,4 +1,4 @@
-package appcase
+package accesscase
 
 import (
 	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"

@@ -1,4 +1,4 @@
-package appcase
+package accesscase
 
 import (
 	"github.com/google/uuid"
