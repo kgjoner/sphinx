@@ -116,7 +116,8 @@ func (g gateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) refresh(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
-		AddFromContext(sharedhttp.ActorCtxKey, "actor")
+		AddFromContext(sharedhttp.ActorCtxKey, "actor").
+		AddFromContext(sharedhttp.TokenCtxKey, "token")
 
 	var input authcase.RefreshInput
 	err := c.Write(&input)
