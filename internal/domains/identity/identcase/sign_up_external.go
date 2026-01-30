@@ -67,11 +67,6 @@ func (i ExternalSignUp) Execute(input ExternalSignUpInput) (out identity.UserLea
 		return out, err
 	}
 
-	err = i.IdentityRepo.InsertUser(user)
-	if err != nil {
-		return out, err
-	}
-
 	err = i.IdentityRepo.InsertExternalCredential(extCredential)
 	if err != nil {
 		return out, err
