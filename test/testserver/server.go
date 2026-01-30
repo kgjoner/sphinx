@@ -4,8 +4,9 @@ import (
 	"net/http/httptest"
 
 	"github.com/kgjoner/sphinx/internal/config"
-	baserepo "github.com/kgjoner/sphinx/internal/repositories/base"
 	"github.com/kgjoner/sphinx/internal/server"
+	"github.com/kgjoner/sphinx/internal/shared"
+	"github.com/kgjoner/sphinx/test/mocks"
 )
 
 // TestServer wraps the real server for testing
@@ -21,6 +22,7 @@ func New() *TestServer {
 	config.Env.DATABASE_URL = "postgres://postgres:postgres@localhost:5433/sphinx_test?sslmode=disable"
 	config.Env.REDIS_URL = "redis://localhost:6380/0"
 	config.Env.HERMES.BASE_URL = "http://localhost:8082/v1"
+	config.Env.EXTERNAL_AUTH_PROVIDERS = mocks.IdentityProviders.Config()
 
 	// Create the real server
 	realServer := server.New().Setup()
@@ -43,7 +45,7 @@ func (ts *TestServer) Close() {
 }
 
 // GetBasePool returns the database pool from the real server
-func (ts *TestServer) GetBasePool() *baserepo.Pool {
+func (ts *TestServer) GetBasePool() shared.RepoPool {
 	return ts.realServer.BasePool()
 }
 

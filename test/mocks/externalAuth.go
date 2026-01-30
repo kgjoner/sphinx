@@ -7,14 +7,110 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"github.com/kgjoner/sphinx/internal/config"
+	"github.com/kgjoner/sphinx/internal/pkg/identpvd"
 )
 
-// MockExternalAuthProvider provides a mock external authentication provider
-type MockExternalAuthProvider struct {
+var IdentityProviders = NewIdentityProvidersManager()
+
+var Provider = struct {
+	Name     string
+}{
+	Name: "testprovider",
+}
+
+var UnavailableProvider = struct {
+	Name     string
+}{
+	Name: "unavailableprovider",
+}
+
+var Subject = struct {
+	ID    string
+	Email string
+	Token string
+}{
+	ID:    "external-user-1",
+	Email: "externaluser1@sphinx.test",
+	Token: "valid-token-123",
+}
+
+func init() {
+	IdentityProviders.AddProvider(Provider.Name)
+	IdentityProviders.AddSubjectTo(Provider.Name, Subject.Token, Subject.ID, Subject.Email)
+
+	IdentityProviders.AddProvider(UnavailableProvider.Name)
+	IdentityProviders.AddSubjectTo(UnavailableProvider.Name, Subject.Token, Subject.ID, Subject.Email)
+
+	unprov := IdentityProviders.Provider(UnavailableProvider.Name)
+	unprov.SetError(http.StatusServiceUnavailable, "Service Unavailable")
+}
+
+/* =============================================================================
+	Manager
+============================================================================= */
+
+// IdentityProvidersManager manages multiple mock providers for testing
+type IdentityProvidersManager struct {
+	providers map[string]*identityProvider
+}
+
+// NewIdentityProvidersManager creates a new manager for mock external auth providers
+func NewIdentityProvidersManager() *IdentityProvidersManager {
+	return &IdentityProvidersManager{
+		providers: make(map[string]*identityProvider),
+	}
+}
+
+// AddProvider adds a new mock provider with the given name
+func (m *IdentityProvidersManager) AddProvider(name string) *identityProvider {
+	provider := newMockIdentityProvider(name)
+	m.providers[name] = provider
+	return provider
+}
+
+// Provider returns a mock provider by name
+func (m *IdentityProvidersManager) Provider(name string) *identityProvider {
+	return m.providers[name]
+}
+
+// Config returns configurations for all mock providers as a JSON byte array
+func (m *IdentityProvidersManager) Config() []byte {
+	configs := make([]identpvd.Provider, 0, len(m.providers))
+	for name, provider := range m.providers {
+		configs = append(configs, provider.getConfig(name))
+	}
+
+	data, _ := json.Marshal(configs)
+	return data
+}
+
+// Close shuts down all mock providers
+func (m *IdentityProvidersManager) Close() {
+	for _, provider := range m.providers {
+		provider.close()
+	}
+}
+
+// SetupTestProvider is a convenience function to set up a basic test provider
+func (m *IdentityProvidersManager) AddSubjectTo(providerName, token, userID, email string) *identityProvider {
+	provider := m.Provider(providerName)
+	provider.addValidToken(token, &externalSubject{
+		ID:    userID,
+		Email: email,
+		Name:  "Test User",
+	})
+	return provider
+}
+
+/* =============================================================================
+	Provider
+============================================================================= */
+
+// identityProvider provides a mock external authentication provider
+type identityProvider struct {
 	Name              string
 	server            *httptest.Server
-	validTokens       map[string]*MockAuthSubject
+	validTokens       map[string]*externalSubject
 	expectedHeaders   map[string]string
 	expectedParams    map[string]string
 	responseData      map[string]interface{}
@@ -23,18 +119,18 @@ type MockExternalAuthProvider struct {
 	errorMessage      string
 }
 
-// MockAuthSubject represents a mock authenticated subject
-type MockAuthSubject struct {
+// externalSubject represents a mock authenticated subject
+type externalSubject struct {
 	ID    string
 	Email string
 	Name  string
 }
 
-// NewMockExternalAuthProvider creates a new mock external auth provider
-func NewMockExternalAuthProvider(name string) *MockExternalAuthProvider {
-	mock := &MockExternalAuthProvider{
+// newMockIdentityProvider creates a new mock external auth provider
+func newMockIdentityProvider(name string) *identityProvider {
+	mock := &identityProvider{
 		Name:            name,
-		validTokens:     make(map[string]*MockAuthSubject),
+		validTokens:     make(map[string]*externalSubject),
 		expectedHeaders: make(map[string]string),
 		expectedParams:  make(map[string]string),
 		responseData:    make(map[string]interface{}),
@@ -47,54 +143,54 @@ func NewMockExternalAuthProvider(name string) *MockExternalAuthProvider {
 }
 
 // Close shuts down the mock server
-func (m *MockExternalAuthProvider) Close() {
+func (m *identityProvider) close() {
 	if m.server != nil {
 		m.server.Close()
 	}
 }
 
 // URL returns the mock server URL
-func (m *MockExternalAuthProvider) URL() string {
+func (m *identityProvider) url() string {
 	return m.server.URL
 }
 
 // AddValidToken adds a valid token with associated user data
-func (m *MockExternalAuthProvider) AddValidToken(token string, subject *MockAuthSubject) {
+func (m *identityProvider) addValidToken(token string, subject *externalSubject) {
 	m.validTokens[token] = subject
 }
 
 // SetExpectedHeaders sets headers that should be present in the request
-func (m *MockExternalAuthProvider) SetExpectedHeaders(headers map[string]string) {
+func (m *identityProvider) setExpectedHeaders(headers map[string]string) {
 	m.expectedHeaders = headers
 }
 
 // SetExpectedParams sets query parameters that should be present in the request
-func (m *MockExternalAuthProvider) SetExpectedParams(params map[string]string) {
+func (m *identityProvider) setExpectedParams(params map[string]string) {
 	m.expectedParams = params
 }
 
 // SetResponseData sets custom response data structure
-func (m *MockExternalAuthProvider) SetResponseData(data map[string]interface{}) {
+func (m *identityProvider) setResponseData(data map[string]interface{}) {
 	m.responseData = data
 }
 
 // SetError configures the mock to return an error response
-func (m *MockExternalAuthProvider) SetError(statusCode int, message string) {
+func (m *identityProvider) SetError(statusCode int, message string) {
 	m.shouldReturnError = true
 	m.errorStatusCode = statusCode
 	m.errorMessage = message
 }
 
 // ClearError removes error configuration
-func (m *MockExternalAuthProvider) ClearError() {
+func (m *identityProvider) clearError() {
 	m.shouldReturnError = false
 	m.errorStatusCode = 0
 	m.errorMessage = ""
 }
 
-// GetConfig returns a config.ExternalAuthProvider configured to use this mock
-func (m *MockExternalAuthProvider) GetConfig(name string) config.ExternalAuthProvider {
-	return config.ExternalAuthProvider{
+// GetConfig returns a config.IdentityProvider configured to use this mock
+func (m *identityProvider) getConfig(name string) identpvd.Provider {
+	return identpvd.Provider{
 		Name:           name,
 		URL:            m.server.URL + "/auth",
 		Method:         "GET",
@@ -107,7 +203,7 @@ func (m *MockExternalAuthProvider) GetConfig(name string) config.ExternalAuthPro
 }
 
 // handleAuthRequest handles incoming authentication requests
-func (m *MockExternalAuthProvider) handleAuthRequest(w http.ResponseWriter, r *http.Request) {
+func (m *identityProvider) handleAuthRequest(w http.ResponseWriter, r *http.Request) {
 	// Check if we should return an error
 	if m.shouldReturnError {
 		http.Error(w, m.errorMessage, m.errorStatusCode)
@@ -170,55 +266,4 @@ func (m *MockExternalAuthProvider) handleAuthRequest(w http.ResponseWriter, r *h
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-}
-
-// MockExternalAuthManager manages multiple mock providers for testing
-type MockExternalAuthManager struct {
-	providers map[string]*MockExternalAuthProvider
-}
-
-// NewMockExternalAuthManager creates a new manager for mock external auth providers
-func NewMockExternalAuthManager() *MockExternalAuthManager {
-	return &MockExternalAuthManager{
-		providers: make(map[string]*MockExternalAuthProvider),
-	}
-}
-
-// AddProvider adds a new mock provider with the given name
-func (m *MockExternalAuthManager) AddProvider(name string) *MockExternalAuthProvider {
-	provider := NewMockExternalAuthProvider(name)
-	m.providers[name] = provider
-	return provider
-}
-
-// GetProvider returns a mock provider by name
-func (m *MockExternalAuthManager) GetProvider(name string) *MockExternalAuthProvider {
-	return m.providers[name]
-}
-
-// GetConfigs returns config.ExternalAuthProvider configurations for all mock providers
-func (m *MockExternalAuthManager) GetConfigs() []config.ExternalAuthProvider {
-	configs := make([]config.ExternalAuthProvider, 0, len(m.providers))
-	for name, provider := range m.providers {
-		configs = append(configs, provider.GetConfig(name))
-	}
-	return configs
-}
-
-// Close shuts down all mock providers
-func (m *MockExternalAuthManager) Close() {
-	for _, provider := range m.providers {
-		provider.Close()
-	}
-}
-
-// SetupTestProvider is a convenience function to set up a basic test provider
-func (m *MockExternalAuthManager) SetupTestProvider(name, token, userID, email string) *MockExternalAuthProvider {
-	provider := m.AddProvider(name)
-	provider.AddValidToken(token, &MockAuthSubject{
-		ID:    userID,
-		Email: email,
-		Name:  "Test User",
-	})
-	return provider
 }
