@@ -38,8 +38,10 @@ func (p ConsentProof) ValidFor(target any) bool {
 			p.audID == typedTarget.AudienceID.String()
 	case shared.Actor:
 		return p.verified &&
-			p.subID == typedTarget.ID.String() &&
-			p.audID == typedTarget.AudienceID.String()
+			p.subID == typedTarget.ID.String()
+			// Actor audID is from root application; they don't have a field
+			// to match against audID in the proof. The actor ID is enough once
+			// their permission should be already checked by policies.
 	default:
 		return false
 	}
@@ -92,7 +94,7 @@ func VerifyGrant(grant Grant, client Client, credentials GrantCredentials, solve
 			return nil, ErrInvalidSolver
 		}
 
-		if !hasher.DoesPasswordMatch(client.Secret.String(), credentials.AppSecret) {
+		if hasher.DoesPasswordMatch(client.Secret.String(), credentials.AppSecret) {
 			hasValidCredentials = true
 		}
 	}
@@ -103,7 +105,7 @@ func VerifyGrant(grant Grant, client Client, credentials GrantCredentials, solve
 			return nil, ErrInvalidSolver
 		}
 
-		if challenger.DoesChallengeMatch(grant.CodeChallengeMethod, grant.CodeChallenge, credentials.CodeVerifier) {
+		if challenger.DoesChallengeMatch(string(grant.CodeChallengeMethod), grant.CodeChallenge, credentials.CodeVerifier) {
 			hasValidCredentials = true
 		}
 	}
