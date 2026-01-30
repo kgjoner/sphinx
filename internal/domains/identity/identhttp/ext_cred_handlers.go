@@ -1,6 +1,7 @@
 package identhttp
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -47,17 +48,20 @@ func (g gateway) externalSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	identRepo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
-	accessRepo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
-	i := identcase.ExternalSignUp{
-		IdentityRepo:     identRepo,
-		AccessRepo:       accessRepo,
-		IdentityProvider: g.IdentityProvider,
-		PwHasher:         g.PwHasher,
-		Mailer:           g.Mailer,
-	}
+	output, err := g.PGPool.WithTx(r.Context(), nil, func(tx *sql.Tx) (any, error) {
+		identRepo := g.IdentFactory.NewDAO(r.Context(), tx)
+		accessRepo := g.AccessFactory.NewDAO(r.Context(), tx)
 
-	output, err := i.Execute(input)
+		i := identcase.ExternalSignUp{
+			IdentityRepo:     identRepo,
+			AccessRepo:       accessRepo,
+			IdentityProvider: g.IdentityProvider,
+			PwHasher:         g.PwHasher,
+			Mailer:           g.Mailer,
+		}
+
+		return i.Execute(input)
+	})
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
@@ -140,11 +144,12 @@ func (g gateway) unauthorizeExternalCredential(w http.ResponseWriter, r *http.Re
 	i := identcase.UnauthorizeExternalCredential{
 		IdentityRepo: repo,
 	}
-	output, err := i.Execute(input)
+
+	_, err = i.Execute(input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	presenter.HTTPSuccess(nil, w, r, http.StatusNoContent)
 }
