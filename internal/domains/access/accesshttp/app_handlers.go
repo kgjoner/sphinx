@@ -7,7 +7,7 @@ import (
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
-	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
+	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
 
 func (g gateway) applicationHandler(r chi.Router) {

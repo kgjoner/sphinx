@@ -28,7 +28,7 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/identity/identhttp"
 	"github.com/kgjoner/sphinx/internal/domains/identity/identrepo"
 	"github.com/kgjoner/sphinx/internal/shared"
-	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
+	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 
 	"github.com/kgjoner/sphinx/internal/pkg/authorizer"
 	"github.com/kgjoner/sphinx/internal/pkg/identpvd"

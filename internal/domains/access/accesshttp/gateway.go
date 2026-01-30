@@ -11,7 +11,7 @@ import (
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
 	"github.com/kgjoner/sphinx/internal/shared"
-	"github.com/kgjoner/sphinx/internal/shared/api/sharedhttp"
+	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
 
 type gateway struct {
