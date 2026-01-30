@@ -27,5 +27,5 @@ type TokenProvider interface {
 }
 
 type CodeChallenger interface {
-	DoesChallengeMatch(method ChallengeMethod, challenge string, verifier string) bool
+	DoesChallengeMatch(method string, challenge string, verifier string) bool
 }

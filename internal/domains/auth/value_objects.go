@@ -97,13 +97,6 @@ const (
 	ChallengeS256  ChallengeMethod = "S256"
 )
 
-func (i ChallengeMethod) Enumerate() any {
-	return []ChallengeMethod{
-		ChallengePlain,
-		ChallengeS256,
-	}
-}
-
 /* ==============================================================================
 	Grant Input
 ============================================================================== */
@@ -165,7 +158,7 @@ func NewGrant(g GrantInput, actor shared.Actor, client Client, proof *ConsentPro
 		// TODO: move code generation to an extenal layer
 		code = pwdgen.GeneratePassword(42, "lower", "upper", "number")
 		if g.CodeChallenge != "" && g.CodeChallengeMethod == "" {
-			g.CodeChallengeMethod = "S256" // Default to S256 if not specified
+			g.CodeChallengeMethod = ChallengeS256 // Default to S256 if not specified
 		}
 	}
 

@@ -10,6 +10,7 @@ type ExchangeGrant struct {
 	AuthRepo      auth.Repo
 	PwHasher      shared.PasswordHasher
 	DataHasher    shared.DataHasher
+	Challenger    auth.CodeChallenger
 	CacheRepo     cache.DAO
 	TokenProvider auth.TokenProvider
 }
@@ -48,7 +49,13 @@ func (i ExchangeGrant) Execute(input ExchangeGrantInput) (out LoginOutput, err e
 	}
 
 	// Consume Grant
-	proof, err := auth.VerifyGrant(*grant, *client, input.GrantCredentials, i.PwHasher)
+	var proof *auth.GrantProof
+	if input.GrantCredentials.IsConfidentialClient() {
+		proof, err = auth.VerifyGrant(*grant, *client, input.GrantCredentials, i.PwHasher)
+	} else {
+		proof, err = auth.VerifyGrant(*grant, *client, input.GrantCredentials, i.Challenger)
+	}
+
 	if err != nil {
 		return out, err
 	}
