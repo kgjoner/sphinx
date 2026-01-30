@@ -60,7 +60,7 @@ func (i IssueGrant) Execute(input IssueGrantInput) (out IssueGrantOutput, err er
 			return out, err
 		}
 
-		err = i.AccessRepo.UpsertLinks(*link)
+		err = i.AccessRepo.InsertLink(link)
 		if err != nil {
 			return out, err
 		}

@@ -67,7 +67,7 @@ func (i SignUp) executeEntity(input SignUpInput) (*identity.User, error) {
 		return nil, err
 	}
 
-	err = i.AccessRepo.UpsertLinks(*link)
+	err = i.AccessRepo.InsertLink(link)
 	if err != nil {
 		return nil, err
 	}
