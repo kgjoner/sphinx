@@ -9,7 +9,6 @@ import (
 )
 
 type Link struct {
-	InternalID  int
 	ID          uuid.UUID   `validate:"required"`
 	UserID      uuid.UUID   `validate:"required"`
 	Application Application `validate:"required"`

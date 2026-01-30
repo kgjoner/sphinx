@@ -14,13 +14,12 @@ import (
 )
 
 type User struct {
-	InternalID int
-	ID         uuid.UUID    `validate:"required"`
-	Email      htypes.Email `validate:"required"`
-	Phone      htypes.PhoneNumber
-	Password   shared.HashedPassword `validate:"required"`
-	Username   string                `validate:"wordID,atLeastOne=letter"`
-	Document   htypes.Document
+	ID       uuid.UUID    `validate:"required"`
+	Email    htypes.Email `validate:"required"`
+	Phone    htypes.PhoneNumber
+	Password shared.HashedPassword `validate:"required"`
+	Username string                `validate:"wordID,atLeastOne=letter"`
+	Document htypes.Document
 	ExtraData
 
 	PendingEmail         htypes.Email
@@ -349,8 +348,8 @@ func (u *User) ExternalCredential(providerName string, providerSubjectID string)
 ============================================================================== */
 
 type UserView struct {
-	ID       uuid.UUID          `json:"id" validate:"required"`
-	Email    htypes.Email       `json:"email" validate:"required"`
+	ID       uuid.UUID          `json:"id"`
+	Email    htypes.Email       `json:"email"`
 	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
 	Username string             `json:"username,omitempty"`
 	Document htypes.Document    `json:"document,omitempty"`
@@ -399,14 +398,14 @@ func (u User) View() UserView {
 }
 
 type UserLeanView struct {
-	ID       uuid.UUID `json:"id" validate:"required"`
+	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username,omitempty"`
 	Name     string    `json:"name,omitempty"`
 	Surname  string    `json:"surname,omitempty"`
 
 	IsActive  bool      `json:"isActive"`
-	CreatedAt time.Time `json:"createdAt" validate:"required"`
-	UpdatedAt time.Time `json:"updatedAt" validate:"required"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (u User) LeanView() UserLeanView {

@@ -11,7 +11,6 @@ import (
 )
 
 type Application struct {
-	InternalID    int
 	ID            uuid.UUID `validate:"required"`
 	Name          string    `validate:"required"`
 	PossibleRoles []Role

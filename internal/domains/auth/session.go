@@ -10,15 +10,13 @@ import (
 )
 
 type Session struct {
-	InternalID int
-	ID         uuid.UUID `validate:"required"`
-
+	ID           uuid.UUID    `validate:"required"`
 	SubjectID    uuid.UUID    `validate:"required"`
 	SubjectEmail htypes.Email `validate:"required"`
 	SubjectName  string       `validate:"required"`
 
 	AudienceID uuid.UUID `validate:"required"`
-	Roles      []string  `validate:"required"`
+	Roles      []string
 
 	IP                             string `validate:"required"`
 	Device                         string `validate:"required"`
@@ -208,13 +206,18 @@ func (s Session) ToSubject() (*Subject, error) {
 		return nil, ErrInvalidSession
 	}
 
+	roles := s.Roles
+	if roles == nil {
+		roles = []string{}
+	}
+
 	return &Subject{
 		Kind:       shared.KindUser,
 		ID:         s.SubjectID,
 		Email:      s.SubjectEmail,
 		Name:       s.SubjectName,
 		AudienceID: s.AudienceID,
-		Roles:      s.Roles,
+		Roles:      roles,
 		SessionID:  s.ID,
 	}, nil
 }

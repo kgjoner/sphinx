@@ -8,7 +8,6 @@ import (
 )
 
 type ExternalCredential struct {
-	InternalID        int
 	UserID            uuid.UUID `validate:"required"`
 	ProviderName      string    `validate:"required"`
 	ProviderSubjectID string    `validate:"required"`
