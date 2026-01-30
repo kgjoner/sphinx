@@ -66,13 +66,11 @@ An **Identity and Access Management (IAM)** API built with Go, designed to handl
    ```
 
 3. **Access the API**
-
    - API Server: `http://localhost:8080/v1/api`
    - API Documentation: `http://localhost:8080/v1`
    - Health Check: `http://localhost:8080/v1/health`
 
    Auxiliary tools during development:
-
    - Mail Delivery Check (Mailhog): `http://localhost:8025`
 
 ### Manual Setup
@@ -224,18 +222,25 @@ DOCKER_REGISTRY=docker.io make ci   # Build and push artifacts
 ### Project Structure
 
 ```
-├── cmd/                   # Application entrypoints
-├── internal/              # Private application code
-│   ├── domains/auth/      # Authentication domain logic
-│   ├── repositories/      # Data access layer
-│   ├── server/            # HTTP server setup
-│   └── config/            # Configuration management
-├── pkg/                   # Public SDK and utilities
-│   └── sphinx/            # Go client SDK
-├── build/                 # Build related code
-|   ├── helm/              # Kubernetes deployment charts
-│   └── scripts/           # Shell scripts for developing and integration
-└── test/                  # Test suites
+├── cmd/                      # Application entrypoints
+├── internal/                 # Private application code
+│   |── config/               # Configuration management
+│   ├── domains/{name}        # Domain logic
+|   |   └── {name}case        # Application logic (use cases)
+|   |   └── {name}http        # Gateway logic for http
+|   |   └── {name}repo        # Adapters for SQL code
+|   |   |   └── queries       # SQL raw queries
+│   ├── shared/               # Shared value objects, interfaces and simple domain services
+|   |   └── sharedhttp        # Middlewares shared by http gateways
+│   ├── pkg/                  # Generic and project specific adapters
+│   └── server/               # Composition root and HTTP server setup
+├── pkg/                      # Public SDK and utilities
+│   └── sphinx/               # Go client SDK
+├── migrations/               # Database migrations
+├── build/                    # Build related code
+|   ├── helm/                 # Kubernetes deployment charts
+│   └── scripts/              # Shell scripts for developing and integration
+└── test/                     # Test suites
 ```
 
 ### Running Tests
