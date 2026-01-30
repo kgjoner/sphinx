@@ -7,14 +7,10 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/sphinx/internal/pkg/errcode"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/shared"
 )
-
-/* ==========================================================================
-	PROVIDER IMPLEMENTATION
-========================================================================== */
 
 type JWTProvider struct {
 	accessTokenLifetimeInSec  int
@@ -30,20 +26,24 @@ func NewJWTProvider(secret string, accessLifetime int, refreshLifetime int) *JWT
 	}
 }
 
-func (p *JWTProvider) Generate(sub Subject) (*Tokens, error) {
+/* ==========================================================================
+	TokenProvider
+========================================================================== */
+
+func (p *JWTProvider) Generate(sub auth.Subject) (*auth.Tokens, error) {
 	now := time.Now()
 
 	accessDuration := time.Second * time.Duration(p.accessTokenLifetimeInSec)
 	accessClaims := jwtClaims{
-		sub.UserID,
-		sub.ApplicationID,
-		now.Unix(),
-		now.Add(accessDuration).Unix(),
-		IntentAccess,
-		sub.UserEmail.String(),
-		sub.UserName,
-		sub.Roles,
-		sub.SessionID,
+		Sub:       sub.ID,
+		Aud:       sub.AudienceID,
+		Iat:       now.Unix(),
+		Exp:       now.Add(accessDuration).Unix(),
+		Intent:    auth.IntentAccess,
+		Email:     sub.Email.String(),
+		Name:      sub.Name,
+		Roles:     sub.Roles,
+		SessionID: sub.SessionID,
 	}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessSignedToken, err := accessToken.SignedString([]byte(p.secret))
@@ -53,11 +53,12 @@ func (p *JWTProvider) Generate(sub Subject) (*Tokens, error) {
 
 	refreshDuration := time.Second * time.Duration(p.refreshTokenLifetimeInSec)
 	refreshClaims := jwtClaims{
-		Sub:       sub.UserID,
+		Sub:       sub.ID,
+		Aud:       sub.AudienceID,
 		SessionID: sub.SessionID,
 		Iat:       now.Unix(),
 		Exp:       now.Add(refreshDuration).Unix(),
-		Intent:    IntentRefresh,
+		Intent:    auth.IntentRefresh,
 	}
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshSignedToken, err := refreshToken.SignedString([]byte(p.secret))
@@ -65,14 +66,14 @@ func (p *JWTProvider) Generate(sub Subject) (*Tokens, error) {
 		return nil, err
 	}
 
-	return &Tokens{
+	return &auth.Tokens{
 		AccessToken:  accessSignedToken,
 		RefreshToken: refreshSignedToken,
 		ExpiresIn:    int(accessDuration.Seconds()),
 	}, nil
 }
 
-func (p *JWTProvider) Validate(signedToken string) (*Subject, Intent, error) {
+func (p *JWTProvider) Validate(signedToken string) (*auth.Subject, auth.Intent, error) {
 	token, err := jwt.Parse(signedToken, func(t *jwt.Token) (interface{}, error) {
 		return []byte(p.secret), nil
 	})
@@ -82,56 +83,56 @@ func (p *JWTProvider) Validate(signedToken string) (*Subject, Intent, error) {
 			iat, _ := token.Claims.GetIssuedAt()
 			exp, _ := token.Claims.GetExpirationTime()
 			diff := exp.Sub(iat.Time)
-			code := errcode.ExpiredAccess
+			err = auth.ErrExpiredAccess
 			if diff.Seconds() >= float64(p.refreshTokenLifetimeInSec) {
-				code = errcode.ExpiredSession
+				err = auth.ErrExpiredSession
 			}
-			return nil, "", apperr.NewUnauthorizedError(msg, code)
+			return nil, "", err
 		} else {
-			code := errcode.InvalidAccess
-			return nil, "", apperr.NewUnauthorizedError(msg, code)
+			return nil, "", auth.ErrInvalidAccess
 		}
 	}
 
 	if !token.Valid {
-		return nil, "", apperr.NewUnauthorizedError("Invalid jwtToken", errcode.InvalidAccess)
+		return nil, "", auth.ErrInvalidAccess
 	}
 
 	var claims jwtClaims
 	ms, _ := json.Marshal(token.Claims)
 	err = json.Unmarshal(ms, &claims)
 	if err != nil {
-		return nil, "", apperr.NewUnauthorizedError("Badly formatted jwtToken", errcode.InvalidAccess)
+		return nil, "", auth.ErrInvalidAccess
 	}
 
 	var email htypes.Email
 	if claims.Email != "" {
 		email, err = htypes.ParseEmail(claims.Email)
 		if err != nil {
-			return nil, "", apperr.NewUnauthorizedError("Badly formatted email in jwtToken", errcode.InvalidAccess)
+			return nil, "", auth.ErrInvalidAccess
 		}
 	}
 
-	return &Subject{
-		SessionID:     claims.SessionID,
-		UserID:        claims.Sub,
-		UserEmail:     email,
-		UserName:      claims.Name,
-		ApplicationID: claims.Aud,
-		Roles:         claims.Roles,
+	return &auth.Subject{
+		ID:         claims.Sub,
+		Kind:       shared.KindUser,
+		Email:      email,
+		Name:       claims.Name,
+		AudienceID: claims.Aud,
+		Roles:      claims.Roles,
+		SessionID:  claims.SessionID,
 	}, claims.Intent, nil
 }
 
 /* ==========================================================================
-	TOKEN CLAIMS
+	Token Claims
 ========================================================================== */
 
 type jwtClaims struct {
-	Sub    uuid.UUID `json:"sub"`
-	Aud    uuid.UUID `json:"aud"`
-	Iat    int64     `json:"iat"`
-	Exp    int64     `json:"exp"`
-	Intent Intent    `json:"itn"`
+	Sub    uuid.UUID   `json:"sub"`
+	Aud    uuid.UUID   `json:"aud"`
+	Iat    int64       `json:"iat"`
+	Exp    int64       `json:"exp"`
+	Intent auth.Intent `json:"itn"`
 
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
