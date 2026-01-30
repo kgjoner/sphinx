@@ -8,7 +8,7 @@ import (
 
 type CreateApplication struct {
 	AccessRepo access.Repo
-	Hasher     shared.PasswordHasher
+	PwHasher   shared.PasswordHasher
 }
 
 type CreateApplicationInput struct {
@@ -25,7 +25,7 @@ func (i CreateApplication) Execute(input CreateApplicationInput) (out CreateAppl
 	// and use shared.PasswordGenerator interface instead
 	secret := pwdgen.GeneratePassword(42, "lower", "upper", "number")
 
-	hashPw, err := shared.NewHashedPassword(secret, i.Hasher)
+	hashPw, err := shared.NewHashedPassword(secret, i.PwHasher)
 	if err != nil {
 		return out, err
 	}

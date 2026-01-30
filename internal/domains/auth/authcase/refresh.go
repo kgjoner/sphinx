@@ -7,7 +7,7 @@ import (
 
 type Refresh struct {
 	AuthRepo      auth.Repo
-	Hasher        shared.DataHasher
+	DataHasher    shared.DataHasher
 	TokenProvider auth.TokenProvider
 }
 
@@ -29,17 +29,17 @@ func (i Refresh) Execute(input RefreshInput) (out LoginOutput, err error) {
 		return out, err
 	}
 
-	proof, err := shared.VerifyData(session.RefreshToken, input.Token, i.Hasher)
+	proof, err := shared.VerifyData(session.RefreshToken, input.Token, i.DataHasher)
 	if err != nil {
-		err := i.AuthRepo.TerminateAllSubjectSessions(input.Actor.ID)
-		if err != nil {
-			return out, err
+		terminateErr := i.AuthRepo.TerminateAllSubjectSessions(input.Actor.ID)
+		if terminateErr != nil {
+			return out, terminateErr
 		}
 
 		return out, err
 	}
 
-	err = session.Authenticate(*proof)
+	err = session.Authenticate(proof)
 	if err != nil {
 		return out, err
 	}
@@ -54,7 +54,7 @@ func (i Refresh) Execute(input RefreshInput) (out LoginOutput, err error) {
 		return out, err
 	}
 
-	refreshHash, err := shared.NewHashedData(tokens.RefreshToken, i.Hasher)
+	refreshHash, err := shared.NewHashedData(tokens.RefreshToken, i.DataHasher)
 	if err != nil {
 		return out, err
 	}

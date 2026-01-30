@@ -10,7 +10,7 @@ import (
 type ChangePassword struct {
 	IdentityRepo identity.Repo
 	AuthRepo     auth.Repo
-	Hasher       shared.PasswordHasher
+	PwHasher     shared.PasswordHasher
 	Mailer       shared.Mailer
 }
 
@@ -34,12 +34,12 @@ func (i ChangePassword) Execute(input ChangePasswordInput) (out bool, err error)
 		return out, identity.ErrUserNotFound
 	}
 
-	proof, err := shared.VerifyPassword(user.Password, input.OldPassword, i.Hasher)
+	proof, err := shared.VerifyPassword(user.Password, input.OldPassword, i.PwHasher)
 	if err != nil {
 		return out, err
 	}
 
-	hashPw, err := shared.NewHashedPassword(input.NewPassword, i.Hasher)
+	hashPw, err := shared.NewHashedPassword(input.NewPassword, i.PwHasher)
 	if err != nil {
 		return out, err
 	}
