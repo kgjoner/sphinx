@@ -1,4 +1,4 @@
-package email
+package assets
 
 type Link struct {
 	Key LinkKey

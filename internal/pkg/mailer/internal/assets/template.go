@@ -1,4 +1,4 @@
-package email
+package assets
 
 import (
 	"bytes"

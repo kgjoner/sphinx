@@ -1,4 +1,4 @@
-package email
+package assets
 
 type Params struct {
 	UserName      string
