@@ -24,7 +24,7 @@ func (g gateway) userHandler(r chi.Router) {
 	r.With(g.Authenticate, g.TargetUser).Post("/me/{field}", g.updateMyUniqueFields)
 	r.With(g.Authenticate, g.TargetUser).Delete("/me/{field}/verification", g.cancelMyPendingField)
 
-	r.With(g.Authenticate, g.TargetUser).Get("/{userID}", g.getPrivateUser)
+	r.With(g.AuthenticateAny, g.TargetUser).Get("/{userID}", g.getPrivateUser)
 	r.With(g.Authenticate, g.TargetUser).Patch("/{userID}", g.updateExtraData)
 	r.With(g.Authenticate, g.TargetUser).Post("/{userID}/{field}", g.updateUniqueFields)
 	r.With(g.AuthenticateApp, g.TargetUser).Get("/{userID}/email", g.getUserEmail)
@@ -60,15 +60,19 @@ func (g gateway) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	identRepo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
-	accessRepo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
-	i := identcase.SignUp{
-		IdentityRepo: identRepo,
-		AccessRepo:   accessRepo,
-		PwHasher:     g.PwHasher,
-		Mailer:       g.Mailer,
-	}
-	output, err := i.Execute(input)
+	output, err := g.PGPool.WithTx(r.Context(), nil, func(tx *sql.Tx) (any, error) {
+		identRepo := g.IdentFactory.NewDAO(r.Context(), tx)
+		accessRepo := g.AccessFactory.NewDAO(r.Context(), tx)
+
+		i := identcase.SignUp{
+			IdentityRepo: identRepo,
+			AccessRepo:   accessRepo,
+			PwHasher:     g.PwHasher,
+			Mailer:       g.Mailer,
+		}
+
+		return i.Execute(input)
+	})
 
 	if err != nil {
 		presenter.HTTPError(err, w, r)

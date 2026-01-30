@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
@@ -24,6 +23,8 @@ func NewMiddleware(authorizer Authorizer) *Middleware {
 	}
 }
 
+// Authenticate middleware verifies Bearer token from Authorization header,
+// authorizes the user, and injects the actor and token into the request context.
 func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("authorization")
@@ -32,23 +33,12 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 			presenter.HTTPError(shared.ErrMissingCredentials, w, r)
 			return
 		}
-
+		
 		tokenStr := authHeaderParts[1]
-		actor, intent, err := m.authorizer.AuthorizeUser(tokenStr)
+		isRefreshRoute := strings.Contains(r.URL.Path, "/refresh")
+		actor, err := m.authorizer.AuthorizeToken(tokenStr, isRefreshRoute)
 		if err != nil {
 			presenter.HTTPError(err, w, r)
-			return
-		}
-
-		if intent != auth.IntentAccess && intent != auth.IntentRefresh {
-			presenter.HTTPError(auth.ErrInvalidAccess, w, r)
-			return
-		}
-
-		isRefreshRoute := strings.Contains(r.URL.Path, "/refresh")
-		if (intent == auth.IntentRefresh && !isRefreshRoute) ||
-			(intent == auth.IntentAccess && isRefreshRoute) {
-			presenter.HTTPError(auth.ErrInvalidAccess, w, r)
 			return
 		}
 
@@ -61,6 +51,8 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	})
 }
 
+// AuthenticateApp middleware verifies Basic auth from Authorization header,
+// authorizes the application, and injects the actor into the request context.
 func (m *Middleware) AuthenticateApp(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("authorization")
@@ -86,7 +78,7 @@ func (m *Middleware) AuthenticateApp(next http.Handler) http.Handler {
 		appID, _ := uuid.Parse(credentials[0])
 		appSecret := credentials[1]
 
-		actor, err := m.authorizer.AuthorizeApp(appID, appSecret)
+		actor, err := m.authorizer.AuthorizeApp(r.Context(), appID, appSecret)
 		if err != nil {
 			presenter.HTTPError(err, w, r)
 			return
@@ -97,6 +89,24 @@ func (m *Middleware) AuthenticateApp(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+// AuthenticateAny middleware verifies Bearer or Basic auth from Authorization header,
+// authorizes the user or application, and injects the actor into the request context.
+func (m *Middleware) AuthenticateAny(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			m.Authenticate(next).ServeHTTP(w, r)
+			return
+		} else if strings.HasPrefix(authHeader, "Basic ") {
+			m.AuthenticateApp(next).ServeHTTP(w, r)
+			return
+		} else {
+			presenter.HTTPError(shared.ErrMissingCredentials, w, r)
+			return
+		}
 	})
 }
 
