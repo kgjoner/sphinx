@@ -5,8 +5,11 @@ INSERT INTO
     user_id,
     application_id,
     refresh_token,
+    elapsed_minutes_between_refreshes,
+    refreshes_count,
     device,
-    ip
+    ip,
+    is_active
   )
 VALUES
   (
@@ -29,10 +32,11 @@ VALUES
     ),
     $4,
     $5,
-    $6
-  )
-RETURNING
-  id;
+    $6,
+    $7,
+    $8,
+    $9
+  );
 
 -- name: UpdateSession :exec
 UPDATE session
@@ -43,7 +47,7 @@ SET
   refreshes_count = $5,
   is_active = $6,
   terminated_at = $7,
-  updated_at = NOW()
+  updated_at = $8
 WHERE
   id = $1;
 
@@ -55,20 +59,20 @@ SELECT
   COALESCE(
     u.extra_data ->> 'name',
     u.username,
-    SUBSTRING(u.email, 1, CHARINDEX ('@', u.email) - 1)
+    SUBSTRING(u.email, 1, POSITION('@' IN u.email) - 1)
   ) as subject_name,
   a.id as audience_id,
   l.roles as roles,
-  ip,
-  device,
-  refresh_token,
-  refreshed_at,
-  elapsed_minutes_between_refreshes,
-  refreshes_count,
-  is_active,
-  terminated_at,
-  created_at,
-  updated_at
+  s.ip,
+  s.device,
+  s.refresh_token,
+  s.refreshed_at,
+  s.elapsed_minutes_between_refreshes,
+  s.refreshes_count,
+  s.is_active,
+  s.terminated_at,
+  s.created_at,
+  s.updated_at
 FROM
   session s
   JOIN "user" u ON s.user_id = u.internal_id

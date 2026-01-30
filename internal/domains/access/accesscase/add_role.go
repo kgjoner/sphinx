@@ -38,7 +38,7 @@ func (i AddRole) Execute(input AddRoleInput) (out bool, err error) {
 		return out, err
 	}
 
-	err = i.AccessRepo.UpsertLinks(*link)
+	err = i.AccessRepo.InsertLink(link)
 	if err != nil {
 		return out, err
 	}

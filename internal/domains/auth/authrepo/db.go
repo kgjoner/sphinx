@@ -41,8 +41,9 @@ var rawQueries = map[string]string{}
 var ErrNoQuery = fmt.Errorf("authrepo: raw query not found")
 
 func init() {
-	readAndParse("user.sql")
-	readAndParse("external_credential.sql")
+	readAndParse("client.sql")
+	readAndParse("principal.sql")
+	readAndParse("session.sql")
 }
 
 func readAndParse(filename string) {

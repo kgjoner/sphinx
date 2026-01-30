@@ -2,7 +2,6 @@ package authrepo
 
 import (
 	"database/sql"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -25,10 +24,9 @@ func (q DAO) GetClient(clientID uuid.UUID) (*auth.Client, error) {
 		&client.Name,
 		pq.Array(&client.AllowedRedirectUris),
 	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 

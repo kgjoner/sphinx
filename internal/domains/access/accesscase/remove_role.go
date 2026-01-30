@@ -38,7 +38,7 @@ func (i RemoveRole) Execute(input RemoveRoleInput) (out bool, err error) {
 		return out, err
 	}
 
-	err = i.AccessRepo.UpsertLinks(*link)
+	err = i.AccessRepo.UpdateLink(*link)
 	if err != nil {
 		return out, err
 	}

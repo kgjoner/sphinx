@@ -30,12 +30,10 @@ VALUES
     $11,
     $12,
     $13
-  )
-RETURNING internal_id;
+  );
 
 -- name: UpdateUser :exec
-UPDATE
-  "user"
+UPDATE "user"
 SET
   email = $2,
   password = $3,
@@ -70,18 +68,30 @@ SELECT
   u.has_phone_been_verified,
   u.codes,
   u.password_updated_at,
-  json_agg(
-    jsonb_build_object(
-      'id', c.id,
-      'user_id', c.user_id,
-      'provider', c.provider,
-      'provider_subject_id', c.provider_subject_id,
-      'provider_alias', c.provider_alias,
-      'last_used_at', c.last_used_at,
-      'created_at', c.created_at,
-      'updated_at', c.updated_at
-    )
-  ) FILTER (WHERE c.id IS NOT NULL) AS external_credentials,
+  COALESCE(
+    json_agg(
+      jsonb_build_object(
+        'userID',
+        u.id,
+        'providerName',
+        c.provider_name,
+        'providerSubjectID',
+        c.provider_subject_id,
+        'providerAlias',
+        c.provider_alias,
+        'lastUsedAt',
+        c.last_used_at,
+        'createdAt',
+        c.created_at,
+        'updatedAt',
+        c.updated_at
+      )
+    ) FILTER (
+      WHERE
+        c.user_id IS NOT NULL
+    ),
+    '[]'::json
+  ) AS external_credentials,
   u.created_at,
   u.updated_at
 FROM
@@ -108,28 +118,40 @@ SELECT
   u.has_phone_been_verified,
   u.codes,
   u.password_updated_at,
-  json_agg(
-    jsonb_build_object(
-      'id', c.id,
-      'user_id', c.user_id,
-      'provider', c.provider,
-      'provider_subject_id', c.provider_subject_id,
-      'provider_alias', c.provider_alias,
-      'last_used_at', c.last_used_at,
-      'created_at', c.created_at,
-      'updated_at', c.updated_at
-    )
-  ) FILTER (WHERE c.id IS NOT NULL) AS external_credentials,
+  COALESCE(
+    json_agg(
+      jsonb_build_object(
+        'userID',
+        u.id,
+        'providerName',
+        c.provider_name,
+        'providerSubjectID',
+        c.provider_subject_id,
+        'providerAlias',
+        c.provider_alias,
+        'lastUsedAt',
+        c.last_used_at,
+        'createdAt',
+        c.created_at,
+        'updatedAt',
+        c.updated_at
+      )
+    ) FILTER (
+      WHERE
+        c.user_id IS NOT NULL
+    ),
+    '[]'::json
+  ) AS external_credentials,
   u.created_at,
   u.updated_at
 FROM
   "user" u
   LEFT JOIN external_credential c ON c.user_id = u.internal_id
 WHERE
-  u.email = $1 OR
-  u.phone = $1 OR
-  u.username = $1 OR
-  u.document = $1
+  u.email = $1
+  OR u.phone = $1
+  OR u.username = $1
+  OR u.document = $1
 GROUP BY
   u.internal_id;
 
@@ -149,25 +171,37 @@ SELECT
   u.has_phone_been_verified,
   u.codes,
   u.password_updated_at,
-  json_agg(
-    jsonb_build_object(
-      'id', c.id,
-      'user_id', c.user_id,
-      'provider', c.provider,
-      'provider_subject_id', c.provider_subject_id,
-      'provider_alias', c.provider_alias,
-      'last_used_at', c.last_used_at,
-      'created_at', c.created_at,
-      'updated_at', c.updated_at
-    )
-  ) FILTER (WHERE c.id IS NOT NULL) AS external_credentials,
+  COALESCE(
+    json_agg(
+      jsonb_build_object(
+        'userID',
+        u.id,
+        'providerName',
+        c.provider_name,
+        'providerSubjectID',
+        c.provider_subject_id,
+        'providerAlias',
+        c.provider_alias,
+        'lastUsedAt',
+        c.last_used_at,
+        'createdAt',
+        c.created_at,
+        'updatedAt',
+        c.updated_at
+      )
+    ) FILTER (
+      WHERE
+        c.user_id IS NOT NULL
+    ),
+    '[]'::json
+  ) AS external_credentials,
   u.created_at,
   u.updated_at
 FROM
   "user" u
   LEFT JOIN external_credential c ON c.user_id = u.internal_id
 WHERE
-  c.provider = $1 AND
-  c.provider_subject_id = $2
+  c.provider_name = $1
+  AND c.provider_subject_id = $2
 GROUP BY
   u.internal_id;

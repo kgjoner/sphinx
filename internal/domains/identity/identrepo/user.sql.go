@@ -16,7 +16,7 @@ func (q DAO) InsertUser(user *identity.User) error {
 		return ErrNoQuery
 	}
 
-	q.dbtx.QueryRowContext(q.ctx, raw,
+	_, err := q.dbtx.ExecContext(q.ctx, raw,
 		user.ID,
 		user.Email.String(),
 		user.Password,
@@ -31,7 +31,7 @@ func (q DAO) InsertUser(user *identity.User) error {
 		user.HasPhoneBeenVerified,
 		datatransform.ToRawMessage(user.VerificationCodes),
 	)
-	return nil
+	return err
 }
 
 func (q DAO) UpdateUser(user identity.User) error {
@@ -82,8 +82,8 @@ func (q DAO) GetUserByID(id uuid.UUID) (*identity.User, error) {
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
 		dbhandler.Map(&item.VerificationCodes),
-		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.PasswordUpdatedAt,
+		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)
@@ -118,8 +118,8 @@ func (q DAO) GetUserByEntry(entry shared.Entry) (*identity.User, error) {
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
 		dbhandler.Map(&item.VerificationCodes),
-		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.PasswordUpdatedAt,
+		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)
@@ -154,8 +154,8 @@ func (q DAO) GetUserByExternalCredential(provider string, subjectID string) (*id
 		&item.HasEmailBeenVerified,
 		&item.HasPhoneBeenVerified,
 		dbhandler.Map(&item.VerificationCodes),
-		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.PasswordUpdatedAt,
+		dbhandler.FromJSON(&item.ExternalCredentials),
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)

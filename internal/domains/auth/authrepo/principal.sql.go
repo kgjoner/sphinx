@@ -1,6 +1,8 @@
 package authrepo
 
 import (
+	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -29,7 +31,9 @@ func (q DAO) GetPrincipal(subID uuid.UUID, audID uuid.UUID) (*auth.Principal, er
 		&session.IsActive,
 		dbhandler.FromJSON(&session.ExternalCredentials),
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -57,7 +61,9 @@ func (q DAO) GetPrincipalByEntry(entry shared.Entry, audID uuid.UUID) (*auth.Pri
 		&session.IsActive,
 		dbhandler.FromJSON(&session.ExternalCredentials),
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -85,7 +91,9 @@ func (q DAO) GetPrincipalByExtSubID(providerName string, extSubID string, audID 
 		&session.IsActive,
 		dbhandler.FromJSON(&session.ExternalCredentials),
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 

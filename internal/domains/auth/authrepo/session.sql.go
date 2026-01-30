@@ -1,6 +1,8 @@
 package authrepo
 
 import (
+	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/lib/pq"
@@ -12,15 +14,18 @@ func (q DAO) InsertSession(session *auth.Session) error {
 		return ErrNoQuery
 	}
 
-	q.dbtx.QueryRowContext(q.ctx, raw,
+	_, err := q.dbtx.ExecContext(q.ctx, raw,
 		session.ID,
 		session.SubjectID,
 		session.AudienceID,
 		session.RefreshToken,
+		pq.Array(session.ElapsedMinutesBetweenRefreshes),
+		session.RefreshesCount,
 		session.Device,
 		session.IP,
+		session.IsActive,
 	)
-	return nil
+	return err
 }
 
 func (q DAO) UpdateSession(session auth.Session) error {
@@ -30,14 +35,14 @@ func (q DAO) UpdateSession(session auth.Session) error {
 	}
 
 	_, err := q.dbtx.ExecContext(q.ctx, raw,
+		session.ID,
 		session.RefreshToken,
 		session.RefreshedAt,
-		session.ElapsedMinutesBetweenRefreshes,
+		pq.Array(session.ElapsedMinutesBetweenRefreshes),
 		session.RefreshesCount,
 		session.IsActive,
 		session.TerminatedAt,
 		session.UpdatedAt,
-		session.ID,
 	)
 	return err
 }
@@ -69,7 +74,9 @@ func (q DAO) GetSessionByID(id uuid.UUID) (*auth.Session, error) {
 		&session.CreatedAt,
 		&session.UpdatedAt,
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 

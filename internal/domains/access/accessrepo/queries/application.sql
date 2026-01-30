@@ -1,4 +1,4 @@
--- name: CreateApplication :one
+-- name: CreateApplication :exec
 INSERT INTO
   application (
     id,
@@ -8,18 +8,10 @@ INSERT INTO
     allowed_redirect_uris
   )
 VALUES
-  (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5
-  )
-RETURNING internal_id;
+  ($1, $2, $3, $4, $5);
 
 -- name: UpdateApplication :exec
-UPDATE
-  application
+UPDATE application
 SET
   name = $2,
   possible_roles = $3,

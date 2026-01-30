@@ -4,7 +4,7 @@ SELECT
   id as audience_id,
   secret,
   name,
-  redirect_uris,
+  allowed_redirect_uris
 FROM
   application
 WHERE

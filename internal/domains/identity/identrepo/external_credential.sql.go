@@ -11,13 +11,14 @@ func (q DAO) InsertExternalCredential(credential *identity.ExternalCredential) e
 		return ErrNoQuery
 	}
 
-	q.dbtx.QueryRowContext(q.ctx, raw,
+	_, err := q.dbtx.ExecContext(q.ctx, raw,
 		credential.UserID,
 		credential.ProviderName,
 		credential.ProviderSubjectID,
+		credential.ProviderAlias,
 		credential.LastUsedAt,
 	)
-	return nil
+	return err
 }
 
 func (q DAO) UpdateExternalCredential(credential identity.ExternalCredential) error {

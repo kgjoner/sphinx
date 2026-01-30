@@ -16,14 +16,14 @@ func (q DAO) InsertApplication(app *access.Application) error {
 		return ErrNoQuery
 	}
 
-	q.dbtx.QueryRowContext(q.ctx, raw,
+	_, err := q.dbtx.ExecContext(q.ctx, raw,
 		app.ID,
 		app.Name,
 		pq.Array(datatransform.ToStringArray(app.PossibleRoles)),
 		app.Secret,
 		pq.Array(app.AllowedRedirectUris),
 	)
-	return nil
+	return err
 }
 
 func (q DAO) UpdateApplication(app access.Application) error {
