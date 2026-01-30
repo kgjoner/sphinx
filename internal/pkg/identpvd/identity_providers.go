@@ -1,4 +1,4 @@
-package config
+package identpvd
 
 import (
 	"bytes"
@@ -9,9 +9,43 @@ import (
 
 	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
 	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/sphinx/internal/shared"
 )
 
-type ExternalAuthProvider struct {
+type Providers struct {
+	providers map[string]Provider
+}
+
+func NewProviders(raw []byte) (*Providers, error) {
+	if len(raw) == 0 {
+		return &Providers{
+			providers: make(map[string]Provider),
+		}, nil
+	}
+
+	var providers []Provider
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&providers); err != nil {
+		return nil, fmt.Errorf("failed to parse external identity providers: %w", err)
+	}
+
+	providersMap := make(map[string]Provider)
+	for _, provider := range providers {
+		err := validator.Validate(provider)
+		if err != nil {
+			return nil, fmt.Errorf("invalid external identity provider '%s': %w", provider.Name, err)
+		}
+		providersMap[provider.Name] = provider
+	}
+
+	return &Providers{
+		providers: providersMap,
+	}, nil
+}
+
+type Provider struct {
 	Name           string            `validate:"required"`
 	URL            string            `validate:"required"`
 	Method         string            `json:",omitempty"` // Default is GET
@@ -22,15 +56,15 @@ type ExternalAuthProvider struct {
 	// JSON path to extract subject ID from response
 	SubjectIDPath string `json:",omitempty" validate:"required"`
 	EmailPath     string `json:",omitempty"`
+	AliasPath     string `json:",omitempty"`
 }
 
-type ExternalAuthInput struct {
-	AuthorizationHeader string
-	Params              map[string]string
-	Body                map[string]string
-}
+func (p *Providers) Authenticate(input shared.IdentityProviderInput) (subject *shared.ExternalSubject, err error) {
+	e, ok := p.providers[input.ProviderName]
+	if !ok {
+		return nil, shared.ErrInvalidExternalSubject
+	}
 
-func (e ExternalAuthProvider) Authenticate(input ExternalAuthInput) (subject *ExternalSubject, err error) {
 	if e.Method == "" {
 		e.Method = http.MethodGet
 	}
@@ -60,7 +94,7 @@ func (e ExternalAuthProvider) Authenticate(input ExternalAuthInput) (subject *Ex
 	for k, v := range e.DefaultHeaders {
 		req.Header.Set(k, v)
 	}
-	req.Header.Set("Authorization", input.AuthorizationHeader)
+	req.Header.Set("Authorization", input.Authorization)
 
 	// Set query parameters
 	q := req.URL.Query()
@@ -89,14 +123,14 @@ func (e ExternalAuthProvider) Authenticate(input ExternalAuthInput) (subject *Ex
 	}
 
 	// Extract subject ID using the provided path
-	subjectID, err := e.extractValueFromPath(responseBody, e.SubjectIDPath)
+	subjectID, err := extractValueFromPath(responseBody, e.SubjectIDPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract subject ID: %w", err)
 	}
 
 	var email htypes.Email
 	if e.EmailPath != "" {
-		strEmail, err := e.extractValueFromPath(responseBody, e.EmailPath)
+		strEmail, err := extractValueFromPath(responseBody, e.EmailPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract email: %w", err)
 		}
@@ -107,15 +141,26 @@ func (e ExternalAuthProvider) Authenticate(input ExternalAuthInput) (subject *Ex
 		}
 	}
 
-	return &ExternalSubject{
+	var alias string
+	if e.AliasPath != "" {
+		alias, err = extractValueFromPath(responseBody, e.AliasPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to extract alias: %w", err)
+		}
+	} else if email != "" {
+		alias = email.String()
+	}
+
+	return &shared.ExternalSubject{
 		ProviderName: e.Name,
 		ID:           subjectID,
+		Kind:         shared.KindUser,
 		Email:        email,
-		isAuthed:     true,
+		Alias:        alias,
 	}, nil
 }
 
-func (e ExternalAuthProvider) extractValueFromPath(data map[string]interface{}, path string) (string, error) {
+func extractValueFromPath(data map[string]interface{}, path string) (string, error) {
 	parts := strings.Split(path, ".")
 	current := data
 
@@ -152,16 +197,4 @@ func (e ExternalAuthProvider) extractValueFromPath(data map[string]interface{}, 
 	}
 
 	return "", fmt.Errorf("empty path provided")
-}
-
-type ExternalSubject struct {
-	ProviderName string
-	ID           string
-	Email        htypes.Email
-
-	isAuthed bool
-}
-
-func (s *ExternalSubject) IsAuthenticated() bool {
-	return s.isAuthed
 }

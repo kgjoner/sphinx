@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kgjoner/sphinx/internal/assets/email"
 	"github.com/vrischmann/envconfig"
 )
 
@@ -27,7 +26,7 @@ var Env struct {
 	}
 
 	CLIENT struct {
-		BASE_URL          string `envconfig:"default=localhost:3000"`
+		BASE_URL          string `envconfig:"default=http://localhost:3000"`
 		DATA_VERIFICATION string `envconfig:"default=/verification"`
 		PASSWORD_RESET    string `envconfig:"default=/password/reset"`
 	}
@@ -43,7 +42,7 @@ var Env struct {
 	}
 
 	SWAGGER_AUTH    map[string]string `envconfig:"-" json:",omitempty"`
-	EMAIL_TEMPLATES email.TemplateMap `envconfig:"-" json:",omitempty"`
+	EMAIL_TEMPLATES []byte            `envconfig:"-" json:",omitempty"`
 	// Used for integrating with third-party identity providers.
 	// It is OPTIONAL, so if not provided, no external auth will be possible.
 	// Each provider must have a unique name.
@@ -51,7 +50,7 @@ var Env struct {
 	// Use with caution, only with trusted providers, as this may open security vulnerabilities.
 	//
 	// See documentation for more details.
-	EXTERNAL_AUTH_PROVIDERS []ExternalAuthProvider `envconfig:"-" json:",omitempty"`
+	EXTERNAL_AUTH_PROVIDERS []byte `envconfig:"-" json:",omitempty"`
 }
 
 var BASE_PATH string
@@ -69,20 +68,12 @@ func Must() {
 	}
 
 	// Handle EMAIL_TEMPLATES JSON parsing manually
-	if emailTemplatesJSON := os.Getenv("EMAIL_TEMPLATES"); emailTemplatesJSON != "" {
-		if err := json.Unmarshal([]byte(emailTemplatesJSON), &Env.EMAIL_TEMPLATES); err != nil {
-			panic("failed to parse EMAIL_TEMPLATES JSON: " + err.Error())
-		}
-
-		email.MergeTemplates(Env.EMAIL_TEMPLATES)
-	}
+	emailTemplates := []byte(os.Getenv("EMAIL_TEMPLATES"))
+	Env.EMAIL_TEMPLATES = emailTemplates
 
 	// Handle EXTERNAL_AUTH_PROVIDERS JSON parsing manually
-	if providersJSON := os.Getenv("EXTERNAL_AUTH_PROVIDERS"); providersJSON != "" {
-		if err := json.Unmarshal([]byte(providersJSON), &Env.EXTERNAL_AUTH_PROVIDERS); err != nil {
-			panic("failed to parse EXTERNAL_AUTH_PROVIDERS JSON: " + err.Error())
-		}
-	}
+	externalAuthProviders := []byte(os.Getenv("EXTERNAL_AUTH_PROVIDERS"))
+	Env.EXTERNAL_AUTH_PROVIDERS = externalAuthProviders
 
 	if !strings.HasPrefix(Env.APP_VERSION, "v") {
 		Env.APP_VERSION = "v" + Env.APP_VERSION
