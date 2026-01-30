@@ -40,6 +40,8 @@ func Raise(
 		deps,
 	}
 
-	router.Route("/user", gtw.userHandler)
-	router.Route("/user", gtw.externalCredentialHandler)
+	router.Route("/user", func(r chi.Router) {
+		gtw.userHandler(r)
+		gtw.externalCredentialHandler(r)
+	})
 }
