@@ -26,8 +26,8 @@ func (g gateway) applicationHandler(r chi.Router) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		auth.ApplicationCreationFields	true	"Name and possible grantings."
-//	@Success		200		{object}	presenter.Success[auth.ApplicationView]
+//	@Param			payload	body		access.ApplicationCreationFields	true	"Name and possible grantings."
+//	@Success		200		{object}	presenter.Success[access.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
@@ -68,9 +68,9 @@ func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string							true	"ID of target application"
-//	@Param			payload	body		auth.ApplicationEditableFields	true	"If grantings are passed, the new ones (even if empty array) will overwrite old ones."
-//	@Success		200		{object}	presenter.Success[auth.ApplicationView]
+//	@Param			id		path		string								true	"ID of target application"
+//	@Param			payload	body		access.ApplicationEditableFields	true	"If grantings are passed, the new ones (even if empty array) will overwrite old ones."
+//	@Success		200		{object}	presenter.Success[access.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
@@ -110,7 +110,7 @@ func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Application
 //	@Produce		json
 //	@Param			id	path		string	true	"ID of target application"
-//	@Success		200	{object}	presenter.Success[auth.ApplicationView]
+//	@Success		200	{object}	presenter.Success[access.ApplicationView]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) getApplication(w http.ResponseWriter, r *http.Request) {

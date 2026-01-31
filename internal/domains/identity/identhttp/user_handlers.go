@@ -21,12 +21,12 @@ func (g gateway) userHandler(r chi.Router) {
 	r.With(g.Authenticate, g.TargetUser).Get("/me", g.getMe)
 	r.With(g.Authenticate, g.TargetUser).Patch("/me", g.updateMyExtraData)
 	r.With(g.Authenticate, g.TargetUser).Post("/me/password", g.changeMyPassword)
-	r.With(g.Authenticate, g.TargetUser).Post("/me/{field}", g.updateMyUniqueFields)
+	r.With(g.Authenticate, g.TargetUser).Post("/me/{field}", g.updateMyUniqueField)
 	r.With(g.Authenticate, g.TargetUser).Delete("/me/{field}/verification", g.cancelMyPendingField)
 
 	r.With(g.AuthenticateAny, g.TargetUser).Get("/{userID}", g.getPrivateUser)
 	r.With(g.Authenticate, g.TargetUser).Patch("/{userID}", g.updateExtraData)
-	r.With(g.Authenticate, g.TargetUser).Post("/{userID}/{field}", g.updateUniqueFields)
+	r.With(g.Authenticate, g.TargetUser).Post("/{userID}/{field}", g.updateUniqueField)
 	r.With(g.AuthenticateApp, g.TargetUser).Get("/{userID}/email", g.getUserEmail)
 
 	// Utility endpoint to get user ID by its entry. Passed on X-Entry header.
@@ -41,7 +41,7 @@ func (g gateway) userHandler(r chi.Router) {
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			accept-language	header		string					false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		identity.UserCreationFields	true	"Email and password are mandatory."
 //	@Success		201				{object}	presenter.Success[identity.UserLeanView]
 //	@Failure		400				{object}	apperr.AppError
@@ -314,8 +314,8 @@ func (g gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 //	@Tags			User
 //	@Accept			json
 //	@Produce		json
-//	@Param			accept-language	header	string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
-//	@Param			id				path	string						true	"User ID"
+//	@Param			accept-language	header	string							false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
+//	@Param			id				path	string							true	"User ID"
 //	@Param			payload			body	identcase.ResetPasswordInput	true	"Old password and new one."
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
@@ -380,7 +380,7 @@ func (g gateway) updateMyExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path		string			true	"User ID"'
+//	@Param			id		path		string				true	"User ID"'
 //	@Param			payload	body		identity.ExtraData	true	"At least one data must be defined.""
 //	@Success		200		{object}	presenter.Success[identity.UserView]
 //	@Failure		400		{object}	apperr.AppError
@@ -415,7 +415,7 @@ func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	presenter.HTTPSuccess(output, w, r)
 }
 
-// UpdateMyUniqueFields godoc
+// UpdateMyUniqueField godoc
 //
 //	@Summary		Update an unique field of authenticated user
 //	@Description	Update one unique data of authenticated user: email, phone, username or document. Email and phone updates require verification.
@@ -426,17 +426,17 @@ func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			accept-language	header		string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			field			path		string								true	"Must be: email, phone, username or document"
-//	@Param			payload			body		identcase.UpdateUniqueFieldsInput	true	"Value is required."
+//	@Param			payload			body		identcase.UpdateUniqueFieldInput	true	"Value is required."
 //	@Success		200				{object}	presenter.Success[identity.UserView]
 //	@Failure		400				{object}	apperr.AppError
 //	@Failure		401				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
-func (g gateway) updateMyUniqueFields(w http.ResponseWriter, r *http.Request) {
-	g.updateUniqueFields(w, r)
+func (g gateway) updateMyUniqueField(w http.ResponseWriter, r *http.Request) {
+	g.updateUniqueField(w, r)
 }
 
-// UpdateUniqueFields godoc
+// UpdateUniqueField godoc
 //
 //	@Summary		Update an unique field of target user
 //	@Description	Update one unique data of target user: email, phone, username or document. Email and phone updates require verification.
@@ -455,7 +455,7 @@ func (g gateway) updateMyUniqueFields(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
-func (g gateway) updateUniqueFields(w http.ResponseWriter, r *http.Request) {
+func (g gateway) updateUniqueField(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		JSONBody().
 		ParseURLParam("field").

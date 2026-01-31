@@ -28,14 +28,14 @@ func (g gateway) linkHandler(r chi.Router) {
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			userID		path	string								true	"User ID"
-//	@Param			appID		path	string								true	"Application ID"
-//	@Success		200	{object}	access.LinkView
-//	@Failure		400	{object}	apperr.AppError
-//	@Failure		401	{object}	apperr.AppError
-//	@Failure		403	{object}	apperr.AppError
-//	@Failure		404	{object}	apperr.AppError
-//	@Failure		500	{object}	apperr.AppError
+//	@Param			userID	path		string	true	"User ID"
+//	@Param			appID	path		string	true	"Application ID"
+//	@Success		200		{object}	presenter.Success[access.LinkView]
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		403		{object}	apperr.AppError
+//	@Failure		404		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
 func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
@@ -72,9 +72,9 @@ func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			userID		path	string								true	"User ID"
-//	@Param			appID		path	string								true	"Application ID"
-//	@Param			role		path	string								true	"Role to add"
+//	@Param			userID	path	string	true	"User ID"
+//	@Param			appID	path	string	true	"Application ID"
+//	@Param			role	path	string	true	"Role to add"
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
@@ -118,9 +118,9 @@ func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			userID		path	string								true	"User ID"
-//	@Param			appID		path	string								true	"Application ID"
-//	@Param			role		path	string								true	"Role to remove"
+//	@Param			userID	path	string	true	"User ID"
+//	@Param			appID	path	string	true	"Application ID"
+//	@Param			role	path	string	true	"Role to remove"
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError

@@ -144,19 +144,19 @@ func (g gateway) refresh(w http.ResponseWriter, r *http.Request) {
 
 // External Login godoc
 //
-//		@Summary		Log user in via external provider
-//		@Description	Use an external provider to authenticate user and generate root app auth tokens.
-//		@Router			/auth/external/{provider} [post]
-//		@Tags			Auth
-//		@Accept			json
-//		@Produce		json
-//	 @Param			provider	path		string						true	"Name of the external identity provider (e.g., google, facebook)."
-//		@Param			payload	body		authcase.ExternalLoginInput	true	"You may inform email if creation is expected and provider does not provide it."
-//		@Success		200		{object}	presenter.Success[authcase.LoginOutput]
-//		@Failure		400		{object}	apperr.AppError
-//		@Failure		401		{object}	apperr.AppError
-//		@Failure		403		{object}	apperr.AppError
-//		@Failure		500		{object}	apperr.AppError
+//	@Summary		Log user in via external provider
+//	@Description	Use an external provider to authenticate user and generate root app auth tokens.
+//	@Router			/auth/external/{provider} [post]
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			provider	path		string						true	"Name of the external identity provider (e.g., google, facebook)."
+//	@Param			payload		body		authcase.ExternalLoginInput	true	"You may inform email if creation is expected and provider does not provide it."
+//	@Success		200			{object}	presenter.Success[authcase.LoginOutput]
+//	@Failure		400			{object}	apperr.AppError
+//	@Failure		401			{object}	apperr.AppError
+//	@Failure		403			{object}	apperr.AppError
+//	@Failure		500			{object}	apperr.AppError
 func (g gateway) externalLogin(w http.ResponseWriter, r *http.Request) {
 	c := controller.New(r).
 		ParseURLParam("provider", "providerName").

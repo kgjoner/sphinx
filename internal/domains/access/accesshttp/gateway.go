@@ -36,6 +36,13 @@ func Raise(router chi.Router, deps Dependencies) {
 	router.With(gtw.AuthenticateApp, gtw.TargetUser).Patch("/user/{userID}/permission", gtw.editUserPermissions)
 }
 
+type EditUserPermissionsInput struct {
+	Actor        shared.Actor         `json:"-"`
+	UserID       uuid.UUID            `json:"-"`
+	Roles        []access.Role        `json:"roles"`
+	ShouldRemove sql.NullBool        `json:"shouldRemove"`
+}
+
 // EditUserPermissions godoc
 //
 //	@Summary		(DEPRECATED) Add or remove roles
@@ -45,8 +52,8 @@ func Raise(router chi.Router, deps Dependencies) {
 //	@Security		BasicApp
 //	@Accept			json
 //	@Produce		json
-//	@Param			id		path	string								true	"User ID"
-//	@Param			payload	body	accesscase.EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
+//	@Param			id		path	string						true	"User ID"
+//	@Param			payload	body	EditUserPermissionsInput	true	"At least one of roles and grantings must be defined"
 //	@Success		204
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
@@ -59,12 +66,7 @@ func (g gateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		ParseURLParam("userID")
 
-	var input struct {
-		UserID       uuid.UUID     `json:"-"`
-		Actor        shared.Actor  `json:"-"`
-		Roles        []access.Role `json:"roles"`
-		ShouldRemove sql.NullBool  `json:"shouldRemove"`
-	}
+	var input EditUserPermissionsInput
 	err := c.Write(&input)
 	if err != nil {
 		presenter.HTTPError(err, w, r)
