@@ -20,9 +20,13 @@ var Env struct {
 	MAX_CONCURRENT_SESSIONS    int `envconfig:"default=0"`
 	AUTH_GRANT_LIFETIME_IN_SEC int `envconfig:"default=300"`
 	JWT                        struct {
-		SECRET                  string `envconfig:"default=topsecret"`
 		ACCESS_LIFETIME_IN_SEC  int    `envconfig:"default=900"`
 		REFRESH_LIFETIME_IN_SEC int    `envconfig:"default=172800"`
+		ALGORITHM               string `envconfig:"default=RS256"`     // RS256 or HS256 (legacy)
+		SECRET                  string `envconfig:"default=topsecret"` // Legacy HS256 secret (for initial grace period)
+		ENCRYPTION_KEY          string `envconfig:"default=changeme"`
+		// How often to rotate keys (in hours), default 1 year. Set 0 to disable automatic rotation.
+		KEY_ROTATION_INTERVAL_HOURS int `envconfig:"default=8760"`
 	}
 
 	CLIENT struct {

@@ -56,8 +56,22 @@ var (
 	)
 
 	// External Authentication Errors
-	ErrNoUserForThisSubject = apperr.NewRequestError(
+	ErrNoUserForThisSubject = apperr.NewUnauthorizedError(
 		"there is no user associated with this external subject",
 		"auth.no_user_for_this_subject",
+	)
+
+	// Signing Key Errors
+	ErrNoActiveKeys = apperr.NewInternalError(
+		"no active signing key available",
+		"auth.no_active_keys",
+	)
+	ErrRedundantRotation = apperr.NewRequestError(
+		"signing key has already been rotated",
+		"auth.redundant_rotation",
+	)
+	ErrKeyAlreadyExpired = apperr.NewRequestError(
+		"signing key has already expired",
+		"auth.key_already_expired",
 	)
 )

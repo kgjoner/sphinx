@@ -19,6 +19,14 @@ type Repo interface {
 	GetPrincipalByExtSubID(providerName string, extSubID string, audID uuid.UUID) (*Principal, error)
 
 	GetClient(uuid.UUID) (*Client, error)
+
+	// Signing key management
+	InsertSigningKey(*SigningKey) error
+	UpdateSigningKey(SigningKey) error
+	AcquireSigningKeyLock() (release func(), err error)
+	ListActiveSigningKeys() ([]*SigningKey, error)
+	GetSigningKeyByKID(string) (*SigningKey, error)
+	DeactivateExpiredKeys() error
 }
 
 type TokenProvider interface {
@@ -28,4 +36,15 @@ type TokenProvider interface {
 
 type CodeChallenger interface {
 	DoesChallengeMatch(method string, challenge string, verifier string) bool
+}
+
+type Encryptor interface {
+	Encrypt(plainText []byte) ([]byte, error)
+	Decrypt(cipherText []byte) ([]byte, error)
+}
+
+type KeyProvisioner interface {
+	GeneratePair() (privateKeyPEM []byte, publicKeyPEM []byte, err error)
+	DecodePrivate(privateKeyPEM []byte) (privateKey interface{}, err error)
+	DecodePublic(publicKeyPEM []byte) (publicKey interface{}, err error)
 }
