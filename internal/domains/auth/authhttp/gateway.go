@@ -26,6 +26,8 @@ type Dependencies struct {
 	PwHasher         shared.PasswordHasher
 	DataHasher       shared.DataHasher
 	Challenger       auth.CodeChallenger
+	Encryptor        auth.Encryptor
+	KeyProvisioner   auth.KeyProvisioner
 	Mailer           shared.Mailer
 
 	// Middleware
@@ -42,4 +44,7 @@ func Raise(
 
 	router.Route("/auth", gtw.sessionHandlers)
 	router.Route("/oauth", gtw.oauthHandlers)
+
+	router.Get("/.well-known/jwks.json", gtw.getJWKS)
+	router.Route("/admin/keys", gtw.keyHandlers)
 }
