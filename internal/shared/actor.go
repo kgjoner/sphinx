@@ -22,13 +22,15 @@ type Actor struct {
 type SubjectKind string
 
 const (
-	KindUser SubjectKind = "user"
-	KindApp  SubjectKind = "application"
+	KindUser   SubjectKind = "user"
+	KindApp    SubjectKind = "application"
+	KindSystem SubjectKind = "system"
 )
 
 func (i SubjectKind) Enumerate() any {
 	return []SubjectKind{
 		KindUser,
 		KindApp,
+		KindSystem,
 	}
 }
