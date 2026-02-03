@@ -23,7 +23,9 @@ import (
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesshttp"
 	"github.com/kgjoner/sphinx/internal/domains/access/accessrepo"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authhttp"
+	"github.com/kgjoner/sphinx/internal/domains/auth/authint"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authrepo"
 	"github.com/kgjoner/sphinx/internal/domains/identity/identhttp"
 	"github.com/kgjoner/sphinx/internal/domains/identity/identrepo"
@@ -41,10 +43,11 @@ import (
 )
 
 type Server struct {
-	pgPool    shared.RepoPool
-	cachePool cache.Pool
-	mailSvc   *hermes.Service
-	Handler   http.Handler
+	pgPool     shared.RepoPool
+	cachePool  cache.Pool
+	mailSvc    *hermes.Service
+	authIntGtw *authint.Gateway
+	Handler    http.Handler
 }
 
 func New() *Server {
@@ -103,19 +106,52 @@ func (s *Server) Setup() *Server {
 	accessFactory := accessrepo.NewFactory()
 	authFactory := authrepo.NewFactory()
 
-	// Token Provider
-	jwt := tokens.NewJWTProvider(
-		config.Env.JWT.SECRET,
-		config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
-		config.Env.JWT.REFRESH_LIFETIME_IN_SEC,
-	)
-
 	// Hashers
 	bcrypt := security.NewBcryptHasher()
 	sha3 := security.NewSHA3Hasher()
 
 	// Challenger
 	challenger := security.NewCodeChallenger()
+
+	// Encrypter
+	encrypter, err := security.NewAESEncrypter(config.Env.JWT.ENCRYPTION_KEY)
+	if err != nil {
+		log.Fatalf("Failed to initialize encrypter: %v", err)
+	}
+
+	// Key Provisioner
+	keyProvisioner := security.NewRSAProvisioner()
+
+	// Internal Client Gateways
+	s.authIntGtw = authint.Raise(authint.Dependencies{
+		PGPool:         s.pgPool,
+		AuthFactory:    authFactory,
+		KeyProvisioner: keyProvisioner,
+		Encryptor:      encrypter,
+	})
+	s.authIntGtw.InitializeKeysIfNeeded()
+
+	// Token Provider
+	var jwt auth.TokenProvider
+	if config.Env.JWT.ALGORITHM == string(auth.RS256) {
+		jwt = tokens.NewJWTProviderWithKeyPair(
+			s.authIntGtw,
+			config.Env.JWT.SECRET,
+			config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
+			config.Env.JWT.REFRESH_LIFETIME_IN_SEC,
+		)
+
+		log.Println("JWT provider initialized with RS256 algorithm")
+	} else {
+		// Legacy HS256 mode
+		jwt = tokens.NewJWTProvider(
+			config.Env.JWT.SECRET,
+			config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
+			config.Env.JWT.REFRESH_LIFETIME_IN_SEC,
+		)
+
+		log.Println("JWT provider initialized with HS256 algorithm (legacy)")
+	}
 
 	// Middleware
 	authorizer := authorizer.New(jwt, bcrypt, s.pgPool, accessFactory)
@@ -142,7 +178,7 @@ func (s *Server) Setup() *Server {
 	baseR.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-App", "X-Entry", "X-Target"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-Entry"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
@@ -182,9 +218,15 @@ func (s *Server) Setup() *Server {
 			PwHasher:         bcrypt,
 			DataHasher:       sha3,
 			Challenger:       challenger,
+			Encryptor:        encrypter,
+			KeyProvisioner:   keyProvisioner,
 			Mailer:           mailer,
 			Middleware:       spxMid,
 		})
+	})
+
+	r.Get("/.well-known/jwks.json", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, config.BASE_PATH+"/api/.well-known/jwks.json", http.StatusTemporaryRedirect)
 	})
 
 	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
