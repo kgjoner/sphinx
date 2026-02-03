@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/kgjoner/sphinx/internal/config"
-	baserepo "github.com/kgjoner/sphinx/internal/repositories/base"
+	"github.com/kgjoner/sphinx/internal/pkg/pgpool"
 	"github.com/kgjoner/sphinx/test/testutils"
 )
 
@@ -14,7 +14,7 @@ func main() {
 	config.Must()
 
 	// Connect to database
-	pool, err := baserepo.NewPool(config.Env.DATABASE_URL)
+	pool, err := pgpool.New(config.Env.DATABASE_URL)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

@@ -1,62 +1,89 @@
 package sphinx
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
+	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/sphinx/internal/common/errcode"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/pkg/tokens"
 )
 
-type ctxKey string
-
-const (
-	ActorCtxKey ctxKey = "sphinx_actor"
-	TokenCtxKey ctxKey = "sphinx_token"
-)
-
-type Middlewares struct {
-	sphinx *Service
+type middlewares struct {
+	appID         uuid.UUID
+	tokenProvider auth.TokenProvider
+	authorizer    Authorizer
 }
 
-func (s *Service) Middlewares() *Middlewares {
-	return &Middlewares{
-		sphinx: s,
+// NewMiddlewares creates middlewares with JWKS-based token validation.
+// This is the recommended approach for RS256 token validation.
+func NewMiddlewares(appID uuid.UUID, sphinxBaseURL string, authorizer Authorizer) *middlewares {
+	tokenProvider := NewJWKSProvider(sphinxBaseURL, "") // No HS256 fallback
+
+	return &middlewares{
+		appID:         appID,
+		tokenProvider: tokenProvider,
+		authorizer:    authorizer,
+	}
+}
+
+// NewMiddlewaresWithHS256Fallback creates middlewares with JWKS-based RS256 validation and HS256 fallback.
+// Use this during migration period when both RS256 and HS256 tokens may be in use.
+func NewMiddlewaresWithHS256Fallback(appID uuid.UUID, sphinxBaseURL string, tokenSecret string, authorizer Authorizer) *middlewares {
+	tokenProvider := NewJWKSProvider(sphinxBaseURL, tokenSecret) // With HS256 fallback
+
+	return &middlewares{
+		appID:         appID,
+		tokenProvider: tokenProvider,
+		authorizer:    authorizer,
+	}
+}
+
+// NewMiddlewaresWithSecret creates middlewares with a shared secret for HS256 validation.
+// Deprecated: Use NewMiddlewares with JWKS for RS256 support. This is kept for backward compatibility.
+func NewMiddlewaresWithSecret(appID uuid.UUID, tokenSecret string, authorizer Authorizer) *middlewares {
+	tokenProvider := tokens.NewJWTProvider(tokenSecret, 0, 0) // lifetime is not used in validation
+
+	return &middlewares{
+		appID:         appID,
+		tokenProvider: tokenProvider,
+		authorizer:    authorizer,
 	}
 }
 
 // Ensure authentication via bearer token
-func (m Middlewares) Authenticate(next http.Handler) http.Handler {
+func (m middlewares) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" || authHeaderParts[1] == "" {
-			err := apperr.NewUnauthorizedError("missing bearer token", errcode.InvalidAccess)
-			presenter.HTTPError(err, w, r)
+			presenter.HTTPError(ErrInvalidAccess, w, r)
 			return
 		}
 
 		tokenStr := authHeaderParts[1]
-		user, err := m.sphinx.Me(tokenStr)
+		sub, intent, err := m.tokenProvider.Validate(tokenStr)
+		if err != nil {
+			presenter.HTTPError(err, w, r)
+			return
+		} else if intent != auth.IntentAccess {
+			presenter.HTTPError(ErrInvalidAccess, w, r)
+			return
+		}
+
+		r, err = m.authorizer.AuthorizeSubject(Subject(*sub), r)
 		if err != nil {
 			presenter.HTTPError(err, w, r)
 			return
 		}
-
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, ActorCtxKey, *user)
-		ctx = context.WithValue(ctx, TokenCtxKey, tokenStr)
-		ctx = context.WithValue(ctx, presenter.ActorLogKey, user.ID)
-		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 	})
 }
 
 // If authorization header is present, ensure authentication via bearer token. Otherwise, allow request forward.
-func (m Middlewares) TryAuthenticate(next http.Handler) http.Handler {
+func (m middlewares) TryAuthenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("authorization")
 		if authHeader == "" {
@@ -66,34 +93,4 @@ func (m Middlewares) TryAuthenticate(next http.Handler) http.Handler {
 
 		m.Authenticate(next).ServeHTTP(w, r)
 	})
-}
-
-// Ensure authenticated user has at least one of listed roles. Admin users are always allowed.
-func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			actorValue := r.Context().Value(ActorCtxKey)
-			if actorValue == nil {
-				err := apperr.NewUnauthorizedError("no actor found, user must be authenticated prior guard middleware", errcode.InvalidAccess)
-				presenter.HTTPError(err, w, r)
-				return
-			}
-
-			actor := actorValue.(User)
-			if actor.IsAdmin() {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			for _, p := range roles {
-				if actor.HasRole(p) {
-					next.ServeHTTP(w, r)
-					return
-				}
-			}
-
-			err := apperr.NewForbiddenError("user does not have enough permission")
-			presenter.HTTPError(err, w, r)
-		})
-	}
 }

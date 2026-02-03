@@ -75,11 +75,11 @@ func (f *TestDataFactory) CreateApplicationData() map[string]interface{} {
 }
 
 func GenerateEmail() string {
-	return "test-" + uuid.New().String()[:8] + "@spghinx.test"
+	return "test-" + strings.ReplaceAll(uuid.New().String(), "-", "") + "@sphinx.test"
 }
 
 func GenerateUsername() string {
-	return "user-" + uuid.New().String()[:8]
+	return "user-" + strings.ReplaceAll(uuid.New().String(), "-", "")
 }
 
 func GenerateStrongPassword() string {

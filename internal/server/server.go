@@ -20,23 +20,38 @@ import (
 	"github.com/kgjoner/sphinx/docs"
 	"github.com/kgjoner/sphinx/internal/assets/img"
 	"github.com/kgjoner/sphinx/internal/assets/style"
-	"github.com/kgjoner/sphinx/internal/common"
 	"github.com/kgjoner/sphinx/internal/config"
-	authgtw "github.com/kgjoner/sphinx/internal/domains/auth/gateway"
-	baserepo "github.com/kgjoner/sphinx/internal/repositories/base"
+	"github.com/kgjoner/sphinx/internal/domains/access/accesshttp"
+	"github.com/kgjoner/sphinx/internal/domains/access/accessrepo"
+	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/domains/auth/authhttp"
+	"github.com/kgjoner/sphinx/internal/domains/auth/authint"
+	"github.com/kgjoner/sphinx/internal/domains/auth/authrepo"
+	"github.com/kgjoner/sphinx/internal/domains/identity/identhttp"
+	"github.com/kgjoner/sphinx/internal/domains/identity/identrepo"
+	"github.com/kgjoner/sphinx/internal/shared"
+	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
+
+	"github.com/kgjoner/sphinx/internal/pkg/authorizer"
+	"github.com/kgjoner/sphinx/internal/pkg/identpvd"
+	"github.com/kgjoner/sphinx/internal/pkg/mailer"
+	"github.com/kgjoner/sphinx/internal/pkg/pgpool"
+	"github.com/kgjoner/sphinx/internal/pkg/security"
+	"github.com/kgjoner/sphinx/internal/pkg/tokens"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Server struct {
-	basePool  *baserepo.Pool
-	cachePool cache.Pool
-	mailSvc   *hermes.Service
-	Handler   http.Handler
+	pgPool     shared.RepoPool
+	cachePool  cache.Pool
+	mailSvc    *hermes.Service
+	authIntGtw *authint.Gateway
+	Handler    http.Handler
 }
 
 func New() *Server {
-	db, err := baserepo.NewPool(config.Env.DATABASE_URL)
+	db, err := pgpool.New(config.Env.DATABASE_URL)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -49,15 +64,15 @@ func New() *Server {
 	mailSvc := hermes.New(config.Env.HERMES.BASE_URL, config.Env.HERMES.API_KEY)
 
 	return &Server{
-		basePool:  db,
+		pgPool:    db,
 		cachePool: rdb,
 		mailSvc:   mailSvc,
 	}
 }
 
 // BasePool returns the database pool (useful for testing)
-func (s *Server) BasePool() *baserepo.Pool {
-	return s.basePool
+func (s *Server) BasePool() shared.RepoPool {
+	return s.pgPool
 }
 
 //	@title			Sphinx API
@@ -86,23 +101,84 @@ func (s *Server) BasePool() *baserepo.Pool {
 // @host		{{ .Host }}
 // @basePath	{{ .BasePath }}
 func (s *Server) Setup() *Server {
-	pools := common.Pools{
-		BasePool:  s.basePool,
-		CachePool: s.cachePool,
+	// Repository Factories
+	identFactory := identrepo.NewFactory()
+	accessFactory := accessrepo.NewFactory()
+	authFactory := authrepo.NewFactory()
+
+	// Hashers
+	bcrypt := security.NewBcryptHasher()
+	sha3 := security.NewSHA3Hasher()
+
+	// Challenger
+	challenger := security.NewCodeChallenger()
+
+	// Encrypter
+	encrypter, err := security.NewAESEncrypter(config.Env.JWT.ENCRYPTION_KEY)
+	if err != nil {
+		log.Fatalf("Failed to initialize encrypter: %v", err)
 	}
 
+	// Key Provisioner
+	keyProvisioner := security.NewRSAProvisioner()
+
+	// Internal Client Gateways
+	s.authIntGtw = authint.Raise(authint.Dependencies{
+		PGPool:         s.pgPool,
+		AuthFactory:    authFactory,
+		KeyProvisioner: keyProvisioner,
+		Encryptor:      encrypter,
+	})
+	s.authIntGtw.InitializeKeysIfNeeded()
+
+	// Token Provider
+	var jwt auth.TokenProvider
+	if config.Env.JWT.ALGORITHM == string(auth.RS256) {
+		jwt = tokens.NewJWTProviderWithKeyPair(
+			s.authIntGtw,
+			config.Env.JWT.SECRET,
+			config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
+			config.Env.JWT.REFRESH_LIFETIME_IN_SEC,
+		)
+
+		log.Println("JWT provider initialized with RS256 algorithm")
+	} else {
+		// Legacy HS256 mode
+		jwt = tokens.NewJWTProvider(
+			config.Env.JWT.SECRET,
+			config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
+			config.Env.JWT.REFRESH_LIFETIME_IN_SEC,
+		)
+
+		log.Println("JWT provider initialized with HS256 algorithm (legacy)")
+	}
+
+	// Middleware
+	authorizer := authorizer.New(jwt, bcrypt, s.pgPool, accessFactory)
+	spxMid := sharedhttp.NewMiddleware(authorizer)
+
+	// Identity Provider
+	identPvd, err := identpvd.NewProviders(config.Env.EXTERNAL_AUTH_PROVIDERS)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Mailer
+	mailer := mailer.New(s.mailSvc, mailer.Config{
+		AppName:       config.Env.APP_NAME,
+		SupportEmail:  config.Env.SUPPORT_EMAIL,
+		ClientBaseURL: config.Env.CLIENT.BASE_URL,
+	})
 	updateHermesStyle(s.mailSvc)
-	services := common.Services{
-		MailService: s.mailSvc,
-	}
 
+	// Routing
 	baseR := chi.NewRouter()
 	baseR.Use(realIP())
 	baseR.Use(middleware.Timeout(60 * time.Second))
 	baseR.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-App", "X-Entry", "X-Target"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-Entry"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
@@ -114,7 +190,43 @@ func (s *Server) Setup() *Server {
 	r.Route("/api", func(r chi.Router) {
 		r.Use(countRequestMetric())
 
-		authgtw.Raise(r, pools, services)
+		identhttp.Raise(r, identhttp.Dependencies{
+			PGPool:           s.pgPool,
+			IdentFactory:     identFactory,
+			AccessFactory:    accessFactory,
+			AuthFactory:      authFactory,
+			IdentityProvider: identPvd,
+			PwHasher:         bcrypt,
+			Mailer:           mailer,
+			Middleware:       spxMid,
+		})
+
+		accesshttp.Raise(r, accesshttp.Dependencies{
+			PGPool:        s.pgPool,
+			AccessFactory: accessFactory,
+			PwHasher:      bcrypt,
+			Middleware:    spxMid,
+		})
+
+		authhttp.Raise(r, authhttp.Dependencies{
+			PGPool:           s.pgPool,
+			CachePool:        s.cachePool,
+			AuthFactory:      authFactory,
+			AccessFactory:    accessFactory,
+			IdentityProvider: identPvd,
+			TokenProvider:    jwt,
+			PwHasher:         bcrypt,
+			DataHasher:       sha3,
+			Challenger:       challenger,
+			Encryptor:        encrypter,
+			KeyProvisioner:   keyProvisioner,
+			Mailer:           mailer,
+			Middleware:       spxMid,
+		})
+	})
+
+	r.Get("/.well-known/jwks.json", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, config.BASE_PATH+"/api/.well-known/jwks.json", http.StatusTemporaryRedirect)
 	})
 
 	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +274,7 @@ func (s *Server) Setup() *Server {
 }
 
 func (s *Server) Start() {
-	defer s.basePool.Close()
+	defer s.pgPool.Close()
 	defer s.cachePool.Close()
 
 	server := &http.Server{

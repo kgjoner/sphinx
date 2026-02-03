@@ -5,8 +5,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kgjoner/sphinx/internal/config"
-	"github.com/kgjoner/sphinx/internal/domains/auth"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/kgjoner/sphinx/internal/domains/access"
+	"github.com/kgjoner/sphinx/internal/domains/identity"
+	"github.com/kgjoner/sphinx/internal/pkg/security"
+	"github.com/kgjoner/sphinx/internal/shared"
 )
 
 func init() {
@@ -14,34 +16,33 @@ func init() {
 	config.Env.ROOT_APP_ID = RootApplication.ID.String()
 }
 
-func hashPassword(password string) string {
-	hashedBytes, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(hashedBytes)
-}
+var hasher = security.NewBcryptHasher()
 
 // ROOT APPLICATION
-const RootAppSecret = "testsecret"
+const RootAppSecret = "TestS3cret"
 
-var RootApplication = &auth.Application{
+var hashedRootAppSecret, _ = shared.NewHashedPassword(RootAppSecret, hasher)
+var RootApplication = &access.Application{
 	ID:                  uuid.MustParse("80cadd74-5ccd-41c4-9938-3c8961be04db"),
 	Name:                "Root Application",
-	Secret:              hashPassword(RootAppSecret),
+	Secret:              *hashedRootAppSecret,
 	AllowedRedirectUris: []string{},
-	PossibleRoles:       []auth.Role{auth.RoleAdmin, auth.RoleDev},
+	PossibleRoles:       []access.Role{access.Admin, access.Manager},
 	CreatedAt:           time.Now(),
 	UpdatedAt:           time.Now(),
 }
 
 // COMMON APPLICATION
-const CommonAppSecret = "commonappsecret"
+const CommonAppSecret = "commonAppS3cret"
 const CommonRedirectUri = "https://test.example.com/callback"
 
-var CommonApplication = &auth.Application{
+var hashedCommonAppSecret, _ = shared.NewHashedPassword(CommonAppSecret, hasher)
+var CommonApplication = &access.Application{
 	ID:                  uuid.MustParse("abb00001-5ccd-41c4-9938-3c8961be04db"),
 	Name:                "Test Application",
-	Secret:              hashPassword(CommonAppSecret),
+	Secret:              *hashedCommonAppSecret,
 	AllowedRedirectUris: []string{CommonRedirectUri},
-	PossibleRoles:       []auth.Role{auth.RoleAdmin},
+	PossibleRoles:       []access.Role{access.Admin},
 	CreatedAt:           time.Now(),
 	UpdatedAt:           time.Now(),
 }
@@ -49,18 +50,19 @@ var CommonApplication = &auth.Application{
 // ADMIN USER
 const AdminPassword = "AdminPassword123!"
 
-var AdminUser = &auth.User{
+var hashedAdminPassword, _ = shared.NewHashedPassword(AdminPassword, hasher)
+var AdminUser = &identity.User{
 	ID:                   uuid.MustParse("abb00002-5ccd-41c4-9938-3c8961be04db"),
 	Email:                "admin@example.com",
 	Username:             "adminuser",
-	Password:             hashPassword(AdminPassword),
+	Password:             *hashedAdminPassword,
 	Phone:                "+5511988888888",
 	Document:             "cpf:25576958071",
 	IsActive:             true,
 	HasEmailBeenVerified: true,
 	HasPhoneBeenVerified: true,
-	VerificationCodes:    map[auth.VerificationKind]string{},
-	ExtraData: auth.ExtraData{
+	VerificationCodes:    map[identity.VerificationKind]string{},
+	ExtraData: identity.ExtraData{
 		Name:    "Admin",
 		Surname: "User",
 	},
@@ -68,31 +70,32 @@ var AdminUser = &auth.User{
 	UpdatedAt: time.Now(),
 }
 
-var AdminRootLink = &auth.Link{
+var AdminRootLink = &access.Link{
 	ID:          uuid.MustParse("abb00003-5ccd-41c4-9938-3c8961be04db"),
-	UserID:      AdminUser.InternalID,
+	UserID:      AdminUser.ID,
 	Application: *RootApplication,
 	HasConsent:  true,
 	CreatedAt:   time.Now(),
 	UpdatedAt:   time.Now(),
-	Roles:       []auth.Role{auth.RoleAdmin},
+	Roles:       []access.Role{access.Admin},
 }
 
 // SIMPLE USER
 const SimpleUserPassword = "SimpleUserPassword123!"
 
-var SimpleUser = &auth.User{
+var hashedSimpleUserPassword, _ = shared.NewHashedPassword(SimpleUserPassword, hasher)
+var SimpleUser = &identity.User{
 	ID:                   uuid.MustParse("abb00004-5ccd-41c4-9938-3c8961be04db"),
 	Email:                "simple@sphinx.test",
 	Username:             "simpleuser",
-	Password:             hashPassword(SimpleUserPassword),
+	Password:             *hashedSimpleUserPassword,
 	Phone:                "+5511999999999",
 	Document:             "cpf:02496946031",
 	IsActive:             true,
 	HasEmailBeenVerified: true,
 	HasPhoneBeenVerified: true,
-	VerificationCodes:    map[auth.VerificationKind]string{},
-	ExtraData: auth.ExtraData{
+	VerificationCodes:    map[identity.VerificationKind]string{},
+	ExtraData: identity.ExtraData{
 		Name:    "Simple",
 		Surname: "User",
 	},
@@ -100,9 +103,9 @@ var SimpleUser = &auth.User{
 	UpdatedAt: time.Now(),
 }
 
-var SimpleUserRootLink = &auth.Link{
+var SimpleUserRootLink = &access.Link{
 	ID:          uuid.MustParse("abb00005-5ccd-41c4-9938-3c8961be04db"),
-	UserID:      SimpleUser.InternalID,
+	UserID:      SimpleUser.ID,
 	Application: *RootApplication,
 	HasConsent:  true,
 	CreatedAt:   time.Now(),
