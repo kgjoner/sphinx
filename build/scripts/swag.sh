@@ -1,4 +1,6 @@
 #! /bin/bash
 
 swag fmt
-swag init -g server.go --dir internal/server,internal/domains/auth/gateway --parseDependency --parseInternal
+DIRS=internal/server,$(find internal/domains -type d -path "*/*http" | paste -sd ",")
+echo "Generating swag docs for dirs: $DIRS"
+swag init -g server.go --dir $DIRS --parseDependency --parseInternal
