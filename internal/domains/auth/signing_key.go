@@ -19,8 +19,8 @@ type SigningKey struct {
 	PrivateKey  string    // Encrypted PEM-encoded private key (empty for HS256)
 	PublicKey   string    // PEM-encoded public key (empty for HS256)
 	IsActive    bool
-	CreatedAt   time.Time       `validate:"required"`
-	ActivatesAt htypes.NullTime // When the key should start being used for signing (delayed activation)
+	CreatedAt   time.Time `validate:"required"`
+	ActivatesAt time.Time `validate:"required"`
 	ExpiresAt   htypes.NullTime
 	RotatedAt   htypes.NullTime
 }
@@ -42,9 +42,9 @@ func NewSigningKey(f SigningKeyCreationFields) (*SigningKey, error) {
 	kid := keyID.String()
 
 	now := time.Now()
-	var activationTime htypes.NullTime
+	activationTime := now
 	if f.ShouldDelayActivation {
-		activationTime = htypes.NullTime{Time: now.Add(1 * time.Hour)}
+		activationTime = now.Add(1 * time.Hour)
 	}
 
 	s := &SigningKey{
@@ -55,8 +55,8 @@ func NewSigningKey(f SigningKeyCreationFields) (*SigningKey, error) {
 		PrivateKey:  f.PrivateKey,
 		IsActive:    true,
 		CreatedAt:   now,
-		ActivatesAt: activationTime, // Delay activation for cache TTL
-		ExpiresAt:   f.ExpiresAt,    // No expiration initially (zero value)
+		ActivatesAt: activationTime,
+		ExpiresAt:   f.ExpiresAt,
 	}
 
 	return s, validator.Validate(s)
@@ -133,13 +133,8 @@ func (k *SigningKey) ShouldBeUsedForSigning() bool {
 		return false
 	}
 
-	// If no activation time is set, key is immediately usable
-	if k.ActivatesAt.Time.IsZero() {
-		return true
-	}
-
 	// Check if activation time has passed
-	return time.Now().After(k.ActivatesAt.Time)
+	return time.Now().After(k.ActivatesAt)
 }
 
 /* ==========================================================================
@@ -154,7 +149,7 @@ type SigningKeyView struct {
 	PublicKey   string          `json:"-"`
 	IsActive    bool            `json:"isActive"`
 	CreatedAt   time.Time       `json:"createdAt"`
-	ActivatesAt htypes.NullTime `json:"activatesAt"`
+	ActivatesAt time.Time       `json:"activatesAt"`
 	ExpiresAt   htypes.NullTime `json:"expiresAt"`
 	RotatedAt   htypes.NullTime `json:"rotatedAt"`
 }

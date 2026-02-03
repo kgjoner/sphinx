@@ -1,6 +1,7 @@
 package authrepo
 
 import (
+	"database/sql"
 	"sync"
 	"time"
 
@@ -108,7 +109,9 @@ func (q DAO) ListActiveSigningKeys() ([]*auth.SigningKey, error) {
 			&key.ExpiresAt,
 			&key.RotatedAt,
 		)
-		if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else if err != nil {
 			return nil, err
 		}
 		keys = append(keys, &key)
@@ -144,7 +147,9 @@ func (q DAO) GetSigningKeyByKID(kid string) (*auth.SigningKey, error) {
 		&key.ExpiresAt,
 		&key.RotatedAt,
 	)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
 
