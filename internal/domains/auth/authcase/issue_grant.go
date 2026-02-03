@@ -83,6 +83,7 @@ func (i IssueGrant) Execute(input IssueGrantInput) (out IssueGrantOutput, err er
 
 		client = &auth.Client{
 			ID:                  app.ID,
+			AudienceID:          app.ID,
 			Secret:              app.Secret,
 			Name:                app.Name,
 			AllowedRedirectUris: app.AllowedRedirectUris,
