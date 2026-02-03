@@ -25,8 +25,10 @@ data:
   MAX_CONCURRENT_SESSIONS: {{ .Values.configMap.maxConcurrentSessions | quote }}
   FALLBACK_LANGUAGE: {{ .Values.configMap.fallbackLanguage }}
   AUTH_GRANT_LIFETIME_IN_SEC: {{ .Values.configMap.authGrantLifetimeInSec | quote }}
+  JWT_ALGORITHM: {{ .Values.configMap.jwtAlgorithm }}
   JWT_ACCESS_LIFETIME_IN_SEC: {{ .Values.configMap.jwtAccessLifetimeInSec | quote }}
   JWT_REFRESH_LIFETIME_IN_SEC: {{ .Values.configMap.jwtRefreshLifetimeInSec | quote }}
+  JWT_KEY_ROTATION_INTERVAL_HOURS: {{ .Values.configMap.jwtKeyRotationIntervalHours | quote }}
   HERMES_BASE_URL: {{ .Values.configMap.hermesBaseURL }}
   CLIENT_BASE_URL: {{ .Values.configMap.clientBaseURL }}
   CLIENT_DATA_VERIFICATION: {{ .Values.configMap.clientDataVerification }}
