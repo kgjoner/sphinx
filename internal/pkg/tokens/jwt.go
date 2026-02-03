@@ -2,6 +2,7 @@ package tokens
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
@@ -15,14 +16,34 @@ import (
 type JWTProvider struct {
 	accessTokenLifetimeInSec  int
 	refreshTokenLifetimeInSec int
-	secret                    string
+	secret                    string     // Legacy HS256 secret (deprecated)
+	keysGetter                KeysGetter // For RS256 key management
 }
 
+// NewJWTProvider creates a JWT provider with HS256 support (legacy).
+// Deprecated: Use NewJWTProviderWithKeyManager for RS256 support.
 func NewJWTProvider(secret string, accessLifetime int, refreshLifetime int) *JWTProvider {
 	return &JWTProvider{
 		accessTokenLifetimeInSec:  accessLifetime,
 		refreshTokenLifetimeInSec: refreshLifetime,
 		secret:                    secret,
+		keysGetter:                nil,
+	}
+}
+
+// NewJWTProviderWithKeyPair creates a JWT provider with RS256 key rotation support.
+func NewJWTProviderWithKeyPair(
+	keysGetter KeysGetter,
+	secret string, // For legacy HS256 support
+	accessLifetime int,
+	refreshLifetime int,
+
+) *JWTProvider {
+	return &JWTProvider{
+		accessTokenLifetimeInSec:  accessLifetime,
+		refreshTokenLifetimeInSec: refreshLifetime,
+		secret:                    secret, // For legacy validation
+		keysGetter:                keysGetter,
 	}
 }
 
@@ -33,6 +54,27 @@ func NewJWTProvider(secret string, accessLifetime int, refreshLifetime int) *JWT
 func (p *JWTProvider) Generate(sub auth.Subject) (*auth.Tokens, error) {
 	now := time.Now()
 
+	// Determine signing method and key
+	var signingMethod jwt.SigningMethod
+	var signingKey interface{}
+	var kid string
+	var err error
+
+	if p.keysGetter != nil {
+		// Use RS256 with key provisioner
+		signingKey, kid, err = p.keysGetter.CurrentSigningKey()
+		if err != nil {
+			return nil, err
+		}
+		signingMethod = jwt.SigningMethodRS256
+	} else {
+		// Fallback to legacy HS256
+		signingMethod = jwt.SigningMethodHS256
+		signingKey = []byte(p.secret)
+		kid = "hs256-legacy"
+	}
+
+	// Generate access token
 	accessDuration := time.Second * time.Duration(p.accessTokenLifetimeInSec)
 	accessClaims := jwtClaims{
 		Sub:       sub.ID,
@@ -45,12 +87,14 @@ func (p *JWTProvider) Generate(sub auth.Subject) (*auth.Tokens, error) {
 		Roles:     sub.Roles,
 		SessionID: sub.SessionID,
 	}
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessSignedToken, err := accessToken.SignedString([]byte(p.secret))
+	accessToken := jwt.NewWithClaims(signingMethod, accessClaims)
+	accessToken.Header["kid"] = kid // Add key ID to header
+	accessSignedToken, err := accessToken.SignedString(signingKey)
 	if err != nil {
 		return nil, err
 	}
 
+	// Generate refresh token
 	refreshDuration := time.Second * time.Duration(p.refreshTokenLifetimeInSec)
 	refreshClaims := jwtClaims{
 		Sub:       sub.ID,
@@ -60,8 +104,9 @@ func (p *JWTProvider) Generate(sub auth.Subject) (*auth.Tokens, error) {
 		Exp:       now.Add(refreshDuration).Unix(),
 		Intent:    auth.IntentRefresh,
 	}
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshSignedToken, err := refreshToken.SignedString([]byte(p.secret))
+	refreshToken := jwt.NewWithClaims(signingMethod, refreshClaims)
+	refreshToken.Header["kid"] = kid // Add key ID to header
+	refreshSignedToken, err := refreshToken.SignedString(signingKey)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +119,45 @@ func (p *JWTProvider) Generate(sub auth.Subject) (*auth.Tokens, error) {
 }
 
 func (p *JWTProvider) Validate(signedToken string) (*auth.Subject, auth.Intent, error) {
+	// Parse token to extract kid from header
+	var kid string
 	token, err := jwt.Parse(signedToken, func(t *jwt.Token) (interface{}, error) {
-		return []byte(p.secret), nil
+		// Extract kid from header
+		if kidHeader, ok := t.Header["kid"].(string); ok {
+			kid = kidHeader
+		}
+
+		// Validate algorithm
+		if t.Method.Alg() == "HS256" {
+			// Legacy HS256 validation
+			if kid == "" || kid == "hs256-legacy" {
+				return []byte(p.secret), nil
+			}
+			return nil, errors.New("invalid HS256 key ID")
+		}
+
+		if t.Method.Alg() == "RS256" {
+			// RS256 validation with key manager
+			if p.keysGetter == nil {
+				return nil, errors.New("RS256 not supported without key manager")
+			}
+			if kid == "" {
+				return nil, errors.New("missing kid in RS256 token")
+			}
+
+			publicKey, algorithm, err := p.keysGetter.PublicKeyByKID(kid)
+			if err != nil {
+				return nil, err
+			}
+			if algorithm != "RS256" {
+				return nil, errors.New("key algorithm mismatch")
+			}
+			return publicKey, nil
+		}
+
+		return nil, errors.New("unsupported signing method")
 	})
+
 	if err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "token is expired") {
