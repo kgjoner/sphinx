@@ -12,6 +12,7 @@ An **Identity and Access Management (IAM)** API built with Go, designed to handl
 - **User Lifecycle**: User registration, email verification, password reset flows
 - **Secure Session Management**: JWT-based access and refresh tokens with automatic rotation
 - **Session Protection**: Automatic session termination on security violations
+- **Asymmetric Keys for Signing**: JWKS endpoint for any party to validate tokens with key rotation
 - **Concurrent Session Control**: Configurable limits on simultaneous sessions per user
 
 ### OAuth 2.0 Provider
@@ -117,9 +118,13 @@ ROOT_APP_ID=uuid                       # Root application identifier [80cadd74-5
 ### Security Settings
 
 ```bash
-JWT_SECRET=your-secret-key             # JWT signing secret [topsecret]
 JWT_ACCESS_LIFETIME_IN_SEC=900         # Access token lifetime [900] (15 min)
 JWT_REFRESH_LIFETIME_IN_SEC=172800     # Refresh token lifetime [172800] (48 hours)
+JWT_ALGORITHM=RS256                    # Algorithm used in jwt keys [RS256] (Supports HS256 as legacy)
+JWT_SECRET=your-secret-key             # JWT signing secret [topsecret]
+JWT_ENCRYPTION_KEY=your-crypt-key      # Key to encrypt private signing key [changeme]
+JWT_KEY_ROTATION_INTERVAL_HOURS=8760   # Interval for rotating keys [8760] (1 year)
+
 MAX_CONCURRENT_SESSIONS=0              # Session limit [0] (0 = unlimited)
 AUTH_GRANT_LIFETIME_IN_SEC=300         # OAuth grant lifetime [300] (5 min)
 ```
@@ -228,6 +233,7 @@ DOCKER_REGISTRY=docker.io make ci   # Build and push artifacts
 │   ├── domains/{name}        # Domain logic
 |   |   └── {name}case        # Application logic (use cases)
 |   |   └── {name}http        # Gateway logic for http
+|   |   └── {name}int         # Gateway logic used as internal client
 |   |   └── {name}repo        # Adapters for SQL code
 |   |   |   └── queries       # SQL raw queries
 │   ├── shared/               # Shared value objects, interfaces and simple domain services
