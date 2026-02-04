@@ -23,7 +23,7 @@ import (
 	Legacy Support
 ============================================================================== */
 
-// DEPRECATED: use Client instead
+// Deprecated: use Client instead
 type Service struct {
 	httpApi   *httputil.HTTPUtil
 	appID     string
@@ -31,7 +31,7 @@ type Service struct {
 	appToken  string
 }
 
-// DEPRECATED: use NewClient instead
+// Deprecated: use NewClient instead
 func New(baseURL, appID, appSecret string) *Service {
 	httpApi := httputil.New(baseURL)
 	appToken := base64.StdEncoding.EncodeToString([]byte(appID + ":" + appSecret))
@@ -50,7 +50,7 @@ func New(baseURL, appID, appSecret string) *Service {
 	User
 ============================================================================== */
 
-// DEPRECATED: use UserView or Subject instead
+// Deprecated: use UserView or Subject instead
 type User struct {
 	ID       uuid.UUID          `json:"id" validate:"required"`
 	Email    htypes.Email       `json:"email" validate:"required"`
@@ -316,7 +316,7 @@ type LoginOutput struct {
 	ExpiresIn    int       `json:"expiresIn"`
 }
 
-// DEPRECATED: use ExternalLoginBody instead if using sphinx.Client instead of sphinx.Service
+// Deprecated: use ExternalLoginBody instead if using sphinx.Client instead of sphinx.Service
 type ExternalAuthBody struct {
 	ProviderName    string `validate:"required"`
 	Params          map[string]string
@@ -352,14 +352,14 @@ func (s Service) ExternalAuth(authorization string, body ExternalAuthBody, clien
 
 type ctxKey string
 
-// DEPRECATED: use Middlewares instead and define your own
+// Deprecated: use Middlewares instead and define your own
 // context values with AuthReceiver
 const (
 	ActorCtxKey ctxKey = "sphinx_actor"
 	TokenCtxKey ctxKey = "sphinx_token"
 )
 
-// DEPRECATED: use Middlewares instead
+// Deprecated: use Middlewares instead
 type Middlewares struct {
 	sphinx *Service
 }
