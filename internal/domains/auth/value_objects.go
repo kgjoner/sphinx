@@ -178,7 +178,7 @@ func NewGrant(g GrantInput, actor shared.Actor, client Client, proof *ConsentPro
 		Type:                g.Type,
 		Code:                code,
 		SubID:               actor.ID,
-		AudID:               actor.AudienceID,
+		AudID:               client.AudienceID,
 		ClientID:            client.ID,
 		ExpiresAt:           now.Add(time.Second * time.Duration(config.Env.AUTH_GRANT_LIFETIME_IN_SEC)),
 		RedirectUri:         g.RedirectUri,
