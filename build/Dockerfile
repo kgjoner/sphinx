@@ -6,7 +6,7 @@ WORKDIR /app
 
 RUN go install github.com/swaggo/swag/cmd/swag@latest
 
-RUN export GOPRIVATE=github.com/kgjoner/cornucopia
+RUN export GOPRIVATE=github.com/kgjoner/*
 RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
 
@@ -14,7 +14,7 @@ COPY go.mod go.sum ./
 RUN --mount=type=ssh go mod download
 
 COPY . ./
-RUN swag init -g server.go --dir internal/server,internal/domains/auth/gateway --parseDependency --parseInternal
+RUN swag init -g server.go --dir internal/server,$(find internal/domains -type d -path "*/*http" | paste -sd ",") --parseDependency --parseInternal
 
 RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/sphinx
 RUN CGO_ENABLED=0 GOOS=linux go build ./cmd/migrate
