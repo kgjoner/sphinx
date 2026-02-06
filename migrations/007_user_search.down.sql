@@ -1,0 +1,5 @@
+DROP INDEX IF EXISTS idx_user_search_tgrm;
+ALTER TABLE "user" DROP COLUMN IF EXISTS search_field;
+DROP EXTENSION IF EXISTS unaccent;
+DROP EXTENSION IF EXISTS pg_trgm;
+

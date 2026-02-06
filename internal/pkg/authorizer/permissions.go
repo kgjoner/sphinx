@@ -7,6 +7,7 @@ import (
 
 var appPermissions = []string{
 	identity.PermUserReadAll,
+	identity.PermUserList,
 	access.PermAppReadAll,
 	access.PermLinkReadAll,
 	access.PermLinkManage,
@@ -17,6 +18,7 @@ var permissionsByRole = map[string][]string{
 	"admin": {
 		identity.PermUserWriteAll,
 		identity.PermUserReadAll,
+		identity.PermUserList,
 		access.PermAppCreate,
 		access.PermAppReadAll,
 		access.PermAppEdit,
@@ -29,6 +31,7 @@ var permissionsByRole = map[string][]string{
 	"manager": {
 		identity.PermUserWriteAll,
 		identity.PermUserReadAll,
+		identity.PermUserList,
 		access.PermAppCreate,
 		access.PermAppReadAll,
 		access.PermAppEdit,

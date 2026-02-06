@@ -3,7 +3,7 @@ package identity
 import "github.com/kgjoner/cornucopia/v2/helpers/apperr"
 
 var (
-	ErrNoPermission = apperr.NewUnauthorizedError(
+	ErrNoPermission = apperr.NewForbiddenError(
 		"you do not have permission to perform this action",
 		"identity.no_permission",
 	)

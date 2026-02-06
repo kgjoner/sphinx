@@ -205,3 +205,39 @@ WHERE
   AND c.provider_subject_id = $2
 GROUP BY
   u.internal_id;
+
+-- name: ListUsers :many
+SELECT
+  u.id,
+  u.email,
+  COALESCE(u.phone, ''),
+  u.password,
+  COALESCE(u.username, ''),
+  COALESCE(u.document, ''),
+  u.extra_data,
+  u.is_active,
+  COALESCE(u.pending_email, ''),
+  COALESCE(u.pending_phone, ''),
+  u.has_email_been_verified,
+  u.has_phone_been_verified,
+  u.codes,
+  u.password_updated_at,
+  u.username_updated_at,
+  u.created_at,
+  u.updated_at
+FROM
+  "user" u
+WHERE
+  (
+    $1 = ''
+    OR search_field ILIKE '%' || unaccent ($1) || '%'
+  )
+ORDER BY
+  CASE
+    WHEN $1 <> '' THEN similarity (search_field, unaccent ($1))
+  END DESC,
+  u.created_at DESC
+LIMIT
+  $2
+OFFSET
+  $3;

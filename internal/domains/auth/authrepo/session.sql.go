@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/lib/pq"
 )
@@ -67,7 +68,7 @@ func (q DAO) GetSessionByID(id uuid.UUID) (*auth.Session, error) {
 		&session.Device,
 		&session.RefreshToken,
 		&session.RefreshedAt,
-		pq.Array(&session.ElapsedMinutesBetweenRefreshes),
+		dbhandler.IntArray(&session.ElapsedMinutesBetweenRefreshes),
 		&session.RefreshesCount,
 		&session.IsActive,
 		&session.TerminatedAt,

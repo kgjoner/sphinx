@@ -365,6 +365,7 @@ type UserView struct {
 
 	ExternalCredentials []ExternalCredentialView `json:"externalCredentials,omitempty"`
 	IsActive            bool                     `json:"isActive"`
+	CreatedAt           time.Time                `json:"createdAt"`
 }
 
 func (u User) View() UserView {
@@ -394,28 +395,22 @@ func (u User) View() UserView {
 		u.UsernameUpdatedAt,
 		extCredentials,
 		u.IsActive,
+		u.CreatedAt,
 	}
 }
 
 type UserLeanView struct {
-	ID       uuid.UUID `json:"id"`
-	Username string    `json:"username,omitempty"`
-	Name     string    `json:"name,omitempty"`
-	Surname  string    `json:"surname,omitempty"`
-
-	IsActive  bool      `json:"isActive"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Username  string    `json:"username,omitempty"`
 	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (u User) LeanView() UserLeanView {
 	return UserLeanView{
 		u.ID,
+		u.Name(),
 		u.Username,
-		u.ExtraData.Name,
-		u.ExtraData.Surname,
-		u.IsActive,
 		u.CreatedAt,
-		u.UpdatedAt,
 	}
 }

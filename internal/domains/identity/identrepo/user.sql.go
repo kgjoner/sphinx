@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
 	"github.com/kgjoner/cornucopia/v2/utils/datatransform"
 	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
@@ -166,4 +167,39 @@ func (q DAO) GetUserByExternalCredential(provider string, subjectID string) (*id
 	}
 
 	return &item, nil
+}
+
+func (q DAO) ListUsers(filter string, pag *htypes.Pagination) (*htypes.PaginatedData[identity.User], error) {
+	raw, exists := rawQueries["ListUsers"]
+	if !exists {
+		return nil, ErrNoQuery
+	}
+
+	rows, err := q.dbtx.QueryContext(q.ctx, raw, filter, pag.Limit+1, pag.Offset())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return handleListQuery(rows, pag, func(item *identity.User) []any {
+		return []any{
+			&item.ID,
+			&item.Email,
+			&item.Phone,
+			&item.Password,
+			&item.Username,
+			&item.Document,
+			dbhandler.FromJSON(&item.ExtraData),
+			&item.IsActive,
+			&item.PendingEmail,
+			&item.PendingPhone,
+			&item.HasEmailBeenVerified,
+			&item.HasPhoneBeenVerified,
+			dbhandler.Map(&item.VerificationCodes),
+			&item.PasswordUpdatedAt,
+			&item.UsernameUpdatedAt,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		}
+	})
 }

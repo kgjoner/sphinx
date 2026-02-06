@@ -3,10 +3,12 @@ package identrepo
 import (
 	"bufio"
 	"context"
+	"database/sql"
 	"embed"
 	"fmt"
 	"strings"
 
+	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/shared"
 	_ "github.com/lib/pq"
@@ -28,6 +30,37 @@ func (f *Factory) NewDAO(ctx context.Context, dbtx shared.DBTX) identity.Repo {
 		ctx,
 		dbtx,
 	}
+}
+
+/* =============================================================================
+	Listing helpers
+============================================================================= */
+
+func handleListQuery[T any](rows *sql.Rows, pag *htypes.Pagination, dest func(item *T) []any) (*htypes.PaginatedData[T], error) {
+	items := []T{}
+	for rows.Next() {
+		var item T
+		err := rows.Scan(dest(&item)...)
+		if err == sql.ErrNoRows {
+			return nil, nil
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(items) > pag.Limit {
+		pag.HasNext = true
+		items = items[:pag.Limit]
+	}
+
+	return htypes.NewPaginatedData(*pag, items), nil
 }
 
 /* =============================================================================

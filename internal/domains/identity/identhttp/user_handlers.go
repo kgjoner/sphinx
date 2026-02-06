@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v2/helpers/controller"
 	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	_ "github.com/kgjoner/cornucopia/v2/helpers/htypes"
 	"github.com/kgjoner/sphinx/internal/domains/identity/identcase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
@@ -17,6 +18,8 @@ func (g gateway) userHandler(r chi.Router) {
 	r.Post("/request-password", g.requestPasswordReset)
 	r.Post("/{id}/password", g.resetPassword)
 	r.Post("/{id}/{field}/verification", g.verifyUser)
+
+	r.With(g.Authenticate).Get("/", g.listUsers)
 
 	r.With(g.Authenticate, g.TargetUser).Get("/me", g.getMe)
 	r.With(g.Authenticate, g.TargetUser).Patch("/me", g.updateMyExtraData)
@@ -592,6 +595,51 @@ func (g gateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 
 	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
 	i := identcase.GetUserEmail{
+		IdentityRepo: repo,
+	}
+
+	output, err := i.Execute(input)
+	if err != nil {
+		presenter.HTTPError(err, w, r)
+		return
+	}
+
+	presenter.HTTPSuccess(output, w, r)
+}
+
+// ListUsers godoc
+//
+//	@Summary		List users
+//	@Description	Retrieve a paginated list of users, from most recent to oldest. Optionally filter by search term.
+//	@Router			/user [get]
+//	@Tags			User
+//	@Security		Bearer
+//	@Accept			json
+//	@Produce		json
+//	@Param			s		query		string	false	"Search filter (applied to username, email, name, or surname)"
+//	@Param			view	query		string	false	"View type (lean or full). Default is lean."
+//	@Param			limit	query		int		false	"Number of results per page (default: 20)"
+//	@Param			offset	query		int		false	"Number of results to skip (default: 0)"
+//	@Success		200		{object}	presenter.Success[htypes.PaginatedData[identity.UserLeanView]]
+//	@Failure		400		{object}	apperr.AppError
+//	@Failure		401		{object}	apperr.AppError
+//	@Failure		403		{object}	apperr.AppError
+//	@Failure		500		{object}	apperr.AppError
+func (g gateway) listUsers(w http.ResponseWriter, r *http.Request) {
+	c := controller.New(r).
+		AddFromContext(sharedhttp.ActorCtxKey, "actor").
+		ParseQueryParam("s", "searchFilter").
+		AddPagination()
+
+	var input identcase.ListUsersInput
+	err := c.Write(&input)
+	if err != nil {
+		presenter.HTTPError(err, w, r)
+		return
+	}
+
+	repo := g.IdentFactory.NewDAO(r.Context(), g.PGPool.Connection())
+	i := identcase.ListUsers{
 		IdentityRepo: repo,
 	}
 

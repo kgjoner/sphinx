@@ -10,6 +10,7 @@ import (
 const (
 	PermUserWriteAll = "identity.user:write_all"
 	PermUserReadAll  = "identity.user:read_all"
+	PermUserList     = "identity.user:list"
 )
 
 func CanUpdateUser(actor *shared.Actor, targetID uuid.UUID) error {
@@ -61,6 +62,29 @@ func CanReadUserSensitiveData(actor *shared.Actor, targetID uuid.UUID) error {
 
 	if !hasPermission && (actor.Kind != shared.KindUser || actor.ID != targetID) {
 		return ErrNoPermission
+	}
+
+	return nil
+}
+
+func CanListUsers(actor *shared.Actor, filter string) error {
+	if actor == nil {
+		return ErrNoPermission
+	}
+
+	// If the search filter is empty or too short, require special permission
+	if len(filter) < 4 {
+		hasPermission := false
+		for _, p := range actor.Permissions {
+			if p == PermUserList {
+				hasPermission = true
+				break
+			}
+		}
+
+		if !hasPermission {
+			return ErrNoPermission
+		}
 	}
 
 	return nil
