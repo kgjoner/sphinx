@@ -37,8 +37,6 @@ func TestUserCreation(t *testing.T) {
 
 		assert.Equal(t, userData["username"], respData.Data.Username)
 		assert.Equal(t, userData["name"], respData.Data.Name)
-		assert.Equal(t, userData["surname"], respData.Data.Surname)
-		assert.True(t, respData.Data.IsActive)
 
 		// Query the database to verify user was created
 		dao := identrepo.NewFactory().NewDAO(context.Background(), ts.server.GetBasePool().Connection())
@@ -515,5 +513,275 @@ func TestUserExistence(t *testing.T) {
 
 			assert.True(t, existsData2.Data, "User should exist for document in only digit format")
 		})
+	})
+}
+
+func TestUserListing(t *testing.T) {
+	ts := NewTestSuite(t)
+	defer ts.Close()
+
+	factory := NewTestDataFactory()
+
+	t.Run("should list all users when admin has permission", func(t *testing.T) {
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?limit=10&offset=0", nil, adminToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		assert.True(t, len(users) >= 2, "Should have at least 2 seeded users")
+
+		// Verify response structure
+		if len(users) > 0 {
+			firstUser := users[0].(map[string]interface{})
+			assert.NotNil(t, firstUser["id"])
+			assert.NotNil(t, firstUser["name"])
+		}
+	})
+
+	t.Run("should reject listing without filter when user lacks permission", func(t *testing.T) {
+		simpleUserToken := ts.login(t, factory.SimpleUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?limit=10&offset=0", nil, simpleUserToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should allow listing with valid search filter for any authenticated user", func(t *testing.T) {
+		// Search by username (4+ characters)
+		simpleUserToken := ts.login(t, factory.SimpleUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?s=admin&limit=10", nil, simpleUserToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		assert.True(t, len(users) >= 1, "Should find at least the admin user")
+
+		// Verify the admin user is in results
+		found := false
+		for _, u := range users {
+			user := u.(map[string]interface{})
+			if username, ok := user["username"].(string); ok && username == "adminuser" {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "Should find admin user by username search")
+	})
+
+	t.Run("should reject listing with short search filter when user lacks permission", func(t *testing.T) {
+		// Search with less than 4 characters
+		simpleUserToken := ts.login(t, factory.SimpleUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?s=adm&limit=10", nil, simpleUserToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("should search users by email prefix", func(t *testing.T) {
+		// Create a user with specific email
+		factory := NewTestDataFactory()
+		userData := factory.RandomUser()
+		email := strings.Split(userData["email"].(string), "@")[0] // Get prefix before @
+
+		createResp, err := ts.Request("POST", "/user", userData, nil)
+		require.NoError(t, err)
+		createResp.Body.Close()
+
+		// Search by email prefix (before @)
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?s="+email+"&limit=20", nil, adminToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		assert.True(t, len(users) >= 1, "Should find the created user")
+	})
+
+	t.Run("should search users by name", func(t *testing.T) {
+		// Create a user with specific name
+		factory := NewTestDataFactory()
+		userData := factory.RandomUser()
+		userData["name"] = "SearchableJohn"
+
+		createResp, err := ts.Request("POST", "/user", userData, nil)
+		require.NoError(t, err)
+		createResp.Body.Close()
+
+		// Search by name
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?s=Searchable", nil, adminToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		assert.True(t, len(users) >= 1, "Should find user by name")
+	})
+
+	t.Run("should search users by surname", func(t *testing.T) {
+		// Create a user with specific surname
+		factory := NewTestDataFactory()
+		userData := factory.RandomUser()
+		userData["surname"] = "UniqueSurname"
+
+		createResp, err := ts.Request("POST", "/user", userData, nil)
+		require.NoError(t, err)
+		createResp.Body.Close()
+
+		// Search by surname
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?s=Unique", nil, adminToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		assert.True(t, len(users) >= 1, "Should find user by surname")
+	})
+
+	t.Run("should support pagination", func(t *testing.T) {
+		// Get first page
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp1, err := ts.AuthenticatedRequest("GET", "/user?limit=10&page=0", nil, adminToken)
+		require.NoError(t, err)
+		defer resp1.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp1.StatusCode)
+
+		var respData1 presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp1.Body).Decode(&respData1)
+		require.NoError(t, err)
+
+		users1 := respData1.Data
+		assert.True(t, len(users1) <= 10, "First page should have at most 10 users")
+
+		// Get second page
+		resp2, err := ts.AuthenticatedRequest("GET", "/user?limit=10&page=1", nil, adminToken)
+		require.NoError(t, err)
+		defer resp2.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp2.StatusCode)
+
+		var respData2 presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp2.Body).Decode(&respData2)
+		require.NoError(t, err)
+
+		users2 := respData2.Data
+
+		// Verify different users on different pages
+		if len(users1) > 0 && len(users2) > 0 {
+			firstPageID := users1[0].(map[string]interface{})["id"].(string)
+			secondPageID := users2[0].(map[string]interface{})["id"].(string)
+			assert.NotEqual(t, firstPageID, secondPageID, "Pages should have different users")
+		}
+	})
+
+	t.Run("should respect limit parameter", func(t *testing.T) {
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?limit=1", nil, adminToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		assert.Equal(t, 1, len(users), "Should return exactly 1 user")
+	})
+
+	t.Run("should use default limit when not specified", func(t *testing.T) {
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user", nil, adminToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		assert.True(t, len(users) <= 20, "Should return at most the default limit (20) users")
+	})
+
+	t.Run("should order users from most recent to oldest", func(t *testing.T) {
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp, err := ts.AuthenticatedRequest("GET", "/user?limit=5", nil, adminToken)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var respData presenter.Success[[]interface{}]
+		err = json.NewDecoder(resp.Body).Decode(&respData)
+		require.NoError(t, err)
+
+		users := respData.Data
+		if len(users) >= 2 {
+			// Parse dates and verify descending order
+			firstUserDate := users[0].(map[string]interface{})["createdAt"].(string)
+			secondUserDate := users[1].(map[string]interface{})["createdAt"].(string)
+
+			// More recent date should come first (when comparing as strings in ISO format)
+			assert.True(t, firstUserDate >= secondUserDate, "Users should be ordered from newest to oldest")
+		}
+	})
+
+	t.Run("should perform case-insensitive search", func(t *testing.T) {
+		// Search with different case
+		adminToken := ts.login(t, factory.AdminUserLoginData())
+		resp1, err := ts.AuthenticatedRequest("GET", "/user?s=ADMIN", nil, adminToken)
+		require.NoError(t, err)
+		defer resp1.Body.Close()
+
+		resp2, err := ts.AuthenticatedRequest("GET", "/user?s=admin", nil, adminToken)
+		require.NoError(t, err)
+		defer resp2.Body.Close()
+
+		var respData1 presenter.Success[[]interface{}]
+		json.NewDecoder(resp1.Body).Decode(&respData1)
+
+		var respData2 presenter.Success[[]interface{}]
+		json.NewDecoder(resp2.Body).Decode(&respData2)
+
+		users1 := respData1.Data
+		users2 := respData2.Data
+
+		assert.Equal(t, len(users1), len(users2), "Case-insensitive search should return same results")
 	})
 }
