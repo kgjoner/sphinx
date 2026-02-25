@@ -28,7 +28,7 @@ func IsRootApp(appID uuid.UUID) bool {
 
 func CanCreateApplication(a *shared.Actor) error {
 	if a.AudienceID == uuid.Nil || !IsRootApp(a.AudienceID) {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	hasPermission := false
@@ -39,7 +39,7 @@ func CanCreateApplication(a *shared.Actor) error {
 		}
 	}
 	if !hasPermission {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -47,11 +47,11 @@ func CanCreateApplication(a *shared.Actor) error {
 
 func CanEditApplication(a *shared.Actor, targetID uuid.UUID) error {
 	if a.AudienceID == uuid.Nil {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	if a.AudienceID != targetID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	hasPermission := false
@@ -62,7 +62,7 @@ func CanEditApplication(a *shared.Actor, targetID uuid.UUID) error {
 		}
 	}
 	if !hasPermission {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -70,11 +70,11 @@ func CanEditApplication(a *shared.Actor, targetID uuid.UUID) error {
 
 func CanRecreateAppSecret(a *shared.Actor, targetID uuid.UUID) error {
 	if a.AudienceID == uuid.Nil {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	if a.AudienceID != targetID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	hasPermission := false
@@ -85,7 +85,7 @@ func CanRecreateAppSecret(a *shared.Actor, targetID uuid.UUID) error {
 		}
 	}
 	if !hasPermission {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -100,7 +100,7 @@ func CanReadApplications(a *shared.Actor) error {
 		}
 	}
 	if !hasPermission {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -112,14 +112,14 @@ func CanReadApplications(a *shared.Actor) error {
 
 func CanCreateLink(a *shared.Actor, targetUserID uuid.UUID, targetAppID uuid.UUID) error {
 	if a.AudienceID == uuid.Nil {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	// If the actor is the same user, they can create a link only if the application is root.
 	// (They don't have same application access before link creation.)
 	if a.Kind == shared.KindUser && a.ID == targetUserID {
 		if !IsRootApp(a.AudienceID) {
-			return ErrNoPermission
+			return shared.ErrNoPermission
 		}
 		
 		return nil
@@ -127,7 +127,7 @@ func CanCreateLink(a *shared.Actor, targetUserID uuid.UUID, targetAppID uuid.UUI
 
 	// For other actors, they need the permission and the application must match.
 	if a.AudienceID != targetAppID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	hasPermission := false
@@ -138,7 +138,7 @@ func CanCreateLink(a *shared.Actor, targetUserID uuid.UUID, targetAppID uuid.UUI
 		}
 	}
 	if !hasPermission {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -146,7 +146,7 @@ func CanCreateLink(a *shared.Actor, targetUserID uuid.UUID, targetAppID uuid.UUI
 
 func CanManageRole(a *shared.Actor, targetAppID uuid.UUID, role Role) error {
 	if a.AudienceID == uuid.Nil || a.AudienceID != targetAppID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	requiredPermission := PermRoleManageExtra
@@ -165,7 +165,7 @@ func CanManageRole(a *shared.Actor, targetAppID uuid.UUID, role Role) error {
 		}
 	}
 	if !hasPermission {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 	
 	return nil
@@ -173,11 +173,11 @@ func CanManageRole(a *shared.Actor, targetAppID uuid.UUID, role Role) error {
 
 func CanManageConsent(a *shared.Actor, targetUserID uuid.UUID, targetAppID uuid.UUID) error {
 	if a.AudienceID == uuid.Nil || a.AudienceID != targetAppID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	if a.Kind != shared.KindUser || a.ID != targetUserID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 	
 	return nil
@@ -189,7 +189,7 @@ func CanReadLink(a *shared.Actor, targetUserID uuid.UUID, targetAppID uuid.UUID)
 	}
 
 	if a.AudienceID == uuid.Nil || a.AudienceID != targetAppID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	hasPermission := false
@@ -200,7 +200,7 @@ func CanReadLink(a *shared.Actor, targetUserID uuid.UUID, targetAppID uuid.UUID)
 		}
 	}
 	if !hasPermission {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil

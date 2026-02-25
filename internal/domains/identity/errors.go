@@ -3,10 +3,6 @@ package identity
 import "github.com/kgjoner/cornucopia/v2/helpers/apperr"
 
 var (
-	ErrNoPermission = apperr.NewForbiddenError(
-		"you do not have permission to perform this action",
-		"identity.no_permission",
-	)
 	ErrEmptyInput = apperr.NewValidationError(
 		"input cannot be empty",
 		"identity.empty_input",

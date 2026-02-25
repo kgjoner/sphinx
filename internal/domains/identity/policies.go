@@ -23,7 +23,7 @@ func CanUpdateUser(actor *shared.Actor, targetID uuid.UUID) error {
 	}
 
 	if !hasPermission && (actor.Kind != shared.KindUser || actor.ID != targetID) {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -45,7 +45,7 @@ func CanUpdateUsername(actor *shared.Actor, target *User) error {
 
 func CanManageExternalCredentials(actor *shared.Actor, targetID uuid.UUID) error {
 	if actor.Kind != shared.KindUser || actor.ID != targetID {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func CanReadUserSensitiveData(actor *shared.Actor, targetID uuid.UUID) error {
 	}
 
 	if !hasPermission && (actor.Kind != shared.KindUser || actor.ID != targetID) {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func CanReadUserSensitiveData(actor *shared.Actor, targetID uuid.UUID) error {
 
 func CanListUsers(actor *shared.Actor, filter string) error {
 	if actor == nil {
-		return ErrNoPermission
+		return shared.ErrNoPermission
 	}
 
 	// If the search filter is empty or too short, require special permission
@@ -83,7 +83,7 @@ func CanListUsers(actor *shared.Actor, filter string) error {
 		}
 
 		if !hasPermission {
-			return ErrNoPermission
+			return shared.ErrNoPermission
 		}
 	}
 

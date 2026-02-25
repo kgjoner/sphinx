@@ -3,10 +3,6 @@ package access
 import "github.com/kgjoner/cornucopia/v2/helpers/apperr"
 
 var (
-	ErrNoPermission = apperr.NewUnauthorizedError(
-		"you do not have permission to perform this action",
-		"access.no_permission",
-	)
 	ErrInvalidAppSecret = apperr.NewUnauthorizedError(
 		"invalid application secret provided",
 		"access.invalid_app_secret",
