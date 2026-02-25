@@ -69,7 +69,7 @@ func (i Login) Execute(input LoginInput) (out LoginOutput, err error) {
 }
 
 type LoginOutput struct {
-	UserID       uuid.UUID `json:"userID"`
+	UserID       uuid.UUID `json:"userId"`
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken"`
 	ExpiresIn    int       `json:"expiresIn"`
