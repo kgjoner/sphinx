@@ -17,7 +17,6 @@ An **Identity and Access Management (IAM)** API built with Go, designed to handl
 
 ### OAuth 2.0 Provider
 
-- **Base Implementation**: Authorization code grant flow
 - **Multi-client Support**: Both confidential clients (with secrets) and public clients (PKCE)
 - **Consent Management**: User-controlled application permissions
 - **Secure Grant Exchange**: Time-limited authorization codes with proper validation
@@ -60,19 +59,17 @@ An **Identity and Access Management (IAM)** API built with Go, designed to handl
    cd sphinx
    ```
 
-2. **Start the development environment**
+2. **Create .env file**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Start the development environment**
 
    ```bash
    make dev
    ```
-
-3. **Access the API**
-   - API Server: `http://localhost:8080/v1/api`
-   - API Documentation: `http://localhost:8080/v1`
-   - Health Check: `http://localhost:8080/v1/health`
-
-   Auxiliary tools during development:
-   - Mail Delivery Check (Mailhog): `http://localhost:8025`
 
 ### Manual Setup
 
@@ -82,7 +79,11 @@ An **Identity and Access Management (IAM)** API built with Go, designed to handl
    go mod tidy
    ```
 
-2. **Configure environment** (see Configuration section)
+2. **Copy and configure environment** (see Configuration section)
+
+   ```bash
+   cp .env.example .env
+   ```
 
 3. **Run database migrations**
 
@@ -97,62 +98,113 @@ An **Identity and Access Management (IAM)** API built with Go, designed to handl
 
 ## ⚙️ Configuration
 
-The application uses environment variables for configuration. The default values are between brackets.
-
-- **Production environments**: Variables whose comment below starts with an asterisk MUST HAVE a value provided. Other variables MAY HAVE custom values.
-
-- **DEV environment using Docker Compose**: Variables whose comment below starts with an asterisk MUST NOT HAVE a value other than default. Other variables MAY HAVE custom values.
-
 ### Core Settings
 
-```bash
-DATABASE_URL=postgres://...            # PostgreSQL connection string [postgres://postgres:postgres@localhost:5432/sphynx?sslmode=disable&pool_max_conns=20]
-REDIS_URL=redis://...                  # Redis connection string [redis://localhost:6379/0]
-HOST=localhost:8080                    # Server host and port (for Swagger) [localhost:8080]
-ROOT_APP_ID=uuid                       # Root application identifier [80cadd74-5ccd-41c4-9938-3c8961be04db]
-                                         # Default value matches with the "Sphinx app" created in migrations.
-                                         # Only change this if you wish an application you created as root; in
-                                         # majority of cases, you would like to update "Sphinx app" values.
-```
+| Variable                  | Default                                                              | Description                                                                                                                                    |
+| ------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`            | `postgres://postgres:postgres@localhost:5432/sphinx?sslmode=disable` | PostgreSQL connection string                                                                                                                   |
+| `REDIS_URL`               | `redis://localhost:6379/0`                                           | Redis connection string                                                                                                                        |
+| `APP_VERSION`             | `v1.0.0`                                                             | Must be in semantic versioning format. Major version is used as path prefix.                                                                   |
+| `SCHEME`                  | `http`                                                               | Server scheme (used by Swagger UI)                                                                                                             |
+| `HOST`                    | `localhost:8080`                                                     | Server host and port (used by Swagger UI)                                                                                                      |
+| `ROOT_APP_ID`             | `80cadd74-5ccd-41c4-9938-3c8961be04db`                               | Root application identifier. Matches the built-in "Sphinx app" created by migrations. Only change if you want a different application as root. |
+| `EXTERNAL_AUTH_PROVIDERS` | —                                                                    | A JSON array with [providers settings](#external-providers).                                                                                   |
 
 ### Security Settings
 
-```bash
-JWT_ACCESS_LIFETIME_IN_SEC=900         # Access token lifetime [900] (15 min)
-JWT_REFRESH_LIFETIME_IN_SEC=172800     # Refresh token lifetime [172800] (48 hours)
-JWT_ALGORITHM=RS256                    # Algorithm used in jwt keys [RS256] (Supports HS256 as legacy)
-JWT_SECRET=your-secret-key             # JWT signing secret [topsecret]
-JWT_ENCRYPTION_KEY=your-crypt-key      # Key to encrypt private signing key [changeme]
-JWT_KEY_ROTATION_INTERVAL_HOURS=8760   # Interval for rotating keys [8760] (1 year)
+| Variable                          | Default     | Description                                                                                                      |
+| --------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `JWT_ACCESS_LIFETIME_IN_SEC`      | `900`       | Access token lifetime in seconds (15 min)                                                                        |
+| `JWT_REFRESH_LIFETIME_IN_SEC`     | `172800`    | Refresh token lifetime in seconds (48 hours)                                                                     |
+| `JWT_ALGORITHM`                   | `RS256`     | JWT signing algorithm. Supports `HS256` as legacy.                                                               |
+| `JWT_SECRET`                      | `topsecret` | JWT signing secret (used for `HS256` only)                                                                       |
+| `JWT_ENCRYPTION_KEY`              | `changeme`  | Key used to encrypt the private signing key                                                                      |
+| `JWT_KEY_ROTATION_INTERVAL_HOURS` | `8760`      | Signing key rotation interval in hours (1 year). Set `0` to disable.                                             |
+| `MAX_CONCURRENT_SESSIONS`         | `0`         | Max simultaneous sessions per user. `0` = unlimited.                                                             |
+| `AUTH_GRANT_LIFETIME_IN_SEC`      | `300`       | OAuth authorization grant lifetime in seconds (5 min)                                                            |
+| `SWAGGER_AUTH`                    | —           | A JSON for adding basic auth to Swagger in the format '{"user":"password"}'. Let it empty for no authentication. |
 
-MAX_CONCURRENT_SESSIONS=0              # Session limit [0] (0 = unlimited)
-AUTH_GRANT_LIFETIME_IN_SEC=300         # OAuth grant lifetime [300] (5 min)
-```
+### Email and Client Integration
 
-### Email Integration
-
-```bash
-HERMES_BASE_URL=https://your-hermes-server.com    # Hermes server URL.
-HERMES_API_KEY=your-api-key                       # Key to connect with Hermes server.
-```
-
-### Client Integration
-
-```bash
-CLIENT_BASE_URL=https://sphinx-client.com         # Sphinx client URL.
-CLIENT_DATA_VERIFICATION=/verification            # Path used in Sphinx client for verify data (email, phone) [/verification]
-CLIENT_PASSWORD_RESET=/password/reset             # Path used in Sphinx client to reset password [/password/reset]
-```
+| Variable                   | Default                    | Description                                      |
+| -------------------------- | -------------------------- | ------------------------------------------------ |
+| `HERMES_BASE_URL`          | `http://localhost:8081/v1` | Hermes server URL                                |
+| `HERMES_API_KEY`           | `topsecret`                | API key to authenticate with Hermes              |
+| `CLIENT_BASE_URL`          | `http://localhost:3000`    | Base URL of the Sphinx client application        |
+| `CLIENT_DATA_VERIFICATION` | `/verification`            | Client path for data verification (email, phone) |
+| `CLIENT_PASSWORD_RESET`    | `/password/reset`          | Client path for password reset                   |
 
 ### Customization
 
-```bash
-APP_NAME=YourApp                       # Application name for emails [Sphinx]
-APP_STYLE_URL=https://...              # Custom email styling. If none is provided, default style will be used (assets/style/style.go).
-APP_LOGO_URL=https://...               # Custom logo URL. If none is provided, default logo will be used (assets/img/logo.svg)
-SUPPORT_EMAIL=support@yourdomain.com   # Email address sent in emails as a contact.
-FALLBACK_LANGUAGE=en-us                # Default language (en-us/pt-br) [pt-br]
+| Variable            | Default               | Description                                                                           |
+| ------------------- | --------------------- | ------------------------------------------------------------------------------------- |
+| `APP_NAME`          | `Sphinx`              | Application name used in outgoing emails                                              |
+| `APP_STYLE_URL`     | —                     | Custom email styling URL. Falls back to built-in style in `assets/style/`.            |
+| `APP_LOGO_URL`      | —                     | Custom logo URL. Falls back to built-in SVG in `assets/img/`.                         |
+| `SUPPORT_EMAIL`     | `support@example.com` | Contact address shown in outgoing emails                                              |
+| `FALLBACK_LANGUAGE` | `pt-br`               | Default language for emails (`en-us` / `pt-br`)                                       |
+| `EMAIL_TEMPLATES`   | —                     | A JSON for overwriting email templates in the format '{"language": {"template": {}}}' |
+
+### Docker Compose & Build Variables
+
+These variables are only needed when running via Docker Compose or using Makefile CI/CD targets.
+
+| Variable            | Default    | Description                                                                                                |
+| ------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `DOCKER_REGISTRY`   | _(empty)_  | Docker registry for image push/pull. Leave empty for DockerHub. Also used by `make release`/`make deploy`. |
+| `DB_USER`           | `postgres` | PostgreSQL username                                                                                        |
+| `DB_PASSWORD`       | `postgres` | PostgreSQL password                                                                                        |
+| `DB_NAME`           | `sphinx`   | PostgreSQL database name                                                                                   |
+| `DB_PORT`           | `5432`     | PostgreSQL exposed port                                                                                    |
+| `REDIS_PORT`        | `6379`     | Redis exposed port                                                                                         |
+| `MAILHOG_SMTP_PORT` | `1025`     | Mailhog SMTP port                                                                                          |
+| `MAILHOG_WEB_PORT`  | `8025`     | Mailhog web UI port                                                                                        |
+| `HERMES_PORT`       | `8081`     | Hermes email service port                                                                                  |
+
+### External Providers
+
+Use `EXTERNAL_AUTH_PROVIDERS` to configure trusted external identity providers (for example Google, Facebook, or your own endpoint). If not provided, no external auth will be possible.
+
+Expected format:
+
+- Value must be a JSON array.
+- Each object must include: `name`, `url`, `subjectIDPath`.
+- `method` is optional and defaults to `GET`.
+- Unknown fields are rejected during startup.
+
+Example:
+
+```json
+[
+  {
+    "name": "google",
+    "url": "https://openidconnect.googleapis.com/v1/userinfo",
+    "method": "GET",
+    "defaultHeaders": {
+      "Accept": "application/json"
+    },
+    "defaultParams": {},
+    "defaultBody": {},
+    "subjectIDPath": "sub",
+    "emailPath": "email",
+    "aliasPath": "name"
+  }
+]
 ```
+
+How it works:
+
+- Sphinx sends a request to the provider URL using the configured method.
+- It forwards the incoming `Authorization` header.
+- It merges default headers/params/body with runtime values.
+- It extracts user data from response JSON using dot-paths (for example `profile.id`).
+
+Operational notes:
+
+- Keep provider names unique to avoid ambiguous behavior.
+- Only use trusted providers, because external auth directly affects account identity.
+- If startup fails with provider parsing/validation errors, verify JSON syntax and required fields.
+- If authentication fails at runtime, verify `subjectIDPath` and optional paths (`emailPath`, `aliasPath`) match the provider response payload.
 
 ## 🔗 API Integration
 
@@ -221,7 +273,10 @@ make test                           # Run all tests
 make test-unit                      # Run unit tests only
 make test-e2e                       # Run end-to-end tests
 make doc                            # Generate API documentation
-DOCKER_REGISTRY=docker.io make ci   # Build and push artifacts
+make release KIND=stable            # Build and push artifacts;
+                                    # you may also define a PLATFORM variable,
+                                    # which acts the same as platform flag in
+                                    # docker build command
 ```
 
 ### Project Structure
@@ -267,10 +322,10 @@ go test -run TestOAuth ./test/...  # Specific test patterns
 
 ```bash
 # Build production image
-docker build -f build/Dockerfile -t sphinx:latest .
+docker build -f Dockerfile -t sphinx:latest .
 
 # Run with Docker Compose
-docker-compose -f docker-compose.yml up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 ### Kubernetes (Helm)
@@ -279,8 +334,8 @@ docker-compose -f docker-compose.yml up -d
 # Install with Helm
 helm install sphinx ./build/helm \
   --set image.tag=latest \
-  --set database.url="your-db-url" \
-  --set redis.url="your-redis-url"
+  --set secret.databaseURL="your-db-url" \
+  --set secret.redisURL="your-redis-url"
 ```
 
 ### Environment-specific Configurations
@@ -303,7 +358,6 @@ Prometheus metrics are available at `/v1/metrics`:
 ### Health Checks
 
 - **Health**: `GET /v1/health` - Basic health status
-- **Readiness**: Database and Redis connectivity checks
 
 ## 🤝 Contributing
 
@@ -331,10 +385,6 @@ Prometheus metrics are available at `/v1/metrics`:
 - **HTTP Router**: Chi router with middleware support
 - **Documentation**: Swagger/OpenAPI 2.0
 - **Monitoring**: Prometheus metrics integration
-
-## 📄 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
