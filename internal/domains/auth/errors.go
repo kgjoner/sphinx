@@ -62,6 +62,10 @@ var (
 	)
 
 	// Signing Key Errors
+	ErrKeyNotFound = apperr.NewRequestError(
+		"signing key not found",
+		"auth.key_not_found",
+	)
 	ErrNoActiveKeys = apperr.NewInternalError(
 		"no active signing key available",
 		"auth.no_active_keys",

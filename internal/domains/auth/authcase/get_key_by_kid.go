@@ -22,6 +22,8 @@ func (c GetKeyByKID) Execute(input GetKeyByKIDInput) (out auth.SigningKeyView, e
 	key, err := c.AuthRepo.GetSigningKeyByKID(input.KID)
 	if err != nil {
 		return out, err
+	} else if key == nil {
+		return out, auth.ErrKeyNotFound
 	}
 
 	return key.View(), nil
