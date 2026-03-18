@@ -1,14 +1,12 @@
-CI_RELEASE_GOALS := release
-
-ifneq ($(filter $(CI_RELEASE_GOALS),$(MAKECMDGOALS)),)
-RELEASE ?= canary
+ifneq ($(filter release,$(MAKECMDGOALS)),)
+KIND ?= canary
 VALID_RELEASE_KINDS := stable rc canary nightly
 
-ifeq ($(filter $(RELEASE),$(VALID_RELEASE_KINDS)),)
-$(error Invalid RELEASE '$(RELEASE)'. Allowed values: $(VALID_RELEASE_KINDS))
+ifeq ($(filter $(KIND),$(VALID_RELEASE_KINDS)),)
+$(error Invalid KIND '$(KIND)'. Allowed values: $(VALID_RELEASE_KINDS))
 endif
 
-RELEASE_FLAG := --$(RELEASE)
+RELEASE_FLAG := --$(KIND)
 endif
 
 doc:
