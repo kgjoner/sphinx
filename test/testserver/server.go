@@ -19,9 +19,6 @@ type TestServer struct {
 func New() *TestServer {
 	// Load config
 	config.Must()
-	config.Env.DATABASE_URL = "postgres://postgres:postgres@localhost:5433/sphinx_test?sslmode=disable"
-	config.Env.REDIS_URL = "redis://localhost:6380/0"
-	config.Env.HERMES.BASE_URL = "http://localhost:8082/v1"
 	config.Env.EXTERNAL_AUTH_PROVIDERS = mocks.IdentityProviders.Config()
 	config.Env.JWT.ACCESS_LIFETIME_IN_SEC = 2  // Shorten access token lifetime for tests
 	config.Env.JWT.REFRESH_LIFETIME_IN_SEC = 5 // Shorten refresh token lifetime for tests
