@@ -18,7 +18,7 @@ type middlewares struct {
 
 // NewMiddlewares creates middlewares with JWKS-based token validation.
 // This is the recommended approach for RS256 token validation.
-func NewMiddlewares(appID uuid.UUID, sphinxBaseURL string, authorizer Authorizer) *middlewares {
+func NewMiddlewares(appID uuid.UUID, sphinxBaseURL string, authorizer Authorizer) AuthMiddlewares {
 	tokenProvider := NewJWKSProvider(sphinxBaseURL, "") // No HS256 fallback
 
 	return &middlewares{
@@ -30,7 +30,7 @@ func NewMiddlewares(appID uuid.UUID, sphinxBaseURL string, authorizer Authorizer
 
 // NewMiddlewaresWithHS256Fallback creates middlewares with JWKS-based RS256 validation and HS256 fallback.
 // Use this during migration period when both RS256 and HS256 tokens may be in use.
-func NewMiddlewaresWithHS256Fallback(appID uuid.UUID, sphinxBaseURL string, tokenSecret string, authorizer Authorizer) *middlewares {
+func NewMiddlewaresWithHS256Fallback(appID uuid.UUID, sphinxBaseURL string, tokenSecret string, authorizer Authorizer) AuthMiddlewares {
 	tokenProvider := NewJWKSProvider(sphinxBaseURL, tokenSecret) // With HS256 fallback
 
 	return &middlewares{
@@ -42,7 +42,7 @@ func NewMiddlewaresWithHS256Fallback(appID uuid.UUID, sphinxBaseURL string, toke
 
 // NewMiddlewaresWithSecret creates middlewares with a shared secret for HS256 validation.
 // Deprecated: Use NewMiddlewares with JWKS for RS256 support. This is kept for backward compatibility.
-func NewMiddlewaresWithSecret(appID uuid.UUID, tokenSecret string, authorizer Authorizer) *middlewares {
+func NewMiddlewaresWithSecret(appID uuid.UUID, tokenSecret string, authorizer Authorizer) AuthMiddlewares {
 	tokenProvider := tokens.NewJWTProvider(tokenSecret, 0, 0) // lifetime is not used in validation
 
 	return &middlewares{

@@ -13,6 +13,16 @@ var (
 )
 
 /* ==============================================================================
+	Middlewares
+============================================================================== */
+
+// AuthMiddlewares provides HTTP middleware methods for authentication
+type AuthMiddlewares interface {
+	Authenticate(next http.Handler) http.Handler
+	TryAuthenticate(next http.Handler) http.Handler
+}
+
+/* ==============================================================================
 	Authorizer
 ============================================================================== */
 

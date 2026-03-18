@@ -39,7 +39,7 @@ func NewClient(baseURL, appID, appSecret string) *Client {
 //	client := sphinx.NewClient("https://sphinx.example.com", appID, appSecret)
 //	middlewares := client.Middlewares(authorizer)
 //	router.Use(middlewares.Authenticate)
-func (c *Client) Middlewares(authorizer Authorizer) *middlewares {
+func (c *Client) Middlewares(authorizer Authorizer) AuthMiddlewares {
 	appIDUUID, err := uuid.Parse(c.appID)
 	if err != nil {
 		// Fallback to zero UUID if parsing fails

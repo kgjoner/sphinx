@@ -353,13 +353,14 @@ func (s Service) ExternalAuth(authorization string, body ExternalAuthBody, clien
 type ctxKey string
 
 // Deprecated: use Middlewares instead and define your own
-// context values with AuthReceiver
+// context values with Authorizer.AuthorizeSubject.
 const (
 	ActorCtxKey ctxKey = "sphinx_actor"
 	TokenCtxKey ctxKey = "sphinx_token"
 )
 
-// Deprecated: use Middlewares instead
+// Deprecated: use middlewares instead; created either with NewMiddlewares or
+// Client.Middlewares
 type Middlewares struct {
 	sphinx *Service
 }
