@@ -211,7 +211,7 @@ func TestUserManagement(t *testing.T) {
 		token := ts.login(t, userData.LoginPayload())
 
 		updateUsernameData := map[string]interface{}{
-			"value": "updated.username",
+			"value": GenerateUsername(),
 		}
 
 		resp, err := ts.AuthenticatedRequest("POST", "/user/me/username", updateUsernameData, token)
