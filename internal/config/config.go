@@ -45,15 +45,27 @@ var Env struct {
 		API_KEY  string `envconfig:"default=topsecret"`
 	}
 
+	// Used to protect the Swagger UI with basic authentication. The expected format is a JSON 
+	// object where keys are usernames and values are their respective passwords. For example: 
+	// {"admin": "password123", "user1": "passw0rd"}.
+	//
+	// If not provided, the Swagger UI will be accessible without authentication.
 	SWAGGER_AUTH    map[string]string `envconfig:"-" json:",omitempty"`
+	// Overwrite default email templates with custom ones. The expected format is a JSON object 
+	// where first level keys are the language codes (e.g., "en", "pt-br"), the second level keys 
+	// are the template names (e.g., "welcome", "password_reset"), and the values are the template
+	// content.
+	// 
+	// Check internal/pkg/mailer/internal/assets for reference on the expected structure.
 	EMAIL_TEMPLATES []byte            `envconfig:"-" json:",omitempty"`
-	// Used for integrating with third-party identity providers.
-	// It is OPTIONAL, so if not provided, no external auth will be possible.
-	// Each provider must have a unique name.
+	// Configure external authentication providers (e.g., Google, Facebook) with their respective 
+	// validation endpoints. The expected format is a JSON array of objects containing the necessary
+	// configuration for each provider. It is optional, so if not provided, no external auth will
+	// be possible. Each provider must have a unique name.
+	//
+	// Check internal/server/identpvd/identity_providers.go for reference on the expected structure.
 	//
 	// Use with caution, only with trusted providers, as this may open security vulnerabilities.
-	//
-	// See documentation for more details.
 	EXTERNAL_AUTH_PROVIDERS []byte `envconfig:"-" json:",omitempty"`
 }
 
