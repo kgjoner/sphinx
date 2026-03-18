@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "sphinx.prefix" . }}-migrate
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
+    app.kubernetes.io/version: {{ template "sphinx.version" . }}
+    app.kubernetes.io/component: migrate
+    app.kubernetes.io/part-of: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ template "sphinx.prefix" . }}
+        app.kubernetes.io/component: migrate
+        app.kubernetes.io/part-of: {{ .Chart.Name }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: {{ .Chart.Name }}-migrate
+        image: {{ .Values.api.image.repository }}:{{ .Values.api.image.version | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+        command: ["/migrate"]
+        envFrom:
+        - secretRef:
+          {{- if empty .Values.secret.existentName }}
+            name: {{ include "sphinx.secretName" . }}
+          {{- else }}
+            name: {{ .Values.secret.existentName }}
+          {{- end }}
+        - configMapRef:
+            name: {{ include "sphinx.configMapName" . }}
+      imagePullSecrets:
+      - name: {{ .Values.api.imagePullSecretName }}
