@@ -1,8 +1,12 @@
 .git/
 .github/
 build/
+pkg/
 test/
-backup.sql
-docker-compose.yaml
+.env*
+.gitignore
+docker-compose.*yaml
+Dockerfile*
+Makefile
 README.md
 

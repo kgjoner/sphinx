@@ -11,11 +11,14 @@ usage() {
 
 # Parse command-line arguments
 DRY_RUN=false
-RELEASE_TYPE=""
+RELEASE_TYPE="stable"
 for arg in "$@"; do
   case $arg in
     --dry-run)
       DRY_RUN=true
+      ;;
+    --stable)
+      RELEASE_TYPE="stable"
       ;;
     --rc)
       RELEASE_TYPE="rc"

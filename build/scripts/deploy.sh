@@ -2,14 +2,30 @@
 
 set -e
 
-# Fetch latest annotated tag
-LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+ENV=
+for arg in "$@"; do
+  case $arg in
+    --env=*)
+      ENV="${arg#*=}"
+      shift
+      ;;
+    --env)
+      ENV="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $arg"
+      ;;
+  esac
+  shift
+done
 
-# Replace app version in Helm chart
-sed -i -E "s/appVersion:.+/appVersion: \"$LATEST_TAG\"/g" helm/Chart.yaml
+if [ -z "$ENV" ]; then
+  echo "Error: --env argument is required (e.g. --env=staging)"
+  exit 1
+fi
+
+# TODO: ensure kube context is the right one before applying helm charts
 
 # Upgrade Helm release
-cp ~/.kube/personal-htz.yaml ~/.kube/config
-helm upgrade --install shx helm -n personal -f helm/prod-values.yaml
-# kubectl rollout restart deployment shx-sphinx -n personal
-kubectl delete pods -l app.kubernetes.io/name=sphinx -n personal
+helm upgrade --install iam helm -n ${ENV} -f helm/${ENV}-values.yaml

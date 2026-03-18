@@ -6,6 +6,25 @@ IMAGE_NAME="sphinx"
 
 echo "Starting integration script for image: $IMAGE_NAME"
 
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+else
+  echo ".env not found — continuing with default environment variables"
+fi
+
+echo "Starting integration script for image: $IMAGE_NAME"
+
+if [ -n "$DOCKER_REGISTRY" ]; then
+  echo -e "🐳 Using Docker registry: $DOCKER_REGISTRY\n"
+  if [[ "$DOCKER_REGISTRY" != */ ]]; then
+    DOCKER_REGISTRY="$DOCKER_REGISTRY/"
+  fi
+else 
+  echo -e "🐳 Using DockerHub as default registry\n"
+fi
+
 #########################################################################################################
 # SETUP
 # -------------------------------------------------------------------------------------------------------
@@ -13,18 +32,9 @@ echo "Starting integration script for image: $IMAGE_NAME"
 #########################################################################################################
 
 RELEASE_KIND="stable"
-DOCKER_REGISTRY=""
 PLATFORM=""
 for arg in "$@"; do
   case $arg in
-    --registry=*)
-      DOCKER_REGISTRY="${arg#*=}/"
-      shift
-      ;;
-    --registry)
-      DOCKER_REGISTRY="$2/"
-      shift 2
-      ;;
     --platform=*)
       PLATFORM="${arg#*=}"
       shift
@@ -113,7 +123,7 @@ if [ -n "$DOCKER_REGISTRY" ]; then
   PUSH_ARG="--push"
 fi
 
-docker build -f build/Dockerfile . \
+docker build -f Dockerfile . \
   --build-arg APP_VERSION="$LATEST_TAG" \
   $DOCKER_TAGS \
   --ssh default=$SSH_AUTH_SOCK \
@@ -130,7 +140,12 @@ docker build -f build/Dockerfile . \
 #########################################################################################################
 
 if [ -z "$DOCKER_REGISTRY" ]; then
-  echo "No Docker registry specified, skipping Helm chart push."
+  echo -e "No Docker registry specified, skipping Helm chart push.\n"
+  echo "🚀 Release completed!"
+  echo "Docker Images:"
+  echo "  ${DOCKER_REGISTRY}$IMAGE_NAME:$LATEST_TAG"
+  echo "  ${DOCKER_REGISTRY}$IMAGE_NAME:$MAJOR_VERSION"
+  echo "  ${DOCKER_REGISTRY}$IMAGE_NAME:latest"
   exit 0
 fi
 
@@ -139,11 +154,6 @@ echo "Packaging Helm chart..."
 # 1. Prepare Helm chart
 # Replace app version in Helm chart
 sed -i -E "s/appVersion:.+/appVersion: \"$LATEST_TAG\"/g" build/helm/Chart.yaml
-
-# Copy migration files
-echo "Copying migration files"
-mkdir -p build/helm/migrations
-cp internal/repositories/base/migrations/*.sql build/helm/migrations/
 
 # 2. Package it
 # Create temporary directory for chart packaging

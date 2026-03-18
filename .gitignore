@@ -3,4 +3,5 @@ gorunner.w
 build/helm/*-values.yaml
 build/helm/migrations
 backup.sql
-scripts/**
+.env
+.ignore
