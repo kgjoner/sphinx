@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
@@ -30,14 +30,14 @@ func (g gateway) linkHandler(r chi.Router) {
 //	@Produce		json
 //	@Param			userID	path		string	true	"User ID"
 //	@Param			appID	path		string	true	"Application ID"
-//	@Success		200		{object}	presenter.Success[access.LinkView]
+//	@Success		200		{object}	httpserver.Success[access.LinkView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		404		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
 		ParseURLParam("appID", "applicationID")
@@ -45,7 +45,7 @@ func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 	var input accesscase.GetLinkInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -56,11 +56,11 @@ func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 	out, err := i.Execute(input)
 
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(out, w, r, http.StatusOK)
+	httpserver.HTTPSuccess(out, w, r, http.StatusOK)
 }
 
 // AddRole godoc
@@ -82,7 +82,7 @@ func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
 		ParseURLParam("appID", "applicationID").
@@ -91,7 +91,7 @@ func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 	var input accesscase.AddRoleInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -102,11 +102,11 @@ func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 	_, err = i.Execute(input)
 
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(nil, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(nil, w, r, http.StatusNoContent)
 }
 
 // RemoveRole godoc
@@ -128,7 +128,7 @@ func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) removeRole(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
 		ParseURLParam("appID", "applicationID").
@@ -137,7 +137,7 @@ func (g gateway) removeRole(w http.ResponseWriter, r *http.Request) {
 	var input accesscase.RemoveRoleInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -148,9 +148,9 @@ func (g gateway) removeRole(w http.ResponseWriter, r *http.Request) {
 	_, err = i.Execute(input)
 
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(nil, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(nil, w, r, http.StatusNoContent)
 }

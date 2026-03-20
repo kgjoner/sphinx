@@ -2,7 +2,7 @@ package identcase
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
@@ -16,7 +16,7 @@ type GetUserEmailInput struct {
 	Actor    shared.Actor `json:"-"`
 }
 
-func (i GetUserEmail) Execute(input GetUserEmailInput) (out htypes.Email, err error) {
+func (i GetUserEmail) Execute(input GetUserEmailInput) (out prim.Email, err error) {
 	if err := identity.CanReadUserSensitiveData(&input.Actor, input.TargetID); err != nil {
 		return out, err
 	}

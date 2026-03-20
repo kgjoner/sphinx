@@ -1,6 +1,6 @@
 package identity
 
-import "github.com/kgjoner/cornucopia/v2/helpers/apperr"
+import "github.com/kgjoner/cornucopia/v3/apperr"
 
 var (
 	ErrEmptyInput = apperr.NewValidationError(

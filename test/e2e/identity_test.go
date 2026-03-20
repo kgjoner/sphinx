@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/cornucopia/v2/utils/sanitizer"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/sanitizer"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authcase"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/domains/identity/identrepo"
@@ -31,7 +31,7 @@ func TestUserCreation(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-		var respData presenter.Success[identity.UserLeanView]
+		var respData httpserver.Success[identity.UserLeanView]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -88,7 +88,7 @@ func TestUserCreation(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-		var respData presenter.Success[identity.UserLeanView]
+		var respData httpserver.Success[identity.UserLeanView]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -179,7 +179,7 @@ func TestUserManagement(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var accData presenter.Success[identity.UserView]
+		var accData httpserver.Success[identity.UserView]
 		err = json.NewDecoder(resp.Body).Decode(&accData)
 		require.NoError(t, err)
 		t.Log(accData)
@@ -194,7 +194,7 @@ func TestUserManagement(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var accData presenter.Success[identity.UserView]
+			var accData httpserver.Success[identity.UserView]
 			err = json.NewDecoder(resp.Body).Decode(&accData)
 			require.NoError(t, err)
 
@@ -220,7 +220,7 @@ func TestUserManagement(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var accData presenter.Success[identity.UserView]
+		var accData httpserver.Success[identity.UserView]
 		err = json.NewDecoder(resp.Body).Decode(&accData)
 		require.NoError(t, err)
 
@@ -233,7 +233,7 @@ func TestUserManagement(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var accData presenter.Success[identity.UserView]
+			var accData httpserver.Success[identity.UserView]
 			err = json.NewDecoder(resp.Body).Decode(&accData)
 			require.NoError(t, err)
 
@@ -287,7 +287,7 @@ func TestPasswordChange(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var loginRespData presenter.Success[authcase.LoginOutput]
+			var loginRespData httpserver.Success[authcase.LoginOutput]
 			err = json.NewDecoder(resp.Body).Decode(&loginRespData)
 			require.NoError(t, err)
 
@@ -342,7 +342,7 @@ func TestPasswordReset(t *testing.T) {
 
 				assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-				var loginRespData presenter.Success[authcase.LoginOutput]
+				var loginRespData httpserver.Success[authcase.LoginOutput]
 				err = json.NewDecoder(resp.Body).Decode(&loginRespData)
 				require.NoError(t, err)
 
@@ -387,7 +387,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
 
-			var existsData1 presenter.Success[bool]
+			var existsData1 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
 
@@ -404,7 +404,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
 
-			var existsData2 presenter.Success[bool]
+			var existsData2 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
 			require.NoError(t, err)
 
@@ -421,7 +421,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
 
-			var existsData1 presenter.Success[bool]
+			var existsData1 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
 
@@ -438,7 +438,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
 
-			var existsData2 presenter.Success[bool]
+			var existsData2 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
 			require.NoError(t, err)
 
@@ -455,7 +455,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
 
-			var existsData1 presenter.Success[bool]
+			var existsData1 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
 
@@ -473,7 +473,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
 
-			var existsData2 presenter.Success[bool]
+			var existsData2 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
 			require.NoError(t, err)
 
@@ -490,7 +490,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp1.StatusCode)
 
-			var existsData1 presenter.Success[bool]
+			var existsData1 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp1.Body).Decode(&existsData1)
 			require.NoError(t, err)
 
@@ -507,7 +507,7 @@ func TestUserExistence(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, existsResp2.StatusCode)
 
-			var existsData2 presenter.Success[bool]
+			var existsData2 httpserver.Success[bool]
 			err = json.NewDecoder(existsResp2.Body).Decode(&existsData2)
 			require.NoError(t, err)
 
@@ -530,7 +530,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -563,7 +563,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -610,7 +610,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -636,7 +636,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -662,7 +662,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -679,7 +679,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp1.StatusCode)
 
-		var respData1 presenter.Success[[]interface{}]
+		var respData1 httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp1.Body).Decode(&respData1)
 		require.NoError(t, err)
 
@@ -693,7 +693,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp2.StatusCode)
 
-		var respData2 presenter.Success[[]interface{}]
+		var respData2 httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp2.Body).Decode(&respData2)
 		require.NoError(t, err)
 
@@ -715,7 +715,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -731,7 +731,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -747,7 +747,7 @@ func TestUserListing(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData presenter.Success[[]interface{}]
+		var respData httpserver.Success[[]interface{}]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -773,10 +773,10 @@ func TestUserListing(t *testing.T) {
 		require.NoError(t, err)
 		defer resp2.Body.Close()
 
-		var respData1 presenter.Success[[]interface{}]
+		var respData1 httpserver.Success[[]interface{}]
 		json.NewDecoder(resp1.Body).Decode(&respData1)
 
-		var respData2 presenter.Success[[]interface{}]
+		var respData2 httpserver.Success[[]interface{}]
 		json.NewDecoder(resp2.Body).Decode(&respData2)
 
 		users1 := respData1.Data

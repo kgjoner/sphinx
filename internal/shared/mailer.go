@@ -1,9 +1,9 @@
 package shared
 
-import "github.com/kgjoner/cornucopia/v2/helpers/htypes"
+import "github.com/kgjoner/cornucopia/v3/prim"
 
 type Mailer interface {
-	Send(recipient htypes.Email, email Email, languages ...string) error
+	Send(recipient prim.Email, email Email, languages ...string) error
 }
 
 type Email interface {

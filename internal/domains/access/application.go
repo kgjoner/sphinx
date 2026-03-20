@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
-	"github.com/kgjoner/cornucopia/v2/utils/structop"
+	"github.com/kgjoner/cornucopia/v3/validator"
+	"github.com/kgjoner/cornucopia/v3/structop"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/shared"
 )

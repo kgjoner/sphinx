@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/pkg/mailer/internal/assets"
@@ -33,7 +33,7 @@ func New(mailService hermes.MailService, config Config) *Mailer {
 	}
 }
 
-func (m *Mailer) Send(recipient htypes.Email, email shared.Email, lns ...string) error {
+func (m *Mailer) Send(recipient prim.Email, email shared.Email, lns ...string) error {
 	links := []assets.Link{}
 	params := assets.Params{
 		ReceiverEmail: recipient.String(),

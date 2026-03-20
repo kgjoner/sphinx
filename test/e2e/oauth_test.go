@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authcase"
 	"github.com/kgjoner/sphinx/test/mocks"
@@ -29,7 +29,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
 
-	var loginResult presenter.Success[authcase.LoginOutput]
+	var loginResult httpserver.Success[authcase.LoginOutput]
 	err = json.NewDecoder(loginResp.Body).Decode(&loginResult)
 	require.NoError(t, err)
 	accessToken := loginResult.Data.AccessToken
@@ -49,7 +49,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var grantResp presenter.Success[authcase.IssueGrantOutput]
+		var grantResp httpserver.Success[authcase.IssueGrantOutput]
 		err = json.NewDecoder(resp.Body).Decode(&grantResp)
 		require.NoError(t, err)
 
@@ -73,7 +73,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var tokenResp presenter.Success[authcase.LoginOutput]
+			var tokenResp httpserver.Success[authcase.LoginOutput]
 			err = json.NewDecoder(resp.Body).Decode(&tokenResp)
 			require.NoError(t, err)
 
@@ -101,7 +101,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 			require.NoError(t, err)
 			defer grantResp.Body.Close()
 
-			var newGrant presenter.Success[authcase.IssueGrantOutput]
+			var newGrant httpserver.Success[authcase.IssueGrantOutput]
 			err = json.NewDecoder(grantResp.Body).Decode(&newGrant)
 			require.NoError(t, err)
 
@@ -120,7 +120,7 @@ func TestOAuthAuthorizationFlow(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var tokenResp presenter.Success[authcase.LoginOutput]
+			var tokenResp httpserver.Success[authcase.LoginOutput]
 			err = json.NewDecoder(resp.Body).Decode(&tokenResp)
 			require.NoError(t, err)
 
@@ -142,7 +142,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
 
-	var loginResult presenter.Success[authcase.LoginOutput]
+	var loginResult httpserver.Success[authcase.LoginOutput]
 	err = json.NewDecoder(loginResp.Body).Decode(&loginResult)
 	require.NoError(t, err)
 	accessToken := loginResult.Data.AccessToken
@@ -276,7 +276,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, grantResp.StatusCode)
 
-			var grant presenter.Success[authcase.IssueGrantOutput]
+			var grant httpserver.Success[authcase.IssueGrantOutput]
 			err = json.NewDecoder(grantResp.Body).Decode(&grant)
 			require.NoError(t, err)
 
@@ -311,7 +311,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, grantResp.StatusCode)
 
-			var grant presenter.Success[authcase.IssueGrantOutput]
+			var grant httpserver.Success[authcase.IssueGrantOutput]
 			err = json.NewDecoder(grantResp.Body).Decode(&grant)
 			require.NoError(t, err)
 
@@ -362,7 +362,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, grantResp.StatusCode)
 
-			var grant presenter.Success[authcase.IssueGrantOutput]
+			var grant httpserver.Success[authcase.IssueGrantOutput]
 			err = json.NewDecoder(grantResp.Body).Decode(&grant)
 			require.NoError(t, err)
 
@@ -397,7 +397,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, grantResp.StatusCode)
 
-			var grant presenter.Success[authcase.IssueGrantOutput]
+			var grant httpserver.Success[authcase.IssueGrantOutput]
 			err = json.NewDecoder(grantResp.Body).Decode(&grant)
 			require.NoError(t, err)
 
@@ -432,7 +432,7 @@ func TestOAuthAuthorizationErrors(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, grantResp.StatusCode)
 
-			var grant presenter.Success[authcase.IssueGrantOutput]
+			var grant httpserver.Success[authcase.IssueGrantOutput]
 			err = json.NewDecoder(grantResp.Body).Decode(&grant)
 			require.NoError(t, err)
 
@@ -466,7 +466,7 @@ func TestOAuthGrantExpiration(t *testing.T) {
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
 
-	var loginResult presenter.Success[authcase.LoginOutput]
+	var loginResult httpserver.Success[authcase.LoginOutput]
 	err = json.NewDecoder(loginResp.Body).Decode(&loginResult)
 	require.NoError(t, err)
 	accessToken := loginResult.Data.AccessToken
@@ -484,7 +484,7 @@ func TestOAuthGrantExpiration(t *testing.T) {
 		require.NoError(t, err)
 		defer grantResp.Body.Close()
 
-		var grant presenter.Success[authcase.IssueGrantOutput]
+		var grant httpserver.Success[authcase.IssueGrantOutput]
 		err = json.NewDecoder(grantResp.Body).Decode(&grant)
 		require.NoError(t, err)
 

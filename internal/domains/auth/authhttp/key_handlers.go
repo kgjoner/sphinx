@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authcase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
@@ -38,7 +38,7 @@ func (g *gateway) getJWKS(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.ExecutePublic()
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -59,13 +59,13 @@ func (g *gateway) getJWKS(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403	{object}	map[string]interface{}
 //	@Failure		500	{object}	map[string]interface{}
 func (g *gateway) rotateKeys(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor")
 
 	var input authcase.RotateKeysInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -79,11 +79,11 @@ func (g *gateway) rotateKeys(w http.ResponseWriter, r *http.Request) {
 		return i.Execute(input)
 	})
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(nil, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(nil, w, r, http.StatusNoContent)
 }
 
 // GetKeysStatus godoc
@@ -100,13 +100,13 @@ func (g *gateway) rotateKeys(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403	{object}	map[string]interface{}
 //	@Failure		500	{object}	map[string]interface{}
 func (g *gateway) getKeysStatus(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor")
 
 	var input authcase.ListActiveSigningKeysInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -116,7 +116,7 @@ func (g *gateway) getKeysStatus(w http.ResponseWriter, r *http.Request) {
 
 	keys, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (g *gateway) getKeysStatus(w http.ResponseWriter, r *http.Request) {
 		Keys:            keys,
 	}
 
-	presenter.HTTPSuccess(resp, w, r)
+	httpserver.HTTPSuccess(resp, w, r)
 }
 
 // Response types

@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/i18n"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/hermes/pkg/hermes"
 )
 
 // Template returns the mail template for the given key and preferred languages (in order).
 func Template(key TemplateKey, lngs ...string) emailTemplate {
 	for _, lng := range lngs {
-		res, exists := templates[i18n.Language(lng)]
+		res, exists := templates[prim.Locale(lng)]
 		if exists {
 			return res[key]
 		}
 	}
 
-	return templates[i18n.Portuguese][key]
+	return templates[prim.Portuguese][key]
 }
 
 /* ================================================================================
@@ -112,11 +112,11 @@ func executeTemplate(templ *template.Template, params Params) string {
 //go:embed *.json
 var files embed.FS
 
-type TemplateMap map[i18n.Language]map[TemplateKey]emailTemplate
+type TemplateMap map[prim.Locale]map[TemplateKey]emailTemplate
 
 var templates = TemplateMap{}
 
-var acceptedLanguages = []i18n.Language{i18n.Portuguese}
+var acceptedLanguages = []prim.Locale{prim.Portuguese}
 
 func init() {
 	for _, lng := range acceptedLanguages {

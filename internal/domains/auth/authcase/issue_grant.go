@@ -3,8 +3,8 @@ package authcase
 import (
 	"time"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
-	"github.com/kgjoner/cornucopia/v2/repositories/cache"
+	"github.com/kgjoner/cornucopia/v3/validator"
+	"github.com/kgjoner/cornucopia/v3/repositories/cache"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/auth"

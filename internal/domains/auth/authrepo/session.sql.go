@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
+	"github.com/kgjoner/cornucopia/v3/dbhandler"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/lib/pq"
 )

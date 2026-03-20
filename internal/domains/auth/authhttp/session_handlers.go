@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authcase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
@@ -29,12 +29,12 @@ func (g gateway) sessionHandlers(r chi.Router) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		authcase.LoginInput	true	"Credentials. Entry can be: email, phone, username or document"
-//	@Success		200		{object}	presenter.Success[authcase.LoginOutput]
+//	@Success		200		{object}	httpserver.Success[authcase.LoginOutput]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) login(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		AddIP().
 		AddHeader("user-agent", "device")
@@ -42,7 +42,7 @@ func (g gateway) login(w http.ResponseWriter, r *http.Request) {
 	var input authcase.LoginInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -56,11 +56,11 @@ func (g gateway) login(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // Logout godoc
@@ -77,13 +77,13 @@ func (g gateway) login(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) logout(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor")
 
 	var input authcase.LogoutInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -94,11 +94,11 @@ func (g gateway) logout(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
 // Refresh godoc
@@ -110,19 +110,19 @@ func (g gateway) logout(w http.ResponseWriter, r *http.Request) {
 //	@Security		BearerRefresh
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	presenter.Success[authcase.LoginOutput]
+//	@Success		200	{object}	httpserver.Success[authcase.LoginOutput]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) refresh(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TokenCtxKey, "token")
 
 	var input authcase.RefreshInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -135,11 +135,11 @@ func (g gateway) refresh(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // External Login godoc
@@ -152,13 +152,13 @@ func (g gateway) refresh(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			provider	path		string						true	"Name of the external identity provider (e.g., google, facebook)."
 //	@Param			payload		body		authcase.ExternalLoginInput	true	"You may inform email if creation is expected and provider does not provide it."
-//	@Success		200			{object}	presenter.Success[authcase.LoginOutput]
+//	@Success		200			{object}	httpserver.Success[authcase.LoginOutput]
 //	@Failure		400			{object}	apperr.AppError
 //	@Failure		401			{object}	apperr.AppError
 //	@Failure		403			{object}	apperr.AppError
 //	@Failure		500			{object}	apperr.AppError
 func (g gateway) externalLogin(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		ParseURLParam("provider", "providerName").
 		JSONBody().
 		AddIP().
@@ -170,7 +170,7 @@ func (g gateway) externalLogin(w http.ResponseWriter, r *http.Request) {
 	var input authcase.ExternalLoginInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -184,9 +184,9 @@ func (g gateway) externalLogin(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }

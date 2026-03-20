@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
-	"github.com/kgjoner/cornucopia/v2/utils/sanitizer"
+	"github.com/kgjoner/cornucopia/v3/apperr"
+	"github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/validator"
+	"github.com/kgjoner/cornucopia/v3/sanitizer"
 )
 
 // Represents any entry of an user: email, phone, username or document.
@@ -20,17 +20,17 @@ func ParseEntry(str string) (Entry, error) {
 	}
 
 	if strings.Contains(str, "@") {
-		email, err := htypes.ParseEmail(str)
+		email, err := prim.ParseEmail(str)
 		return Entry(email), err
 	}
 
 	if strings.HasPrefix(str, "+") {
-		phone, err := htypes.ParsePhoneNumber(str)
+		phone, err := prim.ParsePhoneNumber(str)
 		return Entry(phone), err
 	}
 
 	// Try to parse a document even if it does not contain a colon.
-	document, err := htypes.ParseDocument(str)
+	document, err := prim.ParseDocument(str)
 	if err == nil || (strings.Contains(str, ":") || sanitizer.IsDigitOnly(str)) {
 		// If it contains a colon or digit, it should be a document.
 		return Entry(document), err
@@ -45,11 +45,11 @@ func (e Entry) IsValid() error {
 	kind := e.Kind()
 	switch kind {
 	case "email":
-		err = htypes.Email(string(e)).IsValid()
+		err = prim.Email(string(e)).IsValid()
 	case "phone":
-		err = htypes.PhoneNumber(string(e)).IsValid()
+		err = prim.PhoneNumber(string(e)).IsValid()
 	case "document":
-		err = htypes.Document(string(e)).IsValid()
+		err = prim.Document(string(e)).IsValid()
 	case "username":
 		err = validator.Validate(string(e), "wordID", "atLeastOne=letter")
 	}

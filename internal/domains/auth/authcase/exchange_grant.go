@@ -1,7 +1,7 @@
 package authcase
 
 import (
-	"github.com/kgjoner/cornucopia/v2/repositories/cache"
+	"github.com/kgjoner/cornucopia/v3/repositories/cache"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/shared"
 )

@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v3/apperr"
+	"github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/validator"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
@@ -128,14 +128,14 @@ func (p *Providers) Authenticate(input shared.IdentityProviderInput) (subject *s
 		return nil, fmt.Errorf("failed to extract subject ID: %w", err)
 	}
 
-	var email htypes.Email
+	var email prim.Email
 	if e.EmailPath != "" {
 		strEmail, err := extractValueFromPath(responseBody, e.EmailPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract email: %w", err)
 		}
 
-		email, err = htypes.ParseEmail(strEmail)
+		email, err = prim.ParseEmail(strEmail)
 		if err != nil {
 			return nil, fmt.Errorf("invalid email format: %w", err)
 		}

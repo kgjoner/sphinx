@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	_ "github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	_ "github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/identity/identcase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
@@ -46,20 +46,20 @@ func (g gateway) userHandler(r chi.Router) {
 //	@Produce		json
 //	@Param			accept-language	header		string						false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			payload			body		identity.UserCreationFields	true	"Email and password are mandatory."
-//	@Success		201				{object}	presenter.Success[identity.UserLeanView]
+//	@Success		201				{object}	httpserver.Success[identity.UserLeanView]
 //	@Failure		400				{object}	apperr.AppError
 //	@Failure		409				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
 func (g gateway) createUser(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		AddLanguages()
 
 	var input identcase.SignUpInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -78,11 +78,11 @@ func (g gateway) createUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusCreated)
+	httpserver.HTTPSuccess(output, w, r, http.StatusCreated)
 }
 
 // CheckEntryExistence godoc
@@ -94,17 +94,17 @@ func (g gateway) createUser(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-entry	header		string	true	"Email, username, phone or document."
-//	@Success		200		{object}	presenter.Success[bool]
+//	@Success		200		{object}	httpserver.Success[bool]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddHeader("X-Entry", "entry")
 
 	var input identcase.CheckEntryExistenceInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -115,11 +115,11 @@ func (g gateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // GetMe godoc
@@ -131,7 +131,7 @@ func (g gateway) checkEntryExistence(w http.ResponseWriter, r *http.Request) {
 //	@Security		Bearer
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	presenter.Success[identity.UserView]
+//	@Success		200	{object}	httpserver.Success[identity.UserView]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
@@ -149,20 +149,20 @@ func (g gateway) getMe(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		string	true	"User ID"
-//	@Success		200	{object}	presenter.Success[identity.UserView]
+//	@Success		200	{object}	httpserver.Success[identity.UserView]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		403	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID")
 
 	var input identcase.GetPrivateUserInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -173,11 +173,11 @@ func (g gateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // VerifyUser godoc
@@ -195,7 +195,7 @@ func (g gateway) getPrivateUser(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		ParseURLParam("id", "userID").
 		ParseURLParam("field", "verificationKind")
@@ -203,7 +203,7 @@ func (g gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 	var input identcase.VerifyUserInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -214,11 +214,11 @@ func (g gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
 // ChangeMyPassword godoc
@@ -238,7 +238,7 @@ func (g gateway) verifyUser(w http.ResponseWriter, r *http.Request) {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID").
@@ -247,7 +247,7 @@ func (g gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
 	var input identcase.ChangePasswordInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -262,11 +262,11 @@ func (g gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
 		return i.Execute(input)
 	})
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
 // RequestPasswordReset godoc
@@ -283,14 +283,14 @@ func (g gateway) changeMyPassword(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		AddLanguages()
 
 	var input identcase.RequestPasswordResetInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -302,11 +302,11 @@ func (g gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
 // ResetPassword godoc
@@ -325,7 +325,7 @@ func (g gateway) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		ParseURLParam("id", "userID").
 		AddLanguages()
@@ -333,7 +333,7 @@ func (g gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 	var input identcase.ResetPasswordInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -348,11 +348,11 @@ func (g gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 		return i.Execute(input)
 	})
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
 // UpdateMyExtraData godoc
@@ -365,7 +365,7 @@ func (g gateway) resetPassword(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		identity.ExtraData	true	"At least one data must be defined.""
-//	@Success		200		{object}	presenter.Success[identity.UserView]
+//	@Success		200		{object}	httpserver.Success[identity.UserView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		422		{object}	apperr.AppError
@@ -385,14 +385,14 @@ func (g gateway) updateMyExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			id		path		string				true	"User ID"'
 //	@Param			payload	body		identity.ExtraData	true	"At least one data must be defined.""
-//	@Success		200		{object}	presenter.Success[identity.UserView]
+//	@Success		200		{object}	httpserver.Success[identity.UserView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		422		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID")
@@ -400,7 +400,7 @@ func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 	var input identcase.UpdateExtraDataInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -411,11 +411,11 @@ func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // UpdateMyUniqueField godoc
@@ -430,7 +430,7 @@ func (g gateway) updateExtraData(w http.ResponseWriter, r *http.Request) {
 //	@Param			accept-language	header		string								false	"Used to define mailing language. Example: pt-br, pt;q=0.9, en;q=0.5"
 //	@Param			field			path		string								true	"Must be: email, phone, username or document"
 //	@Param			payload			body		identcase.UpdateUniqueFieldInput	true	"Value is required."
-//	@Success		200				{object}	presenter.Success[identity.UserView]
+//	@Success		200				{object}	httpserver.Success[identity.UserView]
 //	@Failure		400				{object}	apperr.AppError
 //	@Failure		401				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
@@ -452,14 +452,14 @@ func (g gateway) updateMyUniqueField(w http.ResponseWriter, r *http.Request) {
 //	@Param			id				path		string								true	"User ID"
 //	@Param			field			path		string								true	"Must be: email, phone, username or document"
 //	@Param			payload			body		identcase.UpdateUniqueFieldInput	true	"Value is required."
-//	@Success		200				{object}	presenter.Success[identity.UserView]
+//	@Success		200				{object}	httpserver.Success[identity.UserView]
 //	@Failure		400				{object}	apperr.AppError
 //	@Failure		401				{object}	apperr.AppError
 //	@Failure		403				{object}	apperr.AppError
 //	@Failure		422				{object}	apperr.AppError
 //	@Failure		500				{object}	apperr.AppError
 func (g gateway) updateUniqueField(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		ParseURLParam("field").
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
@@ -469,7 +469,7 @@ func (g gateway) updateUniqueField(w http.ResponseWriter, r *http.Request) {
 	var input identcase.UpdateUniqueFieldInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -481,11 +481,11 @@ func (g gateway) updateUniqueField(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // CancelPendingField godoc
@@ -503,13 +503,13 @@ func (g gateway) updateUniqueField(w http.ResponseWriter, r *http.Request) {
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		ParseURLParam("field")
 
 	var input identcase.CancelPendingFieldInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -520,11 +520,11 @@ func (g gateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
 }
 
 // GetUserID godoc
@@ -537,19 +537,19 @@ func (g gateway) cancelMyPendingField(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			x-entry	header		string	true	"Email, username, phone or document."
-//	@Success		200		{object}	presenter.Success[string]
+//	@Success		200		{object}	httpserver.Success[string]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) getUserID(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddHeader("X-Entry", "entry")
 
 	var input identcase.GetUserIDInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -560,11 +560,11 @@ func (g gateway) getUserID(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // GetUserEmail godoc
@@ -577,19 +577,19 @@ func (g gateway) getUserID(w http.ResponseWriter, r *http.Request) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			id	path		string	true	"User ID"
-//	@Success		200	{object}	presenter.Success[string]
+//	@Success		200	{object}	httpserver.Success[string]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		401	{object}	apperr.AppError
 //	@Failure		403	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.TargetIDCtxKey, "targetID")
 
 	var input identcase.GetUserEmailInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -600,11 +600,11 @@ func (g gateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // ListUsers godoc
@@ -620,21 +620,22 @@ func (g gateway) getUserEmail(w http.ResponseWriter, r *http.Request) {
 //	@Param			view	query		string	false	"View type (lean or full). Default is lean."
 //	@Param			limit	query		int		false	"Number of results per page (default: 20)"
 //	@Param			offset	query		int		false	"Number of results to skip (default: 0)"
-//	@Success		200		{object}	presenter.Success[htypes.PaginatedData[identity.UserLeanView]]
+//	@Success		200		{object}	httpserver.Success[prim.PaginatedData[identity.UserLeanView]]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) listUsers(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		ParseQueryParam("s", "searchFilter").
+		ParseQueryParam("view").
 		AddPagination()
 
 	var input identcase.ListUsersInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -645,9 +646,9 @@ func (g gateway) listUsers(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }

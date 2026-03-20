@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
 	"github.com/kgjoner/sphinx/internal/shared"
@@ -37,10 +37,10 @@ func Raise(router chi.Router, deps Dependencies) {
 }
 
 type EditUserPermissionsInput struct {
-	Actor        shared.Actor         `json:"-"`
-	UserID       uuid.UUID            `json:"-"`
-	Roles        []access.Role        `json:"roles"`
-	ShouldRemove sql.NullBool        `json:"shouldRemove"`
+	Actor        shared.Actor  `json:"-"`
+	UserID       uuid.UUID     `json:"-"`
+	Roles        []access.Role `json:"roles"`
+	ShouldRemove sql.NullBool  `json:"shouldRemove"`
 }
 
 // EditUserPermissions godoc
@@ -61,7 +61,7 @@ type EditUserPermissionsInput struct {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		AddFromContext(sharedhttp.ActorCtxKey, "actor").
 		ParseURLParam("userID")
@@ -69,7 +69,7 @@ func (g gateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	var input EditUserPermissionsInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -98,9 +98,9 @@ func (g gateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
 }

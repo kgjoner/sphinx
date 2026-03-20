@@ -4,8 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
@@ -27,20 +26,20 @@ func (g gateway) applicationHandler(r chi.Router) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		access.ApplicationCreationFields	true	"Name and possible grantings."
-//	@Success		200		{object}	presenter.Success[access.ApplicationView]
+//	@Success		200		{object}	httpserver.Success[access.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		AddFromContext(sharedhttp.ActorCtxKey, "actor")
 
 	var input accesscase.CreateApplicationInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -52,11 +51,11 @@ func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // EditApplication godoc
@@ -70,13 +69,13 @@ func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			id		path		string								true	"ID of target application"
 //	@Param			payload	body		access.ApplicationEditableFields	true	"If grantings are passed, the new ones (even if empty array) will overwrite old ones."
-//	@Success		200		{object}	presenter.Success[access.ApplicationView]
+//	@Success		200		{object}	httpserver.Success[access.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		JSONBody().
 		ParseURLParam("id", "applicationID").
 		AddFromContext(sharedhttp.ActorCtxKey, "actor")
@@ -84,7 +83,7 @@ func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 	var input accesscase.EditAppInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -95,11 +94,11 @@ func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }
 
 // GetApplication godoc
@@ -110,17 +109,17 @@ func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Application
 //	@Produce		json
 //	@Param			id	path		string	true	"ID of target application"
-//	@Success		200	{object}	presenter.Success[access.ApplicationView]
+//	@Success		200	{object}	httpserver.Success[access.ApplicationView]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) getApplication(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
+	c := httpserver.New(r).
 		ParseURLParam("id", "applicationID")
 
 	var input accesscase.GetAppInput
 	err := c.Write(&input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
@@ -131,9 +130,9 @@ func (g gateway) getApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.HTTPError(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(output, w, r)
+	httpserver.HTTPSuccess(output, w, r)
 }

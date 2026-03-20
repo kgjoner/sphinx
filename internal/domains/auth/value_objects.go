@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
-	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
+	"github.com/kgjoner/cornucopia/v3/apperr"
+	"github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/validator"
+	"github.com/kgjoner/cornucopia/v3/pwdgen"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
@@ -20,7 +20,7 @@ type Principal struct {
 	ID                  uuid.UUID
 	Kind                shared.SubjectKind
 	Password            shared.HashedPassword
-	Email               htypes.Email
+	Email               prim.Email
 	Name                string
 	AudienceID          uuid.UUID
 	Roles               []string
@@ -51,7 +51,7 @@ type Client struct {
 type Subject struct {
 	ID         uuid.UUID
 	Kind       shared.SubjectKind
-	Email      htypes.Email
+	Email      prim.Email
 	Name       string
 	AudienceID uuid.UUID
 	Roles      []string

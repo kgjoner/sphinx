@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v3/validator"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
@@ -39,9 +39,9 @@ func (p ConsentProof) ValidFor(target any) bool {
 	case shared.Actor:
 		return p.verified &&
 			p.subID == typedTarget.ID.String()
-			// Actor audID is from root application; they don't have a field
-			// to match against audID in the proof. The actor ID is enough once
-			// their permission should be already checked by policies.
+		// Actor audID is from root application; they don't have a field
+		// to match against audID in the proof. The actor ID is enough once
+		// their permission should be already checked by policies.
 	default:
 		return false
 	}
