@@ -13,7 +13,7 @@ func (g gateway) applicationHandler(r chi.Router) {
 	r.Get("/{id}", g.getApplication)
 
 	r.With(g.Authenticate).Post("/", g.createApplication)
-	r.With(g.Authenticate).Patch("/{id}", g.editApplication)
+	r.With(g.AuthenticateAny).Patch("/{id}", g.editApplication)
 }
 
 // CreateApplication godoc

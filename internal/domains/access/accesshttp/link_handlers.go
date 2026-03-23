@@ -10,8 +10,8 @@ import (
 )
 
 func (g gateway) linkHandler(r chi.Router) {
-	authedUserR := r.With(g.Authenticate, g.TargetUser)
-	authedUserR.Get("/", g.getLink)
+	authedAnyR := r.With(g.AuthenticateAny, g.TargetUser)
+	authedAnyR.Get("/", g.getLink)
 
 	authedAppR := r.With(g.AuthenticateApp, g.TargetUser)
 	authedAppR.Put("/role/{role}", g.addRole)

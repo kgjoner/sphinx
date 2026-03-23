@@ -9,9 +9,12 @@ var appPermissions = []string{
 	identity.PermUserReadAll,
 	identity.PermUserList,
 	access.PermAppReadAll,
+	access.PermAppEdit,
+	access.PermAppRecreateSecret,
 	access.PermLinkReadAll,
 	access.PermLinkManage,
 	access.PermRoleManageExtra,
+	access.PermRoleManageManager,
 }
 
 var permissionsByRole = map[string][]string{
@@ -26,6 +29,8 @@ var permissionsByRole = map[string][]string{
 		access.PermAppReadAll,
 		access.PermLinkManage,
 		access.PermLinkReadAll,
+		access.PermRoleManageExtra,
+		access.PermRoleManageManager,
 		access.PermRoleManageAdmin,
 	},
 	"manager": {
