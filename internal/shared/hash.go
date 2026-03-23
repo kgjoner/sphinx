@@ -54,6 +54,15 @@ func (h *HashedPassword) Scan(src interface{}) error {
 	return nil
 }
 
+func (h *HashedPassword) UnmarshalText(text []byte) error {
+	if text == nil {
+		return ErrEmptyPassword
+	}
+
+	h.value = string(text)
+	return nil
+}
+
 /* ==============================================================================
 	Hashed Data
 ============================================================================== */
@@ -97,5 +106,14 @@ func (h *HashedData) Scan(src interface{}) error {
 	default:
 		return fmt.Errorf("unexpected type for HashedData: %T", src)
 	}
+	return nil
+}
+
+func (h *HashedData) UnmarshalText(text []byte) error {
+	if text == nil {
+		return nil
+	}
+
+	h.value = string(text)
 	return nil
 }
