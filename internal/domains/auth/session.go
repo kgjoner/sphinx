@@ -4,15 +4,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/validator"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
 type Session struct {
 	ID           uuid.UUID    `validate:"required"`
 	SubjectID    uuid.UUID    `validate:"required"`
-	SubjectEmail htypes.Email `validate:"required"`
+	SubjectEmail prim.Email `validate:"required"`
 	SubjectName  string       `validate:"required"`
 
 	AudienceID uuid.UUID `validate:"required"`
@@ -21,14 +21,14 @@ type Session struct {
 	IP                             string `validate:"required"`
 	Device                         string `validate:"required"`
 	RefreshToken                   shared.HashedData
-	RefreshedAt                    htypes.NullTime
+	RefreshedAt                    prim.NullTime
 	ElapsedMinutesBetweenRefreshes []int
 	RefreshesCount                 int
 
 	IsActive        bool
 	isAuthenticated bool
 
-	TerminatedAt htypes.NullTime
+	TerminatedAt prim.NullTime
 	CreatedAt    time.Time `validate:"required"`
 	UpdatedAt    time.Time `validate:"required"`
 }
@@ -110,7 +110,7 @@ func (s *Session) Authenticate(proof shared.AuthProof) error {
 func (s *Session) Terminate() error {
 	now := time.Now()
 	s.IsActive = false
-	s.TerminatedAt = htypes.NullTime{Time: now}
+	s.TerminatedAt = prim.NullTime{Time: now}
 	s.UpdatedAt = now
 	return validator.Validate(s)
 }
@@ -141,7 +141,7 @@ func (s *Session) UpdateRefreshToken(token shared.HashedData) {
 	s.RefreshToken = token
 	s.ElapsedMinutesBetweenRefreshes = append(s.ElapsedMinutesBetweenRefreshes, int(elapsedTime.Minutes()))
 	s.RefreshesCount += 1
-	s.RefreshedAt = htypes.NullTime{Time: now}
+	s.RefreshedAt = prim.NullTime{Time: now}
 	s.UpdatedAt = now
 }
 
@@ -170,15 +170,15 @@ func (a SessionSortableByAge) Swap(i, j int) {
 type SessionView struct {
 	ID                             uuid.UUID       `json:"id"`
 	SubjectID                      uuid.UUID       `json:"subjectId"`
-	SubjectEmail                   htypes.Email    `json:"subjectEmail"`
+	SubjectEmail                   prim.Email    `json:"subjectEmail"`
 	AudienceID                     uuid.UUID       `json:"audienceId"`
-	RefreshedAt                    htypes.NullTime `json:"refreshedAt"`
+	RefreshedAt                    prim.NullTime `json:"refreshedAt"`
 	ElapsedMinutesBetweenRefreshes []int           `json:"elapsedMinutesBetweenRefreshes"`
 	RefreshesCount                 int             `json:"refreshesCount"`
 	Device                         string          `json:"device"`
 	IP                             string          `json:"ip"`
 	IsActive                       bool            `json:"isActive"`
-	TerminatedAt                   htypes.NullTime `json:"terminatedAt"`
+	TerminatedAt                   prim.NullTime `json:"terminatedAt"`
 	CreatedAt                      time.Time       `json:"createdAt"`
 	UpdatedAt                      time.Time       `json:"updatedAt"`
 }

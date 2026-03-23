@@ -17,12 +17,14 @@ import (
 
 // SeedData contains commonly used test data
 type SeedData struct {
-	RootApp      access.Application
-	TestApp      access.Application
-	SimpleUser   identity.User
-	SimpleUserID uuid.UUID
-	AdminUser    identity.User
-	AdminUserID  uuid.UUID
+	RootApp        access.Application
+	TestApp        access.Application
+	SimpleUser     identity.User
+	SimpleUserID   uuid.UUID
+	SimpleRootLink access.Link
+	AdminUser      identity.User
+	AdminUserID    uuid.UUID
+	AdminRootLink  access.Link
 }
 
 // SeedTestData seeds the database with common test data
@@ -62,6 +64,7 @@ func SeedTestData(pool *pgpool.Pool) (*SeedData, error) {
 		}
 		seed.SimpleUser = *mocks.SimpleUser
 		seed.SimpleUserID = mocks.SimpleUser.ID
+		seed.SimpleRootLink = *mocks.SimpleUserRootLink
 		log.Printf("Seeded Simple User: %s (email: %s, password: SimpleUserPassword123!)", mocks.SimpleUser.ID, mocks.SimpleUser.Email.String())
 
 		// Create Admin User
@@ -77,6 +80,7 @@ func SeedTestData(pool *pgpool.Pool) (*SeedData, error) {
 		}
 		seed.AdminUser = *mocks.AdminUser
 		seed.AdminUserID = mocks.AdminUser.ID
+		seed.AdminRootLink = *mocks.AdminRootLink
 		log.Printf("Seeded Admin User: %s (email: %s, password: AdminPassword123!)", mocks.AdminUser.ID, mocks.AdminUser.Email.String())
 
 		return seed, nil
@@ -89,9 +93,13 @@ func SeedTestData(pool *pgpool.Pool) (*SeedData, error) {
 // This allows tests to know what data should exist without querying the database
 func GetSeedDataInfo() *SeedData {
 	return &SeedData{
-		RootApp:    *mocks.RootApplication,
-		TestApp:    *mocks.CommonApplication,
-		SimpleUser: *mocks.SimpleUser,
-		AdminUser:  *mocks.AdminUser,
+		RootApp:        *mocks.RootApplication,
+		TestApp:        *mocks.CommonApplication,
+		SimpleUser:     *mocks.SimpleUser,
+		SimpleUserID:   mocks.SimpleUser.ID,
+		SimpleRootLink: *mocks.SimpleUserRootLink,
+		AdminUser:      *mocks.AdminUser,
+		AdminUserID:    mocks.AdminUser.ID,
+		AdminRootLink:  *mocks.AdminRootLink,
 	}
 }

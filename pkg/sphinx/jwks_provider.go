@@ -14,7 +14,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
@@ -28,10 +28,10 @@ var (
 // JWKSProvider fetches and caches public keys from a JWKS endpoint.
 // Optionally supports HS256 fallback for backward compatibility during migration.
 type JWKSProvider struct {
-	jwksURL              string
-	httpClient           *http.Client
-	cacheTTL             time.Duration
-	hs256Secret          string // Optional: for HS256 fallback during migration
+	jwksURL     string
+	httpClient  *http.Client
+	cacheTTL    time.Duration
+	hs256Secret string // Optional: for HS256 fallback during migration
 
 	// Cache
 	mu        sync.RWMutex
@@ -45,11 +45,11 @@ func NewJWKSProvider(sphinxBaseURL string, hs256Secret string) *JWKSProvider {
 	jwksURL := sphinxBaseURL + "/.well-known/jwks.json"
 
 	return &JWKSProvider{
-		jwksURL:              jwksURL,
-		httpClient:           &http.Client{Timeout: 10 * time.Second},
-		cacheTTL:             60 * time.Minute,
-		hs256Secret:          hs256Secret,
-		keys:                 make(map[string]*rsa.PublicKey),
+		jwksURL:     jwksURL,
+		httpClient:  &http.Client{Timeout: 10 * time.Second},
+		cacheTTL:    60 * time.Minute,
+		hs256Secret: hs256Secret,
+		keys:        make(map[string]*rsa.PublicKey),
 	}
 }
 
@@ -110,9 +110,9 @@ func (p *JWKSProvider) Validate(signedToken string) (*auth.Subject, auth.Intent,
 	}
 
 	// Build subject
-	var email htypes.Email
+	var email prim.Email
 	if claims.Email != "" {
-		email, err = htypes.ParseEmail(claims.Email)
+		email, err = prim.ParseEmail(claims.Email)
 		if err != nil {
 			return nil, "", auth.ErrInvalidAccess
 		}

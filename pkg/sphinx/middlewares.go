@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/pkg/tokens"
 )
@@ -58,23 +58,23 @@ func (m middlewares) Authenticate(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" || authHeaderParts[1] == "" {
-			presenter.HTTPError(ErrInvalidAccess, w, r)
+			httpserver.Error(ErrInvalidAccess, w, r)
 			return
 		}
 
 		tokenStr := authHeaderParts[1]
 		sub, intent, err := m.tokenProvider.Validate(tokenStr)
 		if err != nil {
-			presenter.HTTPError(err, w, r)
+			httpserver.Error(err, w, r)
 			return
 		} else if intent != auth.IntentAccess {
-			presenter.HTTPError(ErrInvalidAccess, w, r)
+			httpserver.Error(ErrInvalidAccess, w, r)
 			return
 		}
 
 		r, err = m.authorizer.AuthorizeSubject(Subject(*sub), r)
 		if err != nil {
-			presenter.HTTPError(err, w, r)
+			httpserver.Error(err, w, r)
 			return
 		}
 

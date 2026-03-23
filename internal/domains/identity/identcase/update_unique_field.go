@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/shared"
 	"github.com/sirupsen/logrus"
@@ -37,14 +37,14 @@ func (i UpdateUniqueField) Execute(input UpdateUniqueFieldInput) (out identity.U
 
 	switch input.Field {
 	case "email":
-		email, err := htypes.ParseEmail(input.Value)
+		email, err := prim.ParseEmail(input.Value)
 		if err != nil {
 			return out, err
 		}
 
 		err = target.UpdateEmail(email)
 	case "phone":
-		phone, err := htypes.ParsePhoneNumber(input.Value)
+		phone, err := prim.ParsePhoneNumber(input.Value)
 		if err != nil {
 			return out, err
 		}
@@ -57,7 +57,7 @@ func (i UpdateUniqueField) Execute(input UpdateUniqueFieldInput) (out identity.U
 
 		err = target.UpdateUsername(input.Value)
 	case "document":
-		document, err := htypes.ParseDocument(input.Value)
+		document, err := prim.ParseDocument(input.Value)
 		if err != nil {
 			return out, err
 		}

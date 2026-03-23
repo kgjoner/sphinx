@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
+	"github.com/kgjoner/cornucopia/v3/apperr"
+	"github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/validator"
 )
 
 // SigningKey represents a cryptographic key used for JWT signing.
@@ -21,8 +21,8 @@ type SigningKey struct {
 	IsActive    bool
 	CreatedAt   time.Time `validate:"required"`
 	ActivatesAt time.Time `validate:"required"`
-	ExpiresAt   htypes.NullTime
-	RotatedAt   htypes.NullTime
+	ExpiresAt   prim.NullTime
+	RotatedAt   prim.NullTime
 }
 
 /* ==============================================================================
@@ -34,7 +34,7 @@ type SigningKeyCreationFields struct {
 	PublicKey             string
 	PrivateKey            string
 	ShouldDelayActivation bool
-	ExpiresAt             htypes.NullTime
+	ExpiresAt             prim.NullTime
 }
 
 func NewSigningKey(f SigningKeyCreationFields) (*SigningKey, error) {
@@ -96,14 +96,14 @@ func (k *SigningKey) Rotate(gracePeriod time.Duration) error {
 			return ErrKeyAlreadyExpired
 		}
 
-		k.ExpiresAt = htypes.NullTime{Time: now.Add(gracePeriod)}
+		k.ExpiresAt = prim.NullTime{Time: now.Add(gracePeriod)}
 	}
 
 	if gracePeriod == 0 {
 		k.IsActive = false
 	}
 
-	k.RotatedAt = htypes.NullTime{Time: now}
+	k.RotatedAt = prim.NullTime{Time: now}
 	return nil
 }
 
@@ -150,8 +150,8 @@ type SigningKeyView struct {
 	IsActive    bool            `json:"isActive"`
 	CreatedAt   time.Time       `json:"createdAt"`
 	ActivatesAt time.Time       `json:"activatesAt"`
-	ExpiresAt   htypes.NullTime `json:"expiresAt"`
-	RotatedAt   htypes.NullTime `json:"rotatedAt"`
+	ExpiresAt   prim.NullTime `json:"expiresAt"`
+	RotatedAt   prim.NullTime `json:"rotatedAt"`
 }
 
 func (k SigningKey) View() SigningKeyView {
@@ -175,7 +175,7 @@ type SigningKeyStatView struct {
 	PublicKey string          `json:"-"`
 	IsActive  bool            `json:"isActive"`
 	CreatedAt time.Time       `json:"createdAt"`
-	ExpiresAt htypes.NullTime `json:"expiresAt"`
+	ExpiresAt prim.NullTime `json:"expiresAt"`
 }
 
 func (k SigningKey) StatView() SigningKeyStatView {

@@ -5,8 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/kgjoner/cornucopia/v2/helpers/controller"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authcase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
@@ -38,7 +37,7 @@ func (g *gateway) getJWKS(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.ExecutePublic()
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
@@ -59,17 +58,16 @@ func (g *gateway) getJWKS(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403	{object}	map[string]interface{}
 //	@Failure		500	{object}	map[string]interface{}
 func (g *gateway) rotateKeys(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
-		AddFromContext(sharedhttp.ActorCtxKey, "actor")
-
 	var input authcase.RotateKeysInput
-	err := c.Write(&input)
-	if err != nil {
-		presenter.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
-	_, err = g.PGPool.WithTx(r.Context(), nil, func(tx *sql.Tx) (any, error) {
+	_, err := g.PGPool.WithTx(r.Context(), nil, func(tx *sql.Tx) (any, error) {
 		i := authcase.RotateKeys{
 			AuthRepo:       g.AuthFactory.NewDAO(r.Context(), tx),
 			KeyProvisioner: g.KeyProvisioner,
@@ -79,11 +77,11 @@ func (g *gateway) rotateKeys(w http.ResponseWriter, r *http.Request) {
 		return i.Execute(input)
 	})
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	presenter.HTTPSuccess(nil, w, r, http.StatusNoContent)
+	httpserver.Success(nil, w, r, http.StatusNoContent)
 }
 
 // GetKeysStatus godoc
@@ -100,13 +98,12 @@ func (g *gateway) rotateKeys(w http.ResponseWriter, r *http.Request) {
 //	@Failure		403	{object}	map[string]interface{}
 //	@Failure		500	{object}	map[string]interface{}
 func (g *gateway) getKeysStatus(w http.ResponseWriter, r *http.Request) {
-	c := controller.New(r).
-		AddFromContext(sharedhttp.ActorCtxKey, "actor")
-
 	var input authcase.ListActiveSigningKeysInput
-	err := c.Write(&input)
-	if err != nil {
-		presenter.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
@@ -116,7 +113,7 @@ func (g *gateway) getKeysStatus(w http.ResponseWriter, r *http.Request) {
 
 	keys, err := i.Execute(input)
 	if err != nil {
-		presenter.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
@@ -125,7 +122,7 @@ func (g *gateway) getKeysStatus(w http.ResponseWriter, r *http.Request) {
 		Keys:            keys,
 	}
 
-	presenter.HTTPSuccess(resp, w, r)
+	httpserver.Success(resp, w, r)
 }
 
 // Response types

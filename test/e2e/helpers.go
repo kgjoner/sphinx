@@ -5,11 +5,15 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type UserData struct {
+	ID       uuid.UUID
 	Email    string
 	Password string
 }
@@ -31,8 +35,12 @@ func (ts *TestSuite) newUser(t *testing.T) UserData {
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
-
+	var respData httpserver.SuccessResponse[identity.UserLeanView]
+	err = json.NewDecoder(resp.Body).Decode(&respData)
+	require.NoError(t, err)
+	
 	return UserData{
+		ID:       respData.Data.ID,
 		Email:    userData["email"].(string),
 		Password: userData["password"].(string),
 	}

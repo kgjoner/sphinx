@@ -1,11 +1,11 @@
 package access
 
 import (
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
-	"github.com/kgjoner/cornucopia/v2/utils/sliceman"
+	"github.com/kgjoner/cornucopia/v3/validator"
 )
 
 type Link struct {
@@ -54,11 +54,11 @@ func (c Link) HasRole(roles ...Role) bool {
 }
 
 func (c *Link) AddRole(r Role) error {
-	if r != Admin && r != Manager && sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
+	if r != Admin && r != Manager && slices.Index(c.Application.PossibleRoles, r) == -1 {
 		return ErrInvalidRole
 	}
 
-	if sliceman.IndexOf(c.Roles, r) != -1 {
+	if slices.Index(c.Roles, r) != -1 {
 		return ErrRedundantRequest
 	}
 
@@ -68,16 +68,16 @@ func (c *Link) AddRole(r Role) error {
 }
 
 func (c *Link) RemoveRole(r Role) error {
-	if r != Admin && r != Manager && sliceman.IndexOf(c.Application.PossibleRoles, r) == -1 {
+	if r != Admin && r != Manager && slices.Index(c.Application.PossibleRoles, r) == -1 {
 		return ErrInvalidRole
 	}
 
-	index := sliceman.IndexOf(c.Roles, r)
+	index := slices.Index(c.Roles, r)
 	if index == -1 {
 		return ErrRedundantRequest
 	}
 
-	c.Roles = sliceman.Remove(c.Roles, index)
+	c.Roles = slices.Delete(c.Roles, index, index+1)
 	c.UpdatedAt = time.Now()
 	return validator.Validate(c)
 }
@@ -99,23 +99,25 @@ func (c *Link) RestoreConsent() error {
 ============================================================================== */
 
 type LinkView struct {
-	ID          uuid.UUID       `json:"id"`
-	Application ApplicationView `json:"application"`
-	Roles       []Role          `json:"roles"`
-	HasConsent  bool            `json:"hasConsent"`
-	CreatedAt   time.Time       `json:"createdAt"`
-	UpdatedAt   time.Time       `json:"updatedAt"`
+	ID              uuid.UUID `json:"id"`
+	ApplicationID   uuid.UUID `json:"applicationId"`
+	ApplicationName string    `json:"applicationName"`
+	Roles           []Role    `json:"roles"`
+	HasConsent      bool      `json:"hasConsent"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
 }
 
 func (l Link) View() LinkView {
 	app := l.Application.View()
 
 	return LinkView{
-		ID:          l.ID,
-		Application: app,
-		Roles:       l.Roles,
-		HasConsent:  l.HasConsent,
-		CreatedAt:   l.CreatedAt,
-		UpdatedAt:   l.UpdatedAt,
+		ID:              l.ID,
+		ApplicationID:   app.ID,
+		ApplicationName: app.Name,
+		Roles:           l.Roles,
+		HasConsent:      l.HasConsent,
+		CreatedAt:       l.CreatedAt,
+		UpdatedAt:       l.UpdatedAt,
 	}
 }

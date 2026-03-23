@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/utils/httputil"
+	"github.com/kgjoner/cornucopia/v3/httpclient"
 )
 
 type Client struct {
-	httpApi   *httputil.HTTPUtil
+	httpApi   *httpclient.Client
 	baseURL   string
 	appID     string
 	appSecret string
@@ -16,7 +16,7 @@ type Client struct {
 }
 
 func NewClient(baseURL, appID, appSecret string) *Client {
-	httpApi := httputil.New(baseURL)
+	httpApi := httpclient.New(baseURL)
 	appToken := base64.StdEncoding.EncodeToString([]byte(appID + ":" + appSecret))
 
 	svc := &Client{

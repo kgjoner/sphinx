@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
@@ -185,9 +185,9 @@ func (p *JWTProvider) Validate(signedToken string) (*auth.Subject, auth.Intent, 
 		return nil, "", auth.ErrInvalidAccess
 	}
 
-	var email htypes.Email
+	var email prim.Email
 	if claims.Email != "" {
-		email, err = htypes.ParseEmail(claims.Email)
+		email, err = prim.ParseEmail(claims.Email)
 		if err != nil {
 			return nil, "", auth.ErrInvalidAccess
 		}

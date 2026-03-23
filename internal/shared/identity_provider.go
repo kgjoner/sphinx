@@ -1,6 +1,6 @@
 package shared
 
-import "github.com/kgjoner/cornucopia/v2/helpers/htypes"
+import "github.com/kgjoner/cornucopia/v3/prim"
 
 type IdentityProvider interface {
 	Authenticate(IdentityProviderInput) (*ExternalSubject, error)
@@ -25,7 +25,7 @@ type IdentityProviderInput struct {
 type ExternalSubject struct {
 	ID    string
 	Kind  SubjectKind
-	Email htypes.Email
+	Email prim.Email
 	// Should be a text easy for user identification (e.g., email, username).
 	Alias        string
 	ProviderName string

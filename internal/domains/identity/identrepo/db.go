@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/shared"
 	_ "github.com/lib/pq"
@@ -36,7 +36,7 @@ func (f *Factory) NewDAO(ctx context.Context, dbtx shared.DBTX) identity.Repo {
 	Listing helpers
 ============================================================================= */
 
-func handleListQuery[T any](rows *sql.Rows, pag *htypes.Pagination, dest func(item *T) []any) (*htypes.PaginatedData[T], error) {
+func handleListQuery[T any](rows *sql.Rows, pag *prim.Pagination, dest func(item *T) []any) (*prim.PaginatedData[T], error) {
 	items := []T{}
 	for rows.Next() {
 		var item T
@@ -60,7 +60,7 @@ func handleListQuery[T any](rows *sql.Rows, pag *htypes.Pagination, dest func(it
 		items = items[:pag.Limit]
 	}
 
-	return htypes.NewPaginatedData(*pag, items), nil
+	return prim.NewPaginatedData(*pag, items), nil
 }
 
 /* =============================================================================

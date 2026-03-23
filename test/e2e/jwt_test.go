@@ -12,7 +12,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth/authcase"
 	"github.com/kgjoner/sphinx/test/mocks"
@@ -38,7 +38,7 @@ func TestRS256TokenGeneration(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var loginResp presenter.Success[authcase.LoginOutput]
+		var loginResp httpserver.SuccessResponse[authcase.LoginOutput]
 		err = json.NewDecoder(resp.Body).Decode(&loginResp)
 		require.NoError(t, err)
 
@@ -79,7 +79,7 @@ func TestRS256TokenGeneration(t *testing.T) {
 		require.NoError(t, err)
 		defer resp.Body.Close()
 
-		var loginResp presenter.Success[authcase.LoginOutput]
+		var loginResp httpserver.SuccessResponse[authcase.LoginOutput]
 		json.NewDecoder(resp.Body).Decode(&loginResp)
 
 		// Use token to access protected endpoint
@@ -235,7 +235,7 @@ func TestForgedTokens(t *testing.T) {
 		require.NoError(t, err)
 		defer loginResp.Body.Close()
 
-		var loginData presenter.Success[authcase.LoginOutput]
+		var loginData httpserver.SuccessResponse[authcase.LoginOutput]
 		json.NewDecoder(loginResp.Body).Decode(&loginData)
 
 		validToken := loginData.Data.AccessToken
@@ -275,7 +275,7 @@ func TestForgedTokens(t *testing.T) {
 		require.NoError(t, err)
 		defer loginResp.Body.Close()
 
-		var loginData presenter.Success[authcase.LoginOutput]
+		var loginData httpserver.SuccessResponse[authcase.LoginOutput]
 		json.NewDecoder(loginResp.Body).Decode(&loginData)
 
 		validToken := loginData.Data.AccessToken
@@ -315,7 +315,7 @@ func TestForgedTokens(t *testing.T) {
 		require.NoError(t, err)
 		defer loginResp.Body.Close()
 
-		var loginData presenter.Success[authcase.LoginOutput]
+		var loginData httpserver.SuccessResponse[authcase.LoginOutput]
 		json.NewDecoder(loginResp.Body).Decode(&loginData)
 
 		// Parse token to check expiration
@@ -400,12 +400,12 @@ func TestTokenIntentValidation(t *testing.T) {
 	defer ts.Close()
 
 	factory := NewTestDataFactory()
-	
+
 	resp, err := ts.Request("POST", "/auth/login", factory.SimpleUserLoginData(), nil)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	var loginResp presenter.Success[authcase.LoginOutput]
+	var loginResp httpserver.SuccessResponse[authcase.LoginOutput]
 	json.NewDecoder(resp.Body).Decode(&loginResp)
 
 	t.Run("should reject refresh token for access endpoints", func(t *testing.T) {
@@ -457,7 +457,7 @@ func TestKeyRotationScenarios(t *testing.T) {
 		require.NoError(t, err)
 		defer loginResp.Body.Close()
 
-		var loginData presenter.Success[authcase.LoginOutput]
+		var loginData httpserver.SuccessResponse[authcase.LoginOutput]
 		json.NewDecoder(loginResp.Body).Decode(&loginData)
 
 		oldToken := loginData.Data.AccessToken

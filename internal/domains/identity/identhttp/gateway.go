@@ -29,9 +29,6 @@ type Dependencies struct {
 	*sharedhttp.Middleware
 }
 
-type Services struct {
-}
-
 func Raise(
 	router chi.Router,
 	deps Dependencies,

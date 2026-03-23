@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
+	"github.com/kgjoner/cornucopia/v3/apperr"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
@@ -30,15 +30,15 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" {
-			presenter.HTTPError(shared.ErrMissingCredentials, w, r)
+			httpserver.Error(shared.ErrMissingCredentials, w, r)
 			return
 		}
-		
+
 		tokenStr := authHeaderParts[1]
 		isRefreshRoute := strings.Contains(r.URL.Path, "/refresh")
 		actor, err := m.authorizer.AuthorizeToken(tokenStr, isRefreshRoute)
 		if err != nil {
-			presenter.HTTPError(err, w, r)
+			httpserver.Error(err, w, r)
 			return
 		}
 
@@ -58,20 +58,20 @@ func (m *Middleware) AuthenticateApp(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Basic" {
-			presenter.HTTPError(shared.ErrMissingCredentials, w, r)
+			httpserver.Error(shared.ErrMissingCredentials, w, r)
 			return
 		}
 
 		tokenStr := authHeaderParts[1]
 		decodedBytes, err := base64.StdEncoding.DecodeString(tokenStr)
 		if err != nil {
-			presenter.HTTPError(err, w, r)
+			httpserver.Error(err, w, r)
 			return
 		}
 
 		credentials := strings.Split(string(decodedBytes), ":")
 		if len(credentials) != 2 {
-			presenter.HTTPError(shared.ErrInvalidCredentials, w, r)
+			httpserver.Error(shared.ErrInvalidCredentials, w, r)
 			return
 		}
 
@@ -80,7 +80,7 @@ func (m *Middleware) AuthenticateApp(next http.Handler) http.Handler {
 
 		actor, err := m.authorizer.AuthorizeApp(r.Context(), appID, appSecret)
 		if err != nil {
-			presenter.HTTPError(err, w, r)
+			httpserver.Error(err, w, r)
 			return
 		}
 
@@ -104,7 +104,7 @@ func (m *Middleware) AuthenticateAny(next http.Handler) http.Handler {
 			m.AuthenticateApp(next).ServeHTTP(w, r)
 			return
 		} else {
-			presenter.HTTPError(shared.ErrMissingCredentials, w, r)
+			httpserver.Error(shared.ErrMissingCredentials, w, r)
 			return
 		}
 	})
@@ -124,14 +124,14 @@ func (m *Middleware) TargetUser(next http.Handler) http.Handler {
 			untypedActor := ctx.Value(ActorCtxKey)
 			if untypedActor == nil {
 				err := apperr.NewInternalError("target middleware must have a userID or an actor")
-				presenter.HTTPError(err, w, r)
+				httpserver.Error(err, w, r)
 				return
 			}
 
 			actor := untypedActor.(shared.Actor)
 			if actor.Kind != shared.KindUser {
 				err := apperr.NewForbiddenError("actor must be a user if no userID is provided")
-				presenter.HTTPError(err, w, r)
+				httpserver.Error(err, w, r)
 				return
 			}
 
@@ -140,7 +140,7 @@ func (m *Middleware) TargetUser(next http.Handler) http.Handler {
 			parsedID, err := uuid.Parse(targetParam)
 			if err != nil {
 				err := apperr.Wrap(err, apperr.Request, apperr.BadRequest, "invalid user ID format")
-				presenter.HTTPError(err, w, r)
+				httpserver.Error(err, w, r)
 				return
 			}
 			targetUserID = parsedID

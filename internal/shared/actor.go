@@ -2,13 +2,13 @@ package shared
 
 import (
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
+	"github.com/kgjoner/cornucopia/v3/prim"
 )
 
 type Actor struct {
 	ID          uuid.UUID
 	Kind        SubjectKind
-	Email       htypes.Email
+	Email       prim.Email
 	Name        string
 	AudienceID  uuid.UUID
 	SessionID   uuid.UUID

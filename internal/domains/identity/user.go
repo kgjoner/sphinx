@@ -5,30 +5,29 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
-	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
-	"github.com/kgjoner/cornucopia/v2/utils/structop"
+	"github.com/kgjoner/cornucopia/v3/apperr"
+	"github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/validator"
+	"github.com/kgjoner/cornucopia/v3/pwdgen"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
 type User struct {
 	ID       uuid.UUID    `validate:"required"`
-	Email    htypes.Email `validate:"required"`
-	Phone    htypes.PhoneNumber
+	Email    prim.Email `validate:"required"`
+	Phone    prim.PhoneNumber
 	Password shared.HashedPassword `validate:"required"`
 	Username string                `validate:"wordID,atLeastOne=letter"`
-	Document htypes.Document
+	Document prim.Document
 	ExtraData
 
-	PendingEmail         htypes.Email
+	PendingEmail         prim.Email
 	HasEmailBeenVerified bool
-	PendingPhone         htypes.PhoneNumber
+	PendingPhone         prim.PhoneNumber
 	HasPhoneBeenVerified bool
 	VerificationCodes    map[VerificationKind]string
-	PasswordUpdatedAt    htypes.NullTime
-	UsernameUpdatedAt    htypes.NullTime
+	PasswordUpdatedAt    prim.NullTime
+	UsernameUpdatedAt    prim.NullTime
 
 	ExternalCredentials []ExternalCredential
 	IsActive            bool
@@ -39,7 +38,7 @@ type User struct {
 type ExtraData struct {
 	Name    string         `json:"name"`
 	Surname string         `json:"surname"`
-	Address htypes.Address `json:"address"`
+	Address prim.Address `json:"address"`
 }
 
 /* ==============================================================================
@@ -47,11 +46,11 @@ type ExtraData struct {
 ============================================================================== */
 
 type UserCreationFields struct {
-	Email    htypes.Email          `validate:"required"`
+	Email    prim.Email          `validate:"required"`
 	Password shared.HashedPassword `json:"-" validate:"required"`
-	Phone    htypes.PhoneNumber
+	Phone    prim.PhoneNumber
 	Username string
-	Document htypes.Document
+	Document prim.Document
 	UserExtraFields
 }
 
@@ -143,7 +142,7 @@ func (u *User) VerifyUser(kind VerificationKind, code string) error {
 		if !u.PendingEmail.IsZero() {
 			// Confirm email update
 			u.Email = u.PendingEmail
-			var emptyEmail htypes.Email
+			var emptyEmail prim.Email
 			u.PendingEmail = emptyEmail
 		}
 		u.HasEmailBeenVerified = true
@@ -151,7 +150,7 @@ func (u *User) VerifyUser(kind VerificationKind, code string) error {
 		if !u.PendingPhone.IsZero() {
 			// Confirm phone update
 			u.Phone = u.PendingPhone
-			var emptyPhone htypes.PhoneNumber
+			var emptyPhone prim.PhoneNumber
 			u.PendingPhone = emptyPhone
 		}
 		u.HasPhoneBeenVerified = true
@@ -179,7 +178,7 @@ func (u *User) ChangePassword(proof shared.AuthProof, newPw shared.HashedPasswor
 
 	now := time.Now()
 	u.Password = newPw
-	u.PasswordUpdatedAt = htypes.NullTime{Time: now}
+	u.PasswordUpdatedAt = prim.NullTime{Time: now}
 	u.UpdatedAt = now
 	return validator.Validate(u)
 }
@@ -190,7 +189,7 @@ func (u *User) RequestPasswordReset() (string, error) {
 	return u.VerificationCodes[VerificationPasswordReset], validator.Validate(u)
 }
 
-func (u *User) UpdateEmail(email htypes.Email) error {
+func (u *User) UpdateEmail(email prim.Email) error {
 	if email.IsZero() {
 		return ErrEmptyInput
 	}
@@ -216,12 +215,12 @@ func (u *User) UpdateUsername(username string) error {
 
 	now := time.Now()
 	u.Username = strings.ToLower(username)
-	u.UsernameUpdatedAt = htypes.NullTime{Time: now}
+	u.UsernameUpdatedAt = prim.NullTime{Time: now}
 	u.UpdatedAt = now
 	return validator.Validate(u)
 }
 
-func (u *User) UpdatePhone(phone htypes.PhoneNumber) error {
+func (u *User) UpdatePhone(phone prim.PhoneNumber) error {
 	if phone.IsZero() {
 		return ErrEmptyInput
 	}
@@ -236,7 +235,7 @@ func (u *User) UpdatePhone(phone htypes.PhoneNumber) error {
 	return validator.Validate(u)
 }
 
-func (u *User) UpdateDocument(document htypes.Document) error {
+func (u *User) UpdateDocument(document prim.Document) error {
 	if document.IsZero() {
 		return ErrEmptyInput
 	}
@@ -253,11 +252,22 @@ func (u *User) UpdateDocument(document htypes.Document) error {
 type UserExtraFields struct {
 	Name    string         `json:"name"`
 	Surname string         `json:"surname"`
-	Address htypes.Address `json:"address"`
+	Address prim.Address `json:"address"`
 }
 
 func (u *User) UpdateExtraData(f UserExtraFields) error {
-	structop.New(&u.ExtraData).Update(f)
+	if f.Name != "" {
+		u.ExtraData.Name = f.Name
+	}
+
+	if f.Surname != "" {
+		u.ExtraData.Surname = f.Surname
+	}
+
+	if f.Address != (prim.Address{}) {
+		u.ExtraData.Address = f.Address
+	}
+
 	u.UpdatedAt = time.Now()
 	return validator.Validate(u)
 }
@@ -286,7 +296,7 @@ func (u *User) cancelPendingEmail() error {
 		return apperr.NewRequestError("No pending email update to cancel.")
 	}
 
-	var emptyEmail htypes.Email
+	var emptyEmail prim.Email
 	u.PendingEmail = emptyEmail
 	u.clearCodeFor(VerificationEmail)
 	u.UpdatedAt = time.Now()
@@ -300,7 +310,7 @@ func (u *User) cancelPendingPhone() error {
 		return apperr.NewRequestError("No pending phone update to cancel.")
 	}
 
-	var emptyPhone htypes.PhoneNumber
+	var emptyPhone prim.PhoneNumber
 	u.PendingPhone = emptyPhone
 	u.clearCodeFor(VerificationPhone)
 	u.UpdatedAt = time.Now()
@@ -349,19 +359,19 @@ func (u *User) ExternalCredential(providerName string, providerSubjectID string)
 
 type UserView struct {
 	ID       uuid.UUID          `json:"id"`
-	Email    htypes.Email       `json:"email"`
-	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
+	Email    prim.Email       `json:"email"`
+	Phone    prim.PhoneNumber `json:"phone,omitempty"`
 	Username string             `json:"username,omitempty"`
-	Document htypes.Document    `json:"document,omitempty"`
+	Document prim.Document    `json:"document,omitempty"`
 	Name     string             `json:"name,omitempty"`
 	Surname  string             `json:"surname,omitempty"`
-	Address  *htypes.Address    `json:"address,omitempty"`
+	Address  *prim.Address    `json:"address,omitempty"`
 
-	PendingEmail         htypes.Email       `json:"pendingEmail,omitempty"`
+	PendingEmail         prim.Email       `json:"pendingEmail,omitempty"`
 	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
-	PendingPhone         htypes.PhoneNumber `json:"pendingPhone,omitempty"`
+	PendingPhone         prim.PhoneNumber `json:"pendingPhone,omitempty"`
 	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
-	UsernameUpdatedAt    htypes.NullTime    `json:"usernameUpdatedAt"`
+	UsernameUpdatedAt    prim.NullTime    `json:"usernameUpdatedAt"`
 
 	ExternalCredentials []ExternalCredentialView `json:"externalCredentials,omitempty"`
 	IsActive            bool                     `json:"isActive"`
@@ -369,8 +379,8 @@ type UserView struct {
 }
 
 func (u User) View() UserView {
-	var address *htypes.Address
-	if u.ExtraData.Address != (htypes.Address{}) {
+	var address *prim.Address
+	if u.ExtraData.Address != (prim.Address{}) {
 		address = &u.ExtraData.Address
 	}
 

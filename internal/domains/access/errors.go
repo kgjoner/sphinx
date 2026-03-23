@@ -1,12 +1,8 @@
 package access
 
-import "github.com/kgjoner/cornucopia/v2/helpers/apperr"
+import "github.com/kgjoner/cornucopia/v3/apperr"
 
 var (
-	ErrInvalidAppSecret = apperr.NewUnauthorizedError(
-		"invalid application secret provided",
-		"access.invalid_app_secret",
-	)
 	ErrApplicationNotFound = apperr.NewRequestError(
 		"application not found",
 		"access.application_not_found",
@@ -20,11 +16,11 @@ var (
 		"access.empty_role",
 	)
 	ErrInvalidRole = apperr.NewRequestError(
-		"application does not support the desired role", 
+		"application does not support the desired role",
 		"access.invalid_role",
 	)
 	ErrRedundantRequest = apperr.NewRequestError(
-		"redundant request", 
+		"redundant request",
 		"access.redundant_request",
 	)
 )

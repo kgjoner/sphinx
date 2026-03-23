@@ -4,8 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/validator"
-	"github.com/kgjoner/cornucopia/v2/utils/structop"
+	"github.com/kgjoner/cornucopia/v3/validator"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
@@ -63,7 +62,18 @@ type ApplicationEditableFields struct {
 }
 
 func (a *Application) Edit(f *ApplicationEditableFields) error {
-	structop.New(a).Update(f)
+	if f.Name != "" {
+		a.Name = f.Name
+	}
+
+	if f.PossibleRoles != nil {
+		a.PossibleRoles = f.PossibleRoles
+	}
+
+	if f.AllowedRedirectUris != nil {
+		a.AllowedRedirectUris = f.AllowedRedirectUris
+	}
+
 	a.UpdatedAt = time.Now()
 	return validator.Validate(a)
 }

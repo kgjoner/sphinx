@@ -1,7 +1,7 @@
 package identcase
 
 import (
-	"github.com/kgjoner/cornucopia/v2/utils/pwdgen"
+	"github.com/kgjoner/cornucopia/v3/pwdgen"
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/shared"

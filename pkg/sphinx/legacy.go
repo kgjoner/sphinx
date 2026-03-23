@@ -10,11 +10,10 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/apperr"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/cornucopia/v2/utils/httputil"
-	"github.com/kgjoner/cornucopia/v2/utils/structop"
+	"github.com/kgjoner/cornucopia/v3/apperr"
+	"github.com/kgjoner/cornucopia/v3/httpclient"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 )
@@ -25,7 +24,7 @@ import (
 
 // Deprecated: use Client instead
 type Service struct {
-	httpApi   *httputil.HTTPUtil
+	httpApi   *httpclient.Client
 	appID     string
 	appSecret string
 	appToken  string
@@ -33,7 +32,7 @@ type Service struct {
 
 // Deprecated: use NewClient instead
 func New(baseURL, appID, appSecret string) *Service {
-	httpApi := httputil.New(baseURL)
+	httpApi := httpclient.New(baseURL)
 	appToken := base64.StdEncoding.EncodeToString([]byte(appID + ":" + appSecret))
 
 	svc := &Service{
@@ -52,22 +51,22 @@ func New(baseURL, appID, appSecret string) *Service {
 
 // Deprecated: use UserView or Subject instead
 type User struct {
-	ID       uuid.UUID          `json:"id" validate:"required"`
-	Email    htypes.Email       `json:"email" validate:"required"`
-	Phone    htypes.PhoneNumber `json:"phone,omitempty"`
-	Username string             `json:"username,omitempty" validate:"wordID"`
-	Document htypes.Document    `json:"document,omitempty"`
-	Name     string             `json:"name,omitempty"`
-	Surname  string             `json:"surname,omitempty"`
-	Address  htypes.Address     `json:"address,omitempty"`
+	ID       uuid.UUID        `json:"id" validate:"required"`
+	Email    prim.Email       `json:"email" validate:"required"`
+	Phone    prim.PhoneNumber `json:"phone,omitempty"`
+	Username string           `json:"username,omitempty" validate:"wordID"`
+	Document prim.Document    `json:"document,omitempty"`
+	Name     string           `json:"name,omitempty"`
+	Surname  string           `json:"surname,omitempty"`
+	Address  prim.Address     `json:"address,omitempty"`
 
-	IsActive             bool               `json:"isActive"`
-	PendingEmail         htypes.Email       `json:"pendingEmail,omitempty"`
-	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
-	PendingPhone         htypes.PhoneNumber `json:"pendingPhone,omitempty"`
-	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
-	UsernameUpdatedAt    htypes.NullTime    `json:"usernameUpdatedAt"`
-	Link                 *access.LinkView   `json:"link,omitempty"`
+	IsActive             bool             `json:"isActive"`
+	PendingEmail         prim.Email       `json:"pendingEmail,omitempty"`
+	HasEmailBeenVerified bool             `json:"hasEmailBeenVerified"`
+	PendingPhone         prim.PhoneNumber `json:"pendingPhone,omitempty"`
+	HasPhoneBeenVerified bool             `json:"hasPhoneBeenVerified"`
+	UsernameUpdatedAt    prim.NullTime    `json:"usernameUpdatedAt"`
+	Link                 *access.LinkView `json:"link,omitempty"`
 }
 
 func (a User) DisplayName() string {
@@ -129,8 +128,8 @@ func (s Service) getLink(signedToken string) (*access.LinkView, error) {
 	userID := claims["sub"]
 	appID := claims["aud"]
 
-	var respData presenter.Success[access.LinkView]
-	_, err := s.httpApi.Get("/user/"+userID+"/link/"+appID, &httputil.Options{
+	var respData httpserver.SuccessResponse[access.LinkView]
+	_, err := s.httpApi.Get("/user/"+userID+"/link/"+appID, &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + signedToken,
 		},
@@ -145,8 +144,8 @@ func (s Service) getLink(signedToken string) (*access.LinkView, error) {
 
 // Get token owner's data.
 func (s Service) Me(token string) (*User, error) {
-	var respData presenter.Success[User]
-	_, err := s.httpApi.Get("/user/me", &httputil.Options{
+	var respData httpserver.SuccessResponse[User]
+	_, err := s.httpApi.Get("/user/me", &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
 		},
@@ -169,8 +168,8 @@ func (s Service) Me(token string) (*User, error) {
 //
 // Token owner must be an admin.
 func (s Service) User(userID uuid.UUID, token string) (*User, error) {
-	var respData presenter.Success[User]
-	_, err := s.httpApi.Get("/user/"+userID.String(), &httputil.Options{
+	var respData httpserver.SuccessResponse[User]
+	_, err := s.httpApi.Get("/user/"+userID.String(), &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Bearer " + token,
 		},
@@ -190,9 +189,9 @@ func (s Service) User(userID uuid.UUID, token string) (*User, error) {
 }
 
 // Get target user's email. Return error if target user does not exist.
-func (s Service) EmailOf(userID uuid.UUID) (htypes.Email, error) {
-	var respData presenter.Success[htypes.Email]
-	_, err := s.httpApi.Get("/user/"+userID.String()+"/email", &httputil.Options{
+func (s Service) EmailOf(userID uuid.UUID) (prim.Email, error) {
+	var respData httpserver.SuccessResponse[prim.Email]
+	_, err := s.httpApi.Get("/user/"+userID.String()+"/email", &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 		},
@@ -206,13 +205,13 @@ func (s Service) EmailOf(userID uuid.UUID) (htypes.Email, error) {
 }
 
 // Create a simple user for the informed email.
-func (s Service) NewUser(email htypes.Email, password string) (userID uuid.UUID, err error) {
+func (s Service) NewUser(email prim.Email, password string) (userID uuid.UUID, err error) {
 	body := map[string]any{
 		"email":    email,
 		"password": password,
 	}
 
-	var respData presenter.Success[User]
+	var respData httpserver.SuccessResponse[User]
 	_, err = s.httpApi.Post("/user", body, nil)(&respData)
 
 	if err != nil {
@@ -224,8 +223,8 @@ func (s Service) NewUser(email htypes.Email, password string) (userID uuid.UUID,
 
 // Check whether entry exists.
 func (s Service) DoesEntryExist(entry string) (bool, error) {
-	var respData presenter.Success[bool]
-	_, err := s.httpApi.Get("/user/existence", &httputil.Options{
+	var respData httpserver.SuccessResponse[bool]
+	_, err := s.httpApi.Get("/user/existence", &httpclient.Options{
 		Headers: map[string]string{
 			"X-Entry": entry,
 		},
@@ -240,8 +239,8 @@ func (s Service) DoesEntryExist(entry string) (bool, error) {
 
 // Get user id by their entry. Return zero value if entry is not found.
 func (s Service) UserIDByEntry(entry string) (uuid.UUID, error) {
-	var respData presenter.Success[uuid.UUID]
-	_, err := s.httpApi.Get("/user/id", &httputil.Options{
+	var respData httpserver.SuccessResponse[uuid.UUID]
+	_, err := s.httpApi.Get("/user/id", &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 			"X-Entry":       entry,
@@ -268,8 +267,8 @@ func (s Service) GrantPermissions(userID uuid.UUID, roles []string) (bool, error
 		body["roles"] = roles
 	}
 
-	var respData presenter.Success[bool]
-	_, err := s.httpApi.Patch("/user/"+userID.String()+"/permission", body, &httputil.Options{
+	var respData httpserver.SuccessResponse[bool]
+	_, err := s.httpApi.Patch("/user/"+userID.String()+"/permission", body, &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 		},
@@ -295,8 +294,8 @@ func (s Service) RevokePermissions(userID uuid.UUID, roles []string) (bool, erro
 		body["roles"] = roles
 	}
 
-	var respData presenter.Success[bool]
-	_, err := s.httpApi.Patch("/user/"+userID.String()+"/permission", body, &httputil.Options{
+	var respData httpserver.SuccessResponse[bool]
+	_, err := s.httpApi.Patch("/user/"+userID.String()+"/permission", body, &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
 		},
@@ -327,10 +326,17 @@ type ExternalAuthBody struct {
 }
 
 func (s Service) ExternalAuth(authorization string, body ExternalAuthBody, clientIP string, userAgent string, languages ...string) (*LoginOutput, error) {
-	mapBody := structop.New(body).Map()
+	mapBody := map[string]any{
+		"providerName":    body.ProviderName,
+		"params":          body.Params,
+		"body":            body.Body,
+		"consentRelation": body.ConsentRelation,
+		"consentCreation": body.ConsentCreation,
+		"email":           body.Email,
+	}
 
-	var respData presenter.Success[LoginOutput]
-	_, err := s.httpApi.Post("/auth/external", mapBody, &httputil.Options{
+	var respData httpserver.SuccessResponse[LoginOutput]
+	_, err := s.httpApi.Post("/auth/external", mapBody, &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization":   authorization,
 			"Accept-Language": strings.Join(languages, ","),
@@ -377,21 +383,21 @@ func (m Middlewares) Authenticate(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
 		if len(authHeaderParts) < 2 || authHeaderParts[0] != "Bearer" || authHeaderParts[1] == "" {
-			presenter.HTTPError(auth.ErrInvalidAccess, w, r)
+			httpserver.Error(auth.ErrInvalidAccess, w, r)
 			return
 		}
 
 		tokenStr := authHeaderParts[1]
 		user, err := m.sphinx.Me(tokenStr)
 		if err != nil {
-			presenter.HTTPError(err, w, r)
+			httpserver.Error(err, w, r)
 			return
 		}
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, ActorCtxKey, *user)
 		ctx = context.WithValue(ctx, TokenCtxKey, tokenStr)
-		ctx = context.WithValue(ctx, presenter.ActorLogKey, user.ID)
+		ctx = context.WithValue(ctx, httpserver.ActorLogKey, user.ID)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
@@ -417,7 +423,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			actorValue := r.Context().Value(ActorCtxKey)
 			if actorValue == nil {
-				presenter.HTTPError(auth.ErrInvalidAccess, w, r)
+				httpserver.Error(auth.ErrInvalidAccess, w, r)
 				return
 			}
 
@@ -435,7 +441,7 @@ func (m Middlewares) Guard(roles ...string) func(http.Handler) http.Handler {
 			}
 
 			err := apperr.NewForbiddenError("user does not have enough permission")
-			presenter.HTTPError(err, w, r)
+			httpserver.Error(err, w, r)
 		})
 	}
 }

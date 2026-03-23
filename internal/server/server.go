@@ -13,9 +13,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/cornucopia/v2/repositories/cache"
-	"github.com/kgjoner/cornucopia/v2/repositories/cache/redisdb"
+	"github.com/kgjoner/cornucopia/v3/cache"
+	"github.com/kgjoner/cornucopia/v3/cache/redisdb"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/docs"
 	"github.com/kgjoner/sphinx/internal/assets/img"
@@ -129,7 +129,10 @@ func (s *Server) Setup() *Server {
 		KeyProvisioner: keyProvisioner,
 		Encryptor:      encrypter,
 	})
-	s.authIntGtw.InitializeKeysIfNeeded()
+	err = s.authIntGtw.InitializeKeysIfNeeded()
+	if err != nil {
+		log.Fatalf("Failed to initialize signing keys: %v", err)
+	}
 
 	// Token Provider
 	var jwt auth.TokenProvider
@@ -140,8 +143,6 @@ func (s *Server) Setup() *Server {
 			config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
 			config.Env.JWT.REFRESH_LIFETIME_IN_SEC,
 		)
-
-		log.Println("JWT provider initialized with RS256 algorithm")
 	} else {
 		// Legacy HS256 mode
 		jwt = tokens.NewJWTProvider(
@@ -149,8 +150,6 @@ func (s *Server) Setup() *Server {
 			config.Env.JWT.ACCESS_LIFETIME_IN_SEC,
 			config.Env.JWT.REFRESH_LIFETIME_IN_SEC,
 		)
-
-		log.Println("JWT provider initialized with HS256 algorithm (legacy)")
 	}
 
 	// Middleware
@@ -246,7 +245,7 @@ func (s *Server) Setup() *Server {
 			w.Write(img.Logo)
 		})
 		r.Get("/style", func(w http.ResponseWriter, r *http.Request) {
-			presenter.HTTPSuccess(style.Root, w, r)
+			httpserver.Success(style.Root, w, r)
 		})
 	})
 

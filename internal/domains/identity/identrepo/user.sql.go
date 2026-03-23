@@ -4,9 +4,9 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/utils/datatransform"
-	"github.com/kgjoner/cornucopia/v2/utils/dbhandler"
+	"github.com/kgjoner/cornucopia/v3/prim"
+	"github.com/kgjoner/cornucopia/v3/datatransform"
+	"github.com/kgjoner/cornucopia/v3/dbhandler"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
@@ -169,7 +169,7 @@ func (q DAO) GetUserByExternalCredential(provider string, subjectID string) (*id
 	return &item, nil
 }
 
-func (q DAO) ListUsers(filter string, pag *htypes.Pagination) (*htypes.PaginatedData[identity.User], error) {
+func (q DAO) ListUsers(filter string, pag *prim.Pagination) (*prim.PaginatedData[identity.User], error) {
 	raw, exists := rawQueries["ListUsers"]
 	if !exists {
 		return nil, ErrNoQuery

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"html/template"
 
-	"github.com/kgjoner/cornucopia/v2/helpers/htypes"
-	"github.com/kgjoner/cornucopia/v2/helpers/presenter"
-	"github.com/kgjoner/cornucopia/v2/utils/httputil"
+	"github.com/kgjoner/cornucopia/v3/httpclient"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/style"
 	"github.com/kgjoner/sphinx/internal/config"
@@ -79,8 +79,8 @@ func updateHermesStyle(hms *hermes.Service) error {
 				Style: template.CSS(fmt.Sprintf("background-color: %v; color: #fff", style.Root.Colors.BackgroundDark)),
 			},
 			Alias: struct {
-				Address htypes.Email "json:\"address\""
-				Name    string       "json:\"name\""
+				Address prim.Email "json:\"address\""
+				Name    string     "json:\"name\""
 			}{
 				Name: config.Env.APP_NAME,
 			},
@@ -89,7 +89,7 @@ func updateHermesStyle(hms *hermes.Service) error {
 	}
 
 	// CUSTOM STYLE
-	resp, err := httputil.Get[presenter.Success[style.AppStyle]](config.Env.APP_STYLE_URL)
+	resp, err := httpclient.Get[httpserver.SuccessResponse[style.AppStyle]](config.Env.APP_STYLE_URL)
 	if err != nil {
 		return err
 	}
@@ -120,8 +120,8 @@ func updateHermesStyle(hms *hermes.Service) error {
 			Style: appStyle.Mail.Footer,
 		},
 		Alias: struct {
-			Address htypes.Email "json:\"address\""
-			Name    string       "json:\"name\""
+			Address prim.Email "json:\"address\""
+			Name    string     "json:\"name\""
 		}{
 			Name: config.Env.APP_NAME,
 		},
