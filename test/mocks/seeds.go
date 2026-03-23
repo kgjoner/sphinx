@@ -17,6 +17,7 @@ func init() {
 }
 
 var hasher = security.NewBcryptHasher()
+const DummyRole access.Role = "dummy_role"
 
 // ROOT APPLICATION
 const RootAppSecret = "TestS3cret"
@@ -27,7 +28,7 @@ var RootApplication = &access.Application{
 	Name:                "Root Application",
 	Secret:              *hashedRootAppSecret,
 	AllowedRedirectUris: []string{},
-	PossibleRoles:       []access.Role{access.Admin, access.Manager},
+	PossibleRoles:       []access.Role{access.Admin, access.Manager, DummyRole},
 	CreatedAt:           time.Now(),
 	UpdatedAt:           time.Now(),
 }
@@ -42,7 +43,7 @@ var CommonApplication = &access.Application{
 	Name:                "Test Application",
 	Secret:              *hashedCommonAppSecret,
 	AllowedRedirectUris: []string{CommonRedirectUri},
-	PossibleRoles:       []access.Role{access.Admin},
+	PossibleRoles:       []access.Role{access.Admin, DummyRole},
 	CreatedAt:           time.Now(),
 	UpdatedAt:           time.Now(),
 }
@@ -108,6 +109,7 @@ var SimpleUserRootLink = &access.Link{
 	UserID:      SimpleUser.ID,
 	Application: *RootApplication,
 	HasConsent:  true,
+	Roles:       []access.Role{},
 	CreatedAt:   time.Now(),
 	UpdatedAt:   time.Now(),
 }
