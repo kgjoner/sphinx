@@ -8,7 +8,7 @@ import (
 )
 
 type Client struct {
-	httpApi   *httpclient.HTTPUtil
+	httpApi   *httpclient.Client
 	baseURL   string
 	appID     string
 	appSecret string

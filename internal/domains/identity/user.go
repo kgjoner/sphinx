@@ -9,7 +9,6 @@ import (
 	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/cornucopia/v3/validator"
 	"github.com/kgjoner/cornucopia/v3/pwdgen"
-	"github.com/kgjoner/cornucopia/v3/structop"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
@@ -257,7 +256,18 @@ type UserExtraFields struct {
 }
 
 func (u *User) UpdateExtraData(f UserExtraFields) error {
-	structop.New(&u.ExtraData).Update(f)
+	if f.Name != "" {
+		u.ExtraData.Name = f.Name
+	}
+
+	if f.Surname != "" {
+		u.ExtraData.Surname = f.Surname
+	}
+
+	if f.Address != (prim.Address{}) {
+		u.ExtraData.Address = f.Address
+	}
+
 	u.UpdatedAt = time.Now()
 	return validator.Validate(u)
 }

@@ -26,20 +26,19 @@ func (g gateway) applicationHandler(r chi.Router) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		access.ApplicationCreationFields	true	"Name and possible grantings."
-//	@Success		200		{object}	httpserver.Success[access.ApplicationView]
+//	@Success		200		{object}	httpserver.SuccessResponse[access.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
-	c := httpserver.New(r).
-		JSONBody().
-		AddFromContext(sharedhttp.ActorCtxKey, "actor")
-
 	var input accesscase.CreateApplicationInput
-	err := c.Write(&input)
-	if err != nil {
-		httpserver.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		JSONBody(&input).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
@@ -51,11 +50,11 @@ func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		httpserver.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	httpserver.HTTPSuccess(output, w, r)
+	httpserver.Success(output, w, r)
 }
 
 // EditApplication godoc
@@ -69,21 +68,20 @@ func (g gateway) createApplication(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param			id		path		string								true	"ID of target application"
 //	@Param			payload	body		access.ApplicationEditableFields	true	"If grantings are passed, the new ones (even if empty array) will overwrite old ones."
-//	@Success		200		{object}	httpserver.Success[access.ApplicationView]
+//	@Success		200		{object}	httpserver.SuccessResponse[access.ApplicationView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
-	c := httpserver.New(r).
-		JSONBody().
-		ParseURLParam("id", "applicationID").
-		AddFromContext(sharedhttp.ActorCtxKey, "actor")
-
 	var input accesscase.EditAppInput
-	err := c.Write(&input)
-	if err != nil {
-		httpserver.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		JSONBody(&input).
+		PathParam("id", &input.ApplicationID).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
@@ -94,11 +92,11 @@ func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		httpserver.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	httpserver.HTTPSuccess(output, w, r)
+	httpserver.Success(output, w, r)
 }
 
 // GetApplication godoc
@@ -109,17 +107,16 @@ func (g gateway) editApplication(w http.ResponseWriter, r *http.Request) {
 //	@Tags			Application
 //	@Produce		json
 //	@Param			id	path		string	true	"ID of target application"
-//	@Success		200	{object}	httpserver.Success[access.ApplicationView]
+//	@Success		200	{object}	httpserver.SuccessResponse[access.ApplicationView]
 //	@Failure		400	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) getApplication(w http.ResponseWriter, r *http.Request) {
-	c := httpserver.New(r).
-		ParseURLParam("id", "applicationID")
-
 	var input accesscase.GetAppInput
-	err := c.Write(&input)
-	if err != nil {
-		httpserver.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		PathParam("id", &input.ApplicationID)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
@@ -130,9 +127,9 @@ func (g gateway) getApplication(w http.ResponseWriter, r *http.Request) {
 
 	output, err := i.Execute(input)
 	if err != nil {
-		httpserver.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	httpserver.HTTPSuccess(output, w, r)
+	httpserver.Success(output, w, r)
 }

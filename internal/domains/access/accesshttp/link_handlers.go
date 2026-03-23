@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/kgjoner/cornucopia/v3/httpserver"
-	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
 	"github.com/kgjoner/sphinx/internal/shared/sharedhttp"
 )
@@ -30,22 +29,21 @@ func (g gateway) linkHandler(r chi.Router) {
 //	@Produce		json
 //	@Param			userID	path		string	true	"User ID"
 //	@Param			appID	path		string	true	"Application ID"
-//	@Success		200		{object}	httpserver.Success[access.LinkView]
+//	@Success		200		{object}	httpserver.SuccessResponse[access.LinkView]
 //	@Failure		400		{object}	apperr.AppError
 //	@Failure		401		{object}	apperr.AppError
 //	@Failure		403		{object}	apperr.AppError
 //	@Failure		404		{object}	apperr.AppError
 //	@Failure		500		{object}	apperr.AppError
 func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
-	c := httpserver.New(r).
-		AddFromContext(sharedhttp.ActorCtxKey, "actor").
-		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
-		ParseURLParam("appID", "applicationID")
-
 	var input accesscase.GetLinkInput
-	err := c.Write(&input)
-	if err != nil {
-		httpserver.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor).
+		FromContext(sharedhttp.TargetIDCtxKey, &input.UserID).
+		PathParam("appID", &input.ApplicationID)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
@@ -56,11 +54,11 @@ func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 	out, err := i.Execute(input)
 
 	if err != nil {
-		httpserver.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	httpserver.HTTPSuccess(out, w, r, http.StatusOK)
+	httpserver.Success(out, w, r, http.StatusOK)
 }
 
 // AddRole godoc
@@ -82,16 +80,15 @@ func (g gateway) getLink(w http.ResponseWriter, r *http.Request) {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
-	c := httpserver.New(r).
-		AddFromContext(sharedhttp.ActorCtxKey, "actor").
-		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
-		ParseURLParam("appID", "applicationID").
-		ParseURLParam("role", "role")
-
 	var input accesscase.AddRoleInput
-	err := c.Write(&input)
-	if err != nil {
-		httpserver.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor).
+		FromContext(sharedhttp.TargetIDCtxKey, &input.UserID).
+		PathParam("appID", &input.ApplicationID).
+		PathParam("role", &input.Role)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
@@ -99,14 +96,14 @@ func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 	i := accesscase.AddRole{
 		AccessRepo: repo,
 	}
-	_, err = i.Execute(input)
+	_, err := i.Execute(input)
 
 	if err != nil {
-		httpserver.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	httpserver.HTTPSuccess(nil, w, r, http.StatusNoContent)
+	httpserver.Success(nil, w, r, http.StatusNoContent)
 }
 
 // RemoveRole godoc
@@ -128,16 +125,15 @@ func (g gateway) addRole(w http.ResponseWriter, r *http.Request) {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) removeRole(w http.ResponseWriter, r *http.Request) {
-	c := httpserver.New(r).
-		AddFromContext(sharedhttp.ActorCtxKey, "actor").
-		AddFromContext(sharedhttp.TargetIDCtxKey, "userID").
-		ParseURLParam("appID", "applicationID").
-		ParseURLParam("role", "role")
-
 	var input accesscase.RemoveRoleInput
-	err := c.Write(&input)
-	if err != nil {
-		httpserver.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor).
+		FromContext(sharedhttp.TargetIDCtxKey, &input.UserID).
+		PathParam("appID", &input.ApplicationID).
+		PathParam("role", &input.Role)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
@@ -145,12 +141,12 @@ func (g gateway) removeRole(w http.ResponseWriter, r *http.Request) {
 	i := accesscase.RemoveRole{
 		AccessRepo: repo,
 	}
-	_, err = i.Execute(input)
+	_, err := i.Execute(input)
 
 	if err != nil {
-		httpserver.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	httpserver.HTTPSuccess(nil, w, r, http.StatusNoContent)
+	httpserver.Success(nil, w, r, http.StatusNoContent)
 }

@@ -13,9 +13,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/kgjoner/cornucopia/v3/cache"
+	"github.com/kgjoner/cornucopia/v3/cache/redisdb"
 	"github.com/kgjoner/cornucopia/v3/httpserver"
-	"github.com/kgjoner/cornucopia/v3/repositories/cache"
-	"github.com/kgjoner/cornucopia/v3/repositories/cache/redisdb"
 	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/docs"
 	"github.com/kgjoner/sphinx/internal/assets/img"
@@ -245,7 +245,7 @@ func (s *Server) Setup() *Server {
 			w.Write(img.Logo)
 		})
 		r.Get("/style", func(w http.ResponseWriter, r *http.Request) {
-			httpserver.HTTPSuccess(style.Root, w, r)
+			httpserver.Success(style.Root, w, r)
 		})
 	})
 

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/kgjoner/cornucopia/v3/validator"
-	"github.com/kgjoner/cornucopia/v3/repositories/cache"
+	"github.com/kgjoner/cornucopia/v3/cache"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
@@ -14,7 +14,7 @@ import (
 type IssueGrant struct {
 	AuthRepo   auth.Repo
 	AccessRepo access.Repo
-	CacheRepo  cache.DAO
+	CacheRepo  cache.Store
 }
 
 type IssueGrantInput struct {

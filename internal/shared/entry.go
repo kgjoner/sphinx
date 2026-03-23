@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -80,13 +79,11 @@ func (e Entry) String() string {
 	return string(e)
 }
 
-func (e *Entry) UnmarshalJSON(data []byte) error {
-	var s string
-	err := json.Unmarshal(data, &s)
+func (e *Entry) UnmarshalText(text []byte) error {
+	parsed, err := ParseEntry(string(text))
 	if err != nil {
 		return err
 	}
-
-	*e, err = ParseEntry(s)
-	return err
+	*e = parsed
+	return nil
 }

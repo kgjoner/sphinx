@@ -1,11 +1,10 @@
 module github.com/kgjoner/sphinx
 
-go 1.25.5
+go 1.25
 
 require github.com/google/uuid v1.6.0
 
 require (
-	github.com/kgjoner/cornucopia/v3 v3.0.0
 	github.com/lib/pq v1.10.9
 	golang.org/x/crypto v0.45.0
 )
@@ -13,7 +12,7 @@ require (
 require (
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/kgjoner/hermes v0.6.1
+	github.com/kgjoner/hermes v0.7.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/swaggo/swag v1.16.3
@@ -48,6 +47,7 @@ require (
 require (
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/golang-migrate/migrate/v4 v4.19.1
+	github.com/kgjoner/cornucopia/v3 v3.0.2
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/http-swagger/v2 v2.0.2
 )

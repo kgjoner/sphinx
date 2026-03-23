@@ -1,7 +1,7 @@
 package authcase
 
 import (
-	"github.com/kgjoner/cornucopia/v3/repositories/cache"
+	"github.com/kgjoner/cornucopia/v3/cache"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
@@ -11,7 +11,7 @@ type ExchangeGrant struct {
 	PwHasher      shared.PasswordHasher
 	DataHasher    shared.DataHasher
 	Challenger    auth.CodeChallenger
-	CacheRepo     cache.DAO
+	CacheRepo     cache.Store
 	TokenProvider auth.TokenProvider
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/kgjoner/cornucopia/v3/httpserver"
-	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/sphinx/internal/domains/access"
 	"github.com/kgjoner/sphinx/internal/domains/access/accesscase"
 	"github.com/kgjoner/sphinx/internal/shared"
@@ -61,19 +60,19 @@ type EditUserPermissionsInput struct {
 //	@Failure		422	{object}	apperr.AppError
 //	@Failure		500	{object}	apperr.AppError
 func (g gateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
-	c := httpserver.New(r).
-		JSONBody().
-		AddFromContext(sharedhttp.ActorCtxKey, "actor").
-		ParseURLParam("userID")
-
 	var input EditUserPermissionsInput
-	err := c.Write(&input)
-	if err != nil {
-		httpserver.HTTPError(err, w, r)
+	c := httpserver.Bind(r).
+		JSONBody(&input).
+		FromContext(sharedhttp.ActorCtxKey, &input.Actor).
+		PathParam("userID", &input.UserID)
+
+	if c.Err() != nil {
+		httpserver.Error(c.Err(), w, r)
 		return
 	}
 
 	repo := g.AccessFactory.NewDAO(r.Context(), g.PGPool.Connection())
+	var err error
 	var output bool
 	if input.ShouldRemove.Bool {
 		i := accesscase.RemoveRole{
@@ -98,9 +97,9 @@ func (g gateway) editUserPermissions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		httpserver.HTTPError(err, w, r)
+		httpserver.Error(err, w, r)
 		return
 	}
 
-	httpserver.HTTPSuccess(output, w, r, http.StatusNoContent)
+	httpserver.Success(output, w, r, http.StatusNoContent)
 }

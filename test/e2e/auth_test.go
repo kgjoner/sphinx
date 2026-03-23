@@ -31,7 +31,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData httpserver.Success[authcase.LoginOutput]
+		var respData httpserver.SuccessResponse[authcase.LoginOutput]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -47,7 +47,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var userInfo httpserver.Success[identity.UserView]
+			var userInfo httpserver.SuccessResponse[identity.UserView]
 			err = json.NewDecoder(resp.Body).Decode(&userInfo)
 			require.NoError(t, err)
 
@@ -120,7 +120,7 @@ func TestRefreshToken(t *testing.T) {
 	require.NoError(t, err)
 	defer loginResp.Body.Close()
 
-	var loginData2 httpserver.Success[authcase.LoginOutput]
+	var loginData2 httpserver.SuccessResponse[authcase.LoginOutput]
 	json.NewDecoder(loginResp.Body).Decode(&loginData2)
 
 	t.Run("should refresh token successfully", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestRefreshToken(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var refreshResp httpserver.Success[authcase.LoginOutput]
+		var refreshResp httpserver.SuccessResponse[authcase.LoginOutput]
 		err = json.NewDecoder(resp.Body).Decode(&refreshResp)
 		require.NoError(t, err)
 
@@ -227,7 +227,7 @@ func TestIdentityProviderFlows(t *testing.T) {
 			// Should successfully authenticate and create user
 			assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-			var respData httpserver.Success[identity.UserLeanView]
+			var respData httpserver.SuccessResponse[identity.UserLeanView]
 			err = json.NewDecoder(resp.Body).Decode(&respData)
 			require.NoError(t, err)
 
@@ -248,7 +248,7 @@ func TestIdentityProviderFlows(t *testing.T) {
 
 				assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-				var loginResp httpserver.Success[authcase.LoginOutput]
+				var loginResp httpserver.SuccessResponse[authcase.LoginOutput]
 				err = json.NewDecoder(resp.Body).Decode(&loginResp)
 				require.NoError(t, err)
 
@@ -290,7 +290,7 @@ func TestIdentityProviderFlows(t *testing.T) {
 		require.NoError(t, err)
 		defer resp1.Body.Close()
 
-		var loginResp httpserver.Success[authcase.LoginOutput]
+		var loginResp httpserver.SuccessResponse[authcase.LoginOutput]
 		err = json.NewDecoder(resp1.Body).Decode(&loginResp)
 		require.NoError(t, err)
 		require.NotEmpty(t, loginResp.Data.AccessToken)
@@ -309,7 +309,7 @@ func TestIdentityProviderFlows(t *testing.T) {
 		// Should successfully relate existing user to external provider
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-		var respData httpserver.Success[identity.ExternalCredentialView]
+		var respData httpserver.SuccessResponse[identity.ExternalCredentialView]
 		err = json.NewDecoder(resp.Body).Decode(&respData)
 		require.NoError(t, err)
 
@@ -325,7 +325,7 @@ func TestIdentityProviderFlows(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-			var loginResp httpserver.Success[authcase.LoginOutput]
+			var loginResp httpserver.SuccessResponse[authcase.LoginOutput]
 			err = json.NewDecoder(resp.Body).Decode(&loginResp)
 			require.NoError(t, err)
 

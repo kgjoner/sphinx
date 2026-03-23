@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v3/prim"
-	"github.com/kgjoner/cornucopia/v3/httpserver"
 	"github.com/kgjoner/cornucopia/v3/httpclient"
+	"github.com/kgjoner/cornucopia/v3/httpserver"
+	"github.com/kgjoner/cornucopia/v3/prim"
 )
 
 type ExternalCredentialView struct {
@@ -20,19 +20,19 @@ type ExternalCredentialView struct {
 }
 
 type UserView struct {
-	ID       uuid.UUID          `json:"id"`
+	ID       uuid.UUID        `json:"id"`
 	Email    prim.Email       `json:"email"`
 	Phone    prim.PhoneNumber `json:"phone,omitempty"`
-	Username string             `json:"username,omitempty"`
+	Username string           `json:"username,omitempty"`
 	Document prim.Document    `json:"document,omitempty"`
-	Name     string             `json:"name,omitempty"`
-	Surname  string             `json:"surname,omitempty"`
+	Name     string           `json:"name,omitempty"`
+	Surname  string           `json:"surname,omitempty"`
 	Address  *prim.Address    `json:"address,omitempty"`
 
 	PendingEmail         prim.Email       `json:"pendingEmail,omitempty"`
-	HasEmailBeenVerified bool               `json:"hasEmailBeenVerified"`
+	HasEmailBeenVerified bool             `json:"hasEmailBeenVerified"`
 	PendingPhone         prim.PhoneNumber `json:"pendingPhone,omitempty"`
-	HasPhoneBeenVerified bool               `json:"hasPhoneBeenVerified"`
+	HasPhoneBeenVerified bool             `json:"hasPhoneBeenVerified"`
 	UsernameUpdatedAt    prim.NullTime    `json:"usernameUpdatedAt"`
 
 	ExternalCredentials []ExternalCredentialView `json:"externalCredentials,omitempty"`
@@ -52,7 +52,7 @@ type UserLeanView struct {
 
 // Get target user's data. Return error if target user does not exist.
 func (s Client) User(userID uuid.UUID) (*UserView, error) {
-	var respData httpserver.Success[UserView]
+	var respData httpserver.SuccessResponse[UserView]
 	_, err := s.httpApi.Get("/user/"+userID.String(), &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
@@ -68,7 +68,7 @@ func (s Client) User(userID uuid.UUID) (*UserView, error) {
 
 // Get target user's email. Return error if target user does not exist.
 func (s Client) EmailOf(userID uuid.UUID) (prim.Email, error) {
-	var respData httpserver.Success[prim.Email]
+	var respData httpserver.SuccessResponse[prim.Email]
 	_, err := s.httpApi.Get("/user/"+userID.String()+"/email", &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
@@ -89,7 +89,7 @@ func (s Client) NewUser(email prim.Email, password string) (userID uuid.UUID, er
 		"password": password,
 	}
 
-	var respData httpserver.Success[UserView]
+	var respData httpserver.SuccessResponse[UserView]
 	_, err = s.httpApi.Post("/user", body, nil)(&respData)
 
 	if err != nil {
@@ -101,7 +101,7 @@ func (s Client) NewUser(email prim.Email, password string) (userID uuid.UUID, er
 
 // Check whether entry exists.
 func (s Client) DoesEntryExist(entry string) (bool, error) {
-	var respData httpserver.Success[bool]
+	var respData httpserver.SuccessResponse[bool]
 	_, err := s.httpApi.Get("/user/existence", &httpclient.Options{
 		Headers: map[string]string{
 			"X-Entry": entry,
@@ -117,7 +117,7 @@ func (s Client) DoesEntryExist(entry string) (bool, error) {
 
 // Get user id by their entry. Return zero value if entry is not found.
 func (s Client) UserIDByEntry(entry string) (uuid.UUID, error) {
-	var respData httpserver.Success[uuid.UUID]
+	var respData httpserver.SuccessResponse[uuid.UUID]
 	_, err := s.httpApi.Get("/user/id", &httpclient.Options{
 		Headers: map[string]string{
 			"Authorization": "Basic " + s.appToken,
