@@ -3,10 +3,6 @@ package access
 import "github.com/kgjoner/cornucopia/v3/apperr"
 
 var (
-	ErrInvalidAppSecret = apperr.NewUnauthorizedError(
-		"invalid application secret provided",
-		"access.invalid_app_secret",
-	)
 	ErrApplicationNotFound = apperr.NewRequestError(
 		"application not found",
 		"access.application_not_found",

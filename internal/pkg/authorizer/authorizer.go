@@ -57,10 +57,12 @@ func (a *authorizer) AuthorizeApp(ctx context.Context, appID uuid.UUID, appSecre
 	app, err := a.accessFactory.NewDAO(ctx, a.pgPool.Connection()).GetApplicationByID(appID)
 	if err != nil {
 		return actor, err
+	} else if app == nil {
+		return actor, shared.ErrInvalidCredentials
 	}
 
 	if !a.hasher.DoesPasswordMatch(app.Secret.String(), appSecret) {
-		return actor, access.ErrInvalidAppSecret
+		return actor, shared.ErrInvalidCredentials
 	}
 
 	return shared.Actor{
