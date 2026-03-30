@@ -31,17 +31,3 @@ services:
     ports:
       - ${MAILHOG_SMTP_PORT:-1025}:1025  # SMTP port
       - ${MAILHOG_WEB_PORT:-8025}:8025  # Web UI port
-
-  hermes:
-    container_name: sphinx-hermes
-    image: ${DOCKER_REGISTRY}hermes:latest
-    environment:
-      API_KEY: ${HERMES_API_KEY}
-      SMTP_HOST: mailhog
-      SMTP_PORT: ${MAILHOG_SMTP_PORT:-1025}
-      SMTP_USER:
-      SMTP_PASSWORD:
-    ports:
-      - ${HERMES_PORT:-8081}:8080
-    depends_on:
-      - mailhog

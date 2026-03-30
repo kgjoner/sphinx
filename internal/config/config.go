@@ -9,6 +9,7 @@ import (
 )
 
 var Env struct {
+	APP_ENV      string `envconfig:"default=production"`
 	SCHEME       string `envconfig:"default=http"`
 	HOST         string `envconfig:"default=localhost:8080"`
 	APP_VERSION  string `envconfig:"default=v1.0.0"`
@@ -39,26 +40,29 @@ var Env struct {
 	APP_STYLE_URL     string `envconfig:"optional"` // if none is provided, the default style will be used (see assets/style/style.go)
 	APP_LOGO_URL      string `envconfig:"optional"` // if none is provided, the default logo will be used (see assets/img/logo.svg)
 	SUPPORT_EMAIL     string `envconfig:"default=support@example.com"`
-	FALLBACK_LANGUAGE string `envconfig:"default=pt-br"`
-	HERMES            struct {
-		BASE_URL string `envconfig:"default=http://localhost:8081/v1"`
-		API_KEY  string `envconfig:"default=topsecret"`
+	FALLBACK_LANGUAGE string `envconfig:"default=pt"`
+
+	SMTP struct {
+		USERNAME string `envconfig:"default=http://localhost:8081/v1"`
+		PASSWORD string `envconfig:"default=topsecret"`
+		HOST     string `envconfig:"default=topsecret"`
+		PORT     string `envconfig:"default=topsecret"`
 	}
 
-	// Used to protect the Swagger UI with basic authentication. The expected format is a JSON 
-	// object where keys are usernames and values are their respective passwords. For example: 
+	// Used to protect the Swagger UI with basic authentication. The expected format is a JSON
+	// object where keys are usernames and values are their respective passwords. For example:
 	// {"admin": "password123", "user1": "passw0rd"}.
 	//
 	// If not provided, the Swagger UI will be accessible without authentication.
-	SWAGGER_AUTH    map[string]string `envconfig:"-" json:",omitempty"`
-	// Overwrite default email templates with custom ones. The expected format is a JSON object 
-	// where first level keys are the language codes (e.g., "en", "pt-br"), the second level keys 
-	// are the template names (e.g., "welcome", "password_reset"), and the values are the template
-	// content.
-	// 
+	SWAGGER_AUTH map[string]string `envconfig:"-" json:",omitempty"`
+	// Overwrite default email templates with custom ones. The expected format is a JSON object
+	// where first level keys are the language codes (e.g., "en", "pt"), the second level keys
+	// are the template keys (e.g., "welcome", "password_reset"), and the values are the template
+	// content as string.
+	//
 	// Check internal/pkg/mailer/internal/assets for reference on the expected structure.
-	EMAIL_TEMPLATES []byte            `envconfig:"-" json:",omitempty"`
-	// Configure external authentication providers (e.g., Google, Facebook) with their respective 
+	EMAIL_TEMPLATES []byte `envconfig:"-" json:",omitempty"`
+	// Configure external authentication providers (e.g., Google, Facebook) with their respective
 	// validation endpoints. The expected format is a JSON array of objects containing the necessary
 	// configuration for each provider. It is optional, so if not provided, no external auth will
 	// be possible. Each provider must have a unique name.

@@ -1,0 +1,13 @@
+{{define "subject"}}Atualização de email{{end}}
+
+{{define "body"}}
+  <h2>Olá, {{ .UserName }}</h2>
+
+  <p>Recebemos um pedido para atualizar o email da sua conta. Ao confirmar, o email atual será substituído por este, {{ .NewEmail }}. A partir de então, nossa comunicação será toda destinada ao novo email, incluindo futuras recuperações de conta. Para prosseguir com a alteração, clique no botão abaixo.</p>
+
+  <button class="btn btn-primary">
+    <a href="{{ .ConfirmationURL }}" target="_blank">Confirmar Alteração</a>
+  </button>
+
+  <p>Se você não fez essa solicitação, por favor ignore este email.</p>
+{{end}}

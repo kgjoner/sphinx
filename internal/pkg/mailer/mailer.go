@@ -7,104 +7,142 @@ import (
 	"strings"
 
 	"github.com/kgjoner/cornucopia/v3/prim"
-	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/domains/identity"
-	"github.com/kgjoner/sphinx/internal/pkg/mailer/internal/assets"
+	"github.com/kgjoner/sphinx/internal/pkg/mailer/internal/client"
+	templates "github.com/kgjoner/sphinx/internal/pkg/mailer/internal/template"
 	"github.com/kgjoner/sphinx/internal/shared"
 )
 
 type Mailer struct {
-	mailService hermes.MailService
-	config      Config
+	SMTPClient       *client.Client
+	Templates        templates.Templates
+	FallbackLanguage string
+
+	BaseData
+	InvariantData
 }
 
-type Config struct {
-	ClientBaseURL        string
-	AppName              string
-	SupportEmail         string
-	DataVerificationPath string
-	PasswordResetPath    string
+type SMTPConfig struct {
+	SMTPUsername  string
+	SMTPPassword  string
+	SMTPHost      string
+	SMTPPort      string
+	AllowInsecure bool
 }
 
-func New(mailService hermes.MailService, config Config) *Mailer {
+func New(
+	smtpConfig SMTPConfig,
+	baseData BaseData,
+	invariantData InvariantData,
+	overrideTemplates []byte,
+	defaultLanguage string,
+) *Mailer {
+	smtpClient := client.New(
+		smtpConfig.SMTPUsername,
+		smtpConfig.SMTPPassword,
+		smtpConfig.SMTPHost,
+		smtpConfig.SMTPPort,
+		smtpConfig.AllowInsecure,
+	)
+
+	var overrides map[string]map[templates.Key]string
+	if len(overrideTemplates) > 0 {
+		err := json.Unmarshal(overrideTemplates, &overrides)
+		if err != nil {
+			panic(fmt.Errorf("failed to unmarshal custom email templates: %w", err))
+		}
+	}
+
+	templs, err := templates.New(overrides)
+	if err != nil {
+		panic(fmt.Errorf("failed to initialize email templates: %w", err))
+	}
+	fmt.Println("Email templates loaded successfully", templs)
+
 	return &Mailer{
-		mailService: mailService,
-		config:      config,
+		SMTPClient: smtpClient,
+		Templates:  templs,
+
+		BaseData:         baseData,
+		InvariantData:    invariantData,
+		FallbackLanguage: defaultLanguage,
 	}
 }
 
 func (m *Mailer) Send(recipient prim.Email, email shared.Email, lns ...string) error {
-	links := []assets.Link{}
-	params := assets.Params{
-		ReceiverEmail: recipient.String(),
-		AppName:       m.config.AppName,
-		SupportEmail:  m.config.SupportEmail,
-	}
+	vData := VariantData{}
 
 	switch email := email.(type) {
 	case identity.EmailWelcome:
-		params.UserName = email.UserName
-		links = append(links, assets.Link{
-			Key: assets.VerificationLink,
-			URL: fmt.Sprintf(
+		vData.UserName = email.UserName
+		vData.ValidationURL = m.adjustURL(
+			fmt.Sprintf(
 				"%v?kind=email&id=%v&code=%v",
-				m.config.DataVerificationPath,
+				m.DataVerificationPath,
 				email.UserID,
 				email.Code,
-			),
-		})
+			))
 	case identity.EmailResetPassword:
-		params.UserName = email.UserName
-		links = append(links, assets.Link{
-			Key: assets.ResetLink,
-			URL: fmt.Sprintf(
+		vData.UserName = email.UserName
+		vData.ResetURL = m.adjustURL(
+			fmt.Sprintf(
 				"%v?id=%v&code=%v",
-				m.config.PasswordResetPath,
+				m.PasswordResetPath,
 				email.UserID,
 				email.Code,
-			),
-		})
+			))
 	case identity.EmailUpdateEmailNotice:
-		params.UserName = email.UserName
-		params.NewEmail = email.NewEmail
-		links = append(links, assets.Link{
-			Key: assets.CancelLink,
-			URL: fmt.Sprintf(
+		vData.UserName = email.UserName
+		vData.NewEmail = email.NewEmail
+		vData.CancelURL = m.adjustURL(
+			fmt.Sprintf(
 				"%v?kind=email&action=cancel&id=%v",
-				m.config.DataVerificationPath,
+				m.DataVerificationPath,
 				email.UserID,
-			),
-		})
+			))
 	case identity.EmailConfirmEmailUpdate:
-		params.UserName = email.UserName
-		params.NewEmail = email.NewEmail
-		links = append(links, assets.Link{
-			Key: assets.VerificationLink,
-			URL: fmt.Sprintf(
+		vData.UserName = email.UserName
+		vData.NewEmail = email.NewEmail
+		vData.ConfirmationURL = m.adjustURL(
+			fmt.Sprintf(
 				"%v?kind=email&id=%v&code=%v",
-				m.config.DataVerificationPath,
+				m.DataVerificationPath,
 				email.UserID,
 				email.Code,
-			),
-		})
+			))
 	}
 
-	for i, link := range links {
-		if !strings.HasPrefix(link.URL, "/") {
-			continue
+	var registry templates.Registry
+	var exists bool
+	for _, ln := range lns {
+		registry, exists = m.Templates[ln]
+		if exists {
+			break
 		}
-
-		if strings.HasSuffix(m.config.ClientBaseURL, "path=") {
-			link.URL = url.QueryEscape(link.URL)
-		}
-
-		links[i].URL = m.config.ClientBaseURL + link.URL
 	}
 
-	t := assets.Template(assets.TemplateKey(email.TemplateKey()), lns...)
-	t.Execute(params)
+	if !exists {
+		registry = m.Templates[m.FallbackLanguage]
+	}
 
-	err := m.mailService.SendCustomEmail(recipient, t.Subject.Content, t.Descriptors(links...))
+	data := data{
+		BaseData:      m.BaseData,
+		InvariantData: m.InvariantData,
+		VariantData:   vData,
+	}
+
+	subject, body, err := registry.Execute(templates.Key(email.TemplateKey()), data)
+	if err != nil {
+		return err
+	}
+
+	err = m.SMTPClient.SendEmail(client.SendInput{
+		To:           recipient,
+		Subject:      subject,
+		Body:         body,
+		AliasName:    m.AliasName,
+		AliasAddress: m.AliasAddress,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to send %v email: %w", email.TemplateKey(), err)
 	}
@@ -112,17 +150,22 @@ func (m *Mailer) Send(recipient prim.Email, email shared.Email, lns ...string) e
 	return nil
 }
 
-func (m *Mailer) AddCustomTemplates(raw []byte) error {
-	if len(raw) == 0 {
-		return nil
+func (m *Mailer) UpdateData(
+	baseData BaseData,
+	invariantData InvariantData,
+) {
+	m.BaseData = baseData
+	m.InvariantData = invariantData
+}
+
+func (m *Mailer) adjustURL(link string) string {
+	if !strings.HasPrefix(link, "/") {
+		return link
 	}
 
-	var templates assets.TemplateMap
-	err := json.Unmarshal(raw, &templates)
-	if err != nil {
-		return fmt.Errorf("failed to marshal custom email templates: %w", err)
+	if strings.HasSuffix(m.ClientBaseURL, "path=") {
+		link = url.QueryEscape(link)
 	}
 
-	assets.MergeTemplates(templates)
-	return nil
+	return m.ClientBaseURL + link
 }

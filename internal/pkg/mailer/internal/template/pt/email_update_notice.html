@@ -1,0 +1,13 @@
+{{define "subject"}}Aviso de atualização de email{{end}}
+
+{{define "body"}}
+  <h2>Olá, {{ .UserName }}</h2>
+
+  <p>Recebemos um pedido para atualizar o email da sua conta para {{ .NewEmail }}. Caso você não reconheça este pedido, clique no botão abaixo para cancelá-lo:</p>
+
+  <button class="btn btn-primary">
+    <a href="{{ .CancelURL }}" target="_blank">Cancelar Alteração</a>
+  </button>
+
+  <p>Se o email já tiver sido atualizado sem o seu consentimento, por favor entre em contato com o nosso suporte através do email: {{ .SupportEmail }}.</p>
+{{end}}

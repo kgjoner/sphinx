@@ -1,0 +1,13 @@
+{{define "subject"}}Welcome to {{ .AppName }}{{end}}
+
+{{define "body"}}
+  <h2>Greetings, {{ .UserName }}</h2>
+
+  <p>
+    It's great to see you here. We hope you enjoy our services. Click the button below to validate your email.
+  </p>
+
+  <button class="btn btn-primary">
+    <a href="{{ .ValidationURL }}" target="_blank">Confirm Email</a>
+  </button>
+{{end}}

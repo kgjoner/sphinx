@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"time"
 
 	"github.com/kgjoner/cornucopia/v3/httpclient"
 	"github.com/kgjoner/cornucopia/v3/httpserver"
-	"github.com/kgjoner/cornucopia/v3/prim"
-	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/internal/assets/style"
 	"github.com/kgjoner/sphinx/internal/config"
 	"github.com/kgjoner/sphinx/internal/domains/auth"
+	"github.com/kgjoner/sphinx/internal/pkg/mailer"
 )
 
 func (s Server) runJobs(ctx context.Context) {
 	if config.Env.APP_STYLE_URL != "" {
 		go runPeriodicTask(ctx, 24*60*60, func() {
-			err := updateHermesStyle(s.mailSvc)
+			err := updateMailStyle(s.mailer)
 			if err != nil {
 				fmt.Printf("Failed to update Hermes style: %v\n", err)
 			}
@@ -51,7 +51,7 @@ func (s Server) runJobs(ctx context.Context) {
 }
 
 // Retrieves app style accordingly to configuration and applies it to Hermes service.
-func updateHermesStyle(hms *hermes.Service) error {
+func updateMailStyle(m *mailer.Mailer) error {
 	logoURL := config.Env.APP_LOGO_URL
 	if logoURL == "" {
 		logoURL = config.Env.SCHEME + "://" + config.Env.HOST + config.BASE_PATH + "/assets/logo.svg"
@@ -59,9 +59,13 @@ func updateHermesStyle(hms *hermes.Service) error {
 
 	if config.Env.APP_STYLE_URL == "" {
 		// DEFAULT STYLE
-		hms.UpdateDefaultOptions(hermes.Options{
-			PrimaryColor:      style.Root.Colors.PrimaryPure,
-			PrimaryHoverColor: style.Root.Colors.PrimaryDark,
+		m.UpdateData(mailer.BaseData{
+			PrimaryColor:           style.Root.Colors.PrimaryPure,
+			PrimaryHoverColor:      style.Root.Colors.PrimaryDark,
+			ContentBackgroundColor: style.Root.Colors.Neutral50,
+			BodyBackgroundColor:    style.Root.Colors.BackgroundLight,
+			LinkColor:              style.Root.Colors.PrimaryPure,
+			DividerColor:           style.Root.Colors.Neutral200,
 			Header: struct {
 				Logo      string       "json:\"logo\""
 				Title     string       "json:\"title\""
@@ -70,20 +74,21 @@ func updateHermesStyle(hms *hermes.Service) error {
 			}{
 				Logo:  logoURL,
 				Title: config.Env.APP_NAME,
-				Style: template.CSS(fmt.Sprintf("background-color: %v;", style.Root.Colors.BackgroundLight)),
 			},
 			Footer: struct {
 				Text  string       "json:\"text\""
 				Style template.CSS "json:\"style\""
 			}{
+				Text:  fmt.Sprintf("© %v %v", time.Now().Year(), config.Env.APP_NAME),
 				Style: template.CSS(fmt.Sprintf("background-color: %v; color: #fff", style.Root.Colors.BackgroundDark)),
 			},
-			Alias: struct {
-				Address prim.Email "json:\"address\""
-				Name    string     "json:\"name\""
-			}{
-				Name: config.Env.APP_NAME,
-			},
+		}, mailer.InvariantData{
+			AppName:              config.Env.APP_NAME,
+			SupportEmail:         config.Env.SUPPORT_EMAIL,
+			ClientBaseURL:        config.Env.CLIENT.BASE_URL,
+			DataVerificationPath: config.Env.CLIENT.DATA_VERIFICATION,
+			PasswordResetPath:    config.Env.CLIENT.PASSWORD_RESET,
+			AliasName:            config.Env.APP_NAME,
 		})
 		return nil
 	}
@@ -95,13 +100,13 @@ func updateHermesStyle(hms *hermes.Service) error {
 	}
 	appStyle := resp.Data
 
-	hms.UpdateDefaultOptions(hermes.Options{
-		PrimaryColor:             appStyle.Colors.PrimaryPure,
-		PrimaryHoverColor:        appStyle.Colors.PrimaryLight,
-		PrimaryLinkColor:         appStyle.Colors.PrimaryPure,
-		PrimaryBackgroundColor:   appStyle.Colors.Neutral50,
-		SecondaryBackgroundColor: appStyle.Colors.BackgroundLight,
-		DividerColor:             appStyle.Colors.Neutral200,
+	m.UpdateData(mailer.BaseData{
+		PrimaryColor:           appStyle.Colors.PrimaryPure,
+		PrimaryHoverColor:      appStyle.Colors.PrimaryLight,
+		LinkColor:              appStyle.Colors.PrimaryPure,
+		ContentBackgroundColor: appStyle.Colors.Neutral50,
+		BodyBackgroundColor:    appStyle.Colors.BackgroundLight,
+		DividerColor:           appStyle.Colors.Neutral200,
 		Header: struct {
 			Logo      string       "json:\"logo\""
 			Title     string       "json:\"title\""
@@ -117,14 +122,16 @@ func updateHermesStyle(hms *hermes.Service) error {
 			Text  string       "json:\"text\""
 			Style template.CSS "json:\"style\""
 		}{
+			Text:  fmt.Sprintf("© %v %v", time.Now().Year(), config.Env.APP_NAME),
 			Style: appStyle.Mail.Footer,
 		},
-		Alias: struct {
-			Address prim.Email "json:\"address\""
-			Name    string     "json:\"name\""
-		}{
-			Name: config.Env.APP_NAME,
-		},
+	}, mailer.InvariantData{
+		AppName:              config.Env.APP_NAME,
+		SupportEmail:         config.Env.SUPPORT_EMAIL,
+		ClientBaseURL:        config.Env.CLIENT.BASE_URL,
+		DataVerificationPath: config.Env.CLIENT.DATA_VERIFICATION,
+		PasswordResetPath:    config.Env.CLIENT.PASSWORD_RESET,
+		AliasName:            config.Env.APP_NAME,
 	})
 
 	return nil

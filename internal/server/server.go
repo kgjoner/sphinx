@@ -16,7 +16,6 @@ import (
 	"github.com/kgjoner/cornucopia/v3/cache"
 	"github.com/kgjoner/cornucopia/v3/cache/redisdb"
 	"github.com/kgjoner/cornucopia/v3/httpserver"
-	"github.com/kgjoner/hermes/pkg/hermes"
 	"github.com/kgjoner/sphinx/docs"
 	"github.com/kgjoner/sphinx/internal/assets/img"
 	"github.com/kgjoner/sphinx/internal/assets/style"
@@ -45,7 +44,7 @@ import (
 type Server struct {
 	pgPool     shared.RepoPool
 	cachePool  cache.Pool
-	mailSvc    *hermes.Service
+	mailer     *mailer.Mailer
 	authIntGtw *authint.Gateway
 	Handler    http.Handler
 }
@@ -61,12 +60,9 @@ func New() *Server {
 		log.Fatalln(err)
 	}
 
-	mailSvc := hermes.New(config.Env.HERMES.BASE_URL, config.Env.HERMES.API_KEY)
-
 	return &Server{
 		pgPool:    db,
 		cachePool: rdb,
-		mailSvc:   mailSvc,
 	}
 }
 
@@ -163,12 +159,32 @@ func (s *Server) Setup() *Server {
 	}
 
 	// Mailer
-	mailer := mailer.New(s.mailSvc, mailer.Config{
-		AppName:       config.Env.APP_NAME,
-		SupportEmail:  config.Env.SUPPORT_EMAIL,
-		ClientBaseURL: config.Env.CLIENT.BASE_URL,
-	})
-	updateHermesStyle(s.mailSvc)
+	s.mailer = mailer.New(mailer.SMTPConfig{
+		SMTPUsername:  config.Env.SMTP.USERNAME,
+		SMTPPassword:  config.Env.SMTP.PASSWORD,
+		SMTPHost:      config.Env.SMTP.HOST,
+		SMTPPort:      config.Env.SMTP.PORT,
+		AllowInsecure: config.Env.APP_ENV == "development",
+	}, mailer.BaseData{
+		PrimaryColor:           style.Root.Colors.PrimaryPure,
+		PrimaryHoverColor:      style.Root.Colors.PrimaryLight,
+		ContentBackgroundColor: style.Root.Colors.Neutral50,
+		BodyBackgroundColor:    style.Root.Colors.Neutral100,
+		LinkColor:              style.Root.Colors.PrimaryPure,
+		DividerColor:           style.Root.Colors.Neutral300,
+	},
+		mailer.InvariantData{
+			AppName:              config.Env.APP_NAME,
+			SupportEmail:         config.Env.SUPPORT_EMAIL,
+			ClientBaseURL:        config.Env.CLIENT.BASE_URL,
+			DataVerificationPath: config.Env.CLIENT.DATA_VERIFICATION,
+			PasswordResetPath:    config.Env.CLIENT.PASSWORD_RESET,
+		},
+		config.Env.EMAIL_TEMPLATES,
+		config.Env.FALLBACK_LANGUAGE,
+	)
+
+	updateMailStyle(s.mailer)
 
 	// Routing
 	baseR := chi.NewRouter()
@@ -196,7 +212,7 @@ func (s *Server) Setup() *Server {
 			AuthFactory:      authFactory,
 			IdentityProvider: identPvd,
 			PwHasher:         bcrypt,
-			Mailer:           mailer,
+			Mailer:           s.mailer,
 			Middleware:       spxMid,
 		})
 
@@ -219,7 +235,7 @@ func (s *Server) Setup() *Server {
 			Challenger:       challenger,
 			Encryptor:        encrypter,
 			KeyProvisioner:   keyProvisioner,
-			Mailer:           mailer,
+			Mailer:           s.mailer,
 			Middleware:       spxMid,
 		})
 	})
