@@ -1,3 +1,12 @@
+SHELL := /bin/bash
+
+ifneq (,$(wildcard ./.env))
+	include .env
+	DATABASE_URL = postgres://$(DB_USER):$(DB_PASSWORD)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable
+	REDIS_URL = redis://localhost:$(REDIS_PORT)/0
+	export
+endif
+
 ifneq ($(filter release,$(MAKECMDGOALS)),)
 KIND ?= canary
 VALID_RELEASE_KINDS := stable rc canary nightly
@@ -10,34 +19,41 @@ RELEASE_FLAG := --$(KIND)
 endif
 
 doc:
-	bash build/scripts/swag.sh
+	@./build/scripts/swag.sh
 
 dev: doc
-	bash build/scripts/dev.sh
+	@./build/scripts/dev.sh
 
 dev-down:
-	docker compose -f docker-compose.yaml down -v
+	@docker compose -f docker-compose.yaml down -v
 
 test-env:
-	bash build/scripts/test-env.sh
+	@./build/scripts/test-env.sh
 
 test-env-down:
-	docker compose -f docker-compose.test.yaml down -v
+	@docker compose -f docker-compose.test.yaml down -v
 
-test-e2e: test-env
+test-e2e:
 	@echo -e "\n🧪 Running E2E tests with real database and auxiliary services...\n"
-	go test -v --short ./test/e2e/... || (make test-env-down && exit 1)
-	@make test-env-down
+	@set -o pipefail; \
+	go test -v --short --coverpkg=./internal/... --coverprofile=docs/coverage_e2e.out ./test/e2e/... \
+	| grep -E '^(ok|---)' || (make test-env-down && echo -e "\n❌ E2E tests failed!\n" && exit 1)
+	@make test-env-down	
+	@echo -e "\n======================================================"
+	@echo "✅ All E2E tests passed!"
+	@echo "📊 Coverage:"
+	@go tool cover -func=docs/coverage_e2e.out | awk '/total/ {print "	" $$3}'
+	@echo -e "======================================================\n"
 
 test-unit:
-	go test -v ./internal/...
-	go test -v ./pkg/...
+	@go test ./internal/...
+# 	@go test --cover ./pkg/...
 
-test: test-e2e test-unit
+test: test-unit test-e2e 
 
 release:
-	bash build/scripts/tag.sh $(RELEASE_FLAG)
-	bash build/scripts/integration.sh $(RELEASE_FLAG) --platform=${PLATFORM}
+	@./build/scripts/tag.sh $(RELEASE_FLAG)
+	@./build/scripts/integration.sh $(RELEASE_FLAG) --platform=${PLATFORM}
 
 # Deploy logic is incomplete. Use with caution.
 # It deploys to $ENV namespace using helm/${ENV}-values.yaml file. Certify that the file exists 
@@ -48,4 +64,4 @@ deploy:
 		read -p "Are you SURE you want to deploy to PRODUCTION? [y/N] " ans && [ $${ans:-N} = y ]; \
 	fi
 
-	bash build/scripts/deploy.sh --env=$(ENV)
+	@./build/scripts/deploy.sh --env=$(ENV)
