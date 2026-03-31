@@ -57,7 +57,6 @@ func New(
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize email templates: %w", err))
 	}
-	fmt.Println("Email templates loaded successfully", templs)
 
 	return &Mailer{
 		SMTPClient: smtpClient,
