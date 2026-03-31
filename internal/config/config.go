@@ -9,13 +9,18 @@ import (
 )
 
 var Env struct {
-	APP_ENV      string `envconfig:"default=production"`
-	SCHEME       string `envconfig:"default=http"`
-	HOST         string `envconfig:"default=localhost:8080"`
-	APP_VERSION  string `envconfig:"default=v1.0.0"`
-	DATABASE_URL string `envconfig:"default=postgres://postgres:postgres@localhost:5432/sphinx?sslmode=disable"`
-	REDIS_URL    string `envconfig:"default=redis://localhost:6379/0"`
-	ROOT_APP_ID  string `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
+	// If "development" is set, CORS will allow all origins and SMTP connection will be insecure (TLS disabled).
+	// Use only for local development.
+	APP_ENV         string   `envconfig:"default=production"`
+	SCHEME          string   `envconfig:"default=http"`
+	HOST            string   `envconfig:"default=localhost:8080"`
+	APP_VERSION     string   `envconfig:"default=v1.0.0"`
+	DATABASE_URL    string   `envconfig:"default=postgres://postgres:postgres@localhost:5432/sphinx?sslmode=disable"`
+	REDIS_URL       string   `envconfig:"default=redis://localhost:6379/0"`
+	ROOT_APP_ID     string   `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
+	// Comma-separated list of allowed origins for CORS. If not set, it will default to the CLIENT.BASE_URL. 
+	// In development environment, it will default to allowing all origins.
+	ALLOWED_ORIGINS []string `envconfig:"optional"`
 
 	//Set 0 for disabling concurrent sessions control
 	MAX_CONCURRENT_SESSIONS    int `envconfig:"default=0"`

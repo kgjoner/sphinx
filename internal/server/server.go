@@ -187,11 +187,18 @@ func (s *Server) Setup() *Server {
 	updateMailStyle(s.mailer)
 
 	// Routing
+	allowedOrigins := []string{config.Env.CLIENT.BASE_URL}
+	if len(config.Env.ALLOWED_ORIGINS) > 0 {
+		allowedOrigins = config.Env.ALLOWED_ORIGINS
+	} else if config.Env.APP_ENV == "development" {
+		allowedOrigins = []string{"*"}
+	}
+
 	baseR := chi.NewRouter()
 	baseR.Use(realIP())
 	baseR.Use(middleware.Timeout(60 * time.Second))
 	baseR.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   allowedOrigins,
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Accept-Language", "User-Agent", "X-Entry"},
 		AllowCredentials: false,
