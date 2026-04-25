@@ -29,7 +29,10 @@ secret:
   rootAppID: 80cadd74-5ccd-41c4-9938-3c8961be04db
   jwtSecret: mysecret
   jwtEncryptionKey: mysecret
-  hermesAPIKey: mysecret
+  smtpHost:
+  smtpPort:
+  smtpUsername:
+  smtpPassword:
   swaggerAuth:
     admin: topsecret
   # Use the following with caution, only with trusted providers, as this may open security vulnerabilities.
@@ -54,7 +57,6 @@ configMap:
   jwtAccessLifetimeInSec: "900"
   jwtRefreshLifetimeInSec: "15552000"
   jwtKeyRotationIntervalHours: "8760"
-  hermesBaseURL: hermes/v1
   clientBaseURL: sphinx.com.br
   clientDataVerification: /verification
   clientPasswordReset: /password/reset
