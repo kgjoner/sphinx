@@ -14,8 +14,6 @@ else
   echo ".env not found — continuing with default environment variables"
 fi
 
-echo "Starting integration script for image: $IMAGE_NAME"
-
 if [ -n "$DOCKER_REGISTRY" ]; then
   echo -e "🐳 Using Docker registry: $DOCKER_REGISTRY\n"
   if [[ "$DOCKER_REGISTRY" != */ ]]; then
