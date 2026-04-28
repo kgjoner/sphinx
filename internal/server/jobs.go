@@ -54,7 +54,7 @@ func (s Server) runJobs(ctx context.Context) {
 func updateMailStyle(m *mailer.Mailer) error {
 	logoURL := config.Env.APP_LOGO_URL
 	if logoURL == "" {
-		logoURL = config.Env.SCHEME + "://" + config.Env.HOST + config.BASE_PATH + "/assets/logo.svg"
+		logoURL = config.Env.SCHEME + "://" + config.Env.HOST + config.Env.BASE_PATH + "/assets/logo.svg"
 	}
 
 	if config.Env.APP_STYLE_URL == "" {

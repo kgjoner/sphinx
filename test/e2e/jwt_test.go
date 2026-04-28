@@ -127,7 +127,7 @@ func TestJWKSEndpoint(t *testing.T) {
 
 	t.Run("should expose JWKS endpoint", func(t *testing.T) {
 		// JWKS is at base path, not under /api
-		req, err := http.NewRequest("GET", ts.server.URL()+config.BASE_PATH+"/.well-known/jwks.json", nil)
+		req, err := http.NewRequest("GET", ts.server.URL()+config.Env.BASE_PATH+"/.well-known/jwks.json", nil)
 		require.NoError(t, err)
 
 		resp, err := ts.client.Do(req)
@@ -156,7 +156,7 @@ func TestJWKSEndpoint(t *testing.T) {
 	})
 
 	t.Run("JWKS should contain active keys only", func(t *testing.T) {
-		req, err := http.NewRequest("GET", ts.server.URL()+config.BASE_PATH+"/.well-known/jwks.json", nil)
+		req, err := http.NewRequest("GET", ts.server.URL()+config.Env.BASE_PATH+"/.well-known/jwks.json", nil)
 		require.NoError(t, err)
 
 		resp, err := ts.client.Do(req)
@@ -176,7 +176,7 @@ func TestJWKSEndpoint(t *testing.T) {
 	})
 
 	t.Run("should cache JWKS with proper headers", func(t *testing.T) {
-		req, err := http.NewRequest("GET", ts.server.URL()+config.BASE_PATH+"/.well-known/jwks.json", nil)
+		req, err := http.NewRequest("GET", ts.server.URL()+config.Env.BASE_PATH+"/.well-known/jwks.json", nil)
 		require.NoError(t, err)
 
 		resp, err := ts.client.Do(req)
@@ -439,7 +439,7 @@ func TestKeyRotationScenarios(t *testing.T) {
 
 	t.Run("tokens remain valid after new key is added to JWKS", func(t *testing.T) {
 		// Get initial JWKS
-		req1, err := http.NewRequest("GET", ts.server.URL()+config.BASE_PATH+"/.well-known/jwks.json", nil)
+		req1, err := http.NewRequest("GET", ts.server.URL()+config.Env.BASE_PATH+"/.well-known/jwks.json", nil)
 		require.NoError(t, err)
 
 		jwksResp1, err := ts.client.Do(req1)

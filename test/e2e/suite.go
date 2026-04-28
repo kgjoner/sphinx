@@ -57,7 +57,7 @@ func (ts *TestSuite) Request(method, endpoint string, body interface{}, headers 
 		json.NewEncoder(&reqBody).Encode(body)
 	}
 
-	req, err := http.NewRequest(method, ts.server.URL()+config.BASE_PATH+"/api"+endpoint, &reqBody)
+	req, err := http.NewRequest(method, ts.server.URL()+config.Env.BASE_PATH+"/api"+endpoint, &reqBody)
 	if err != nil {
 		return nil, err
 	}

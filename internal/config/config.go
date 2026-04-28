@@ -15,6 +15,9 @@ var Env struct {
 	SCHEME       string `envconfig:"default=http"`
 	HOST         string `envconfig:"default=localhost:8080"`
 	APP_VERSION  string `envconfig:"default=v1.0.0"`
+	// BASE_PATH is the base path for all API endpoints, it will be automatically suffixed with the major 
+	// version from APP_VERSION.
+	BASE_PATH    string `envconfig:"optional"`
 	DATABASE_URL string
 	REDIS_URL    string
 	ROOT_APP_ID  string `envconfig:"default=80cadd74-5ccd-41c4-9938-3c8961be04db"`
@@ -78,8 +81,6 @@ var Env struct {
 	EXTERNAL_AUTH_PROVIDERS []byte `envconfig:"-" json:",omitempty"`
 }
 
-var BASE_PATH string
-
 func Must() {
 	if err := envconfig.Init(&Env); err != nil {
 		panic(err)
@@ -110,5 +111,5 @@ func Must() {
 		panic("APP_VERSION env must be in form of semantic versioning")
 	}
 
-	BASE_PATH = "/" + semver[0]
+	Env.BASE_PATH += "/" + semver[0]
 }

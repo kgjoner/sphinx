@@ -1,7 +1,7 @@
 # Default values for sphinx-api.
 api:
   image:
-    repository: docker.kgjoner.com.br/sphinx
+    repository: sphinx
     tag: "" # If empty, uses Chart.AppVersion
     pullPolicy: Always
   replicaCount: 1

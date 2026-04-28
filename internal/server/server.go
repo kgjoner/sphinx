@@ -206,7 +206,7 @@ func (s *Server) Setup() *Server {
 	}))
 
 	r := chi.NewRouter()
-	baseR.Mount(config.BASE_PATH, r)
+	baseR.Mount(config.Env.BASE_PATH, r)
 
 	// Api versioning
 	r.Route("/api", func(r chi.Router) {
@@ -248,7 +248,7 @@ func (s *Server) Setup() *Server {
 	})
 
 	r.Get("/.well-known/jwks.json", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, config.BASE_PATH+"/api/.well-known/jwks.json", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, config.Env.BASE_PATH+"/api/.well-known/jwks.json", http.StatusTemporaryRedirect)
 	})
 
 	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
@@ -276,19 +276,19 @@ func (s *Server) Setup() *Server {
 	docs.SwaggerInfo.Version = config.Env.APP_VERSION
 	docs.SwaggerInfo.Host = config.Env.HOST
 	docs.SwaggerInfo.Schemes = []string{config.Env.SCHEME}
-	docs.SwaggerInfo.BasePath = config.BASE_PATH + "/api"
+	docs.SwaggerInfo.BasePath = config.Env.BASE_PATH + "/api"
 
 	r.Route("/docs", func(r chi.Router) {
 		if len(config.Env.SWAGGER_AUTH) > 0 {
 			r.Use(middleware.BasicAuth("Swagger", config.Env.SWAGGER_AUTH))
 		}
 		r.Get("/*", httpSwagger.Handler(
-			httpSwagger.URL(config.BASE_PATH+"/docs/doc.json"),
+			httpSwagger.URL(config.Env.BASE_PATH+"/docs/doc.json"),
 		))
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, config.BASE_PATH+"/docs/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, config.Env.BASE_PATH+"/docs/", http.StatusTemporaryRedirect)
 	})
 
 	s.Handler = baseR
