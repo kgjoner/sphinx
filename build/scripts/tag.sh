@@ -1,11 +1,21 @@
 #!/bin/bash
 
-# Exit on error
-set -e
+set -euo pipefail
+
+log() {
+  echo "[tag] $*"
+}
+
+on_error() {
+  local exit_code=$?
+  log "ERROR at line $1 (exit code: $exit_code)"
+}
+
+trap 'on_error $LINENO' ERR
 
 # Function to print usage
 usage() {
-  echo "Usage: $0 [--dry-run] [--rc] [--canary] [--nightly]"
+  echo "Usage: $0 [--dry-run] [--stable] [--rc] [--canary] [--nightly]"
   exit 1
 }
 
@@ -33,14 +43,16 @@ for arg in "$@"; do
       usage
       ;;
   esac
-  shift
 done
+
+log "Release type: $RELEASE_TYPE (dry-run: $DRY_RUN)"
 
 # 1. Find last stable tag
 LAST_STABLE=$(git tag | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
 if [ -z "$LAST_STABLE" ]; then
   LAST_STABLE="v0.0.0"
 fi
+log "Last stable tag: $LAST_STABLE"
 
 # 2. Extract MAJOR, MINOR, PATCH from last stable
 IFS='.' read -r MAJOR MINOR PATCH <<< "${LAST_STABLE#v}"
@@ -73,7 +85,7 @@ NEW_BASE_TAG="v$MAJOR.$MINOR.$PATCH"
 
 # 5. For pre-releases, find last pre-release for computed base version
 if [[ "$RELEASE_TYPE" =~ ^(rc|canary|nightly)$ ]]; then
-  LAST_PRERELEASE=$(git tag | grep -E "^$NEW_BASE_TAG-$RELEASE_TYPE\\." | sort -V | tail -1)
+  LAST_PRERELEASE=$(git tag | grep -E "^$NEW_BASE_TAG-$RELEASE_TYPE\\." | sort -V | tail -1 || true)
   if [ -n "$LAST_PRERELEASE" ]; then
     # Continue pre-release series
     if [ "$RELEASE_TYPE" == "rc" ]; then
@@ -106,7 +118,7 @@ fi
 
 # 6. Find previous tag for commit aggregation
 if [[ "$RELEASE_TYPE" =~ ^(rc|canary|nightly)$ ]]; then
-  LAST_PRERELEASE=$(git tag | grep -E "^$NEW_BASE_TAG-$RELEASE_TYPE\\." | sort -V | tail -1)
+  LAST_PRERELEASE=$(git tag | grep -E "^$NEW_BASE_TAG-$RELEASE_TYPE\\." | sort -V | tail -1 || true)
   if [ -n "$LAST_PRERELEASE" ]; then
     PREV_TAG="$LAST_PRERELEASE"
   else
@@ -123,26 +135,33 @@ else
 fi
 
 if [ -z "$COMMITS_AGG" ]; then
-  echo "No commits to aggregate. Skipping tag creation."
+  log "No commits to aggregate. Skipping tag creation."
+  exit 0
+fi
+
+
+COMMITS=$(echo "$COMMITS_AGG" | grep -E "^- (feat|fix|.+(\(.+\))?!:)" || true)
+if [ -z "$COMMITS" ]; then
+  log "No feat/fix commits found. Skipping tag creation."
   exit 0
 fi
 
 ANNOTATED_MESSAGE="$INCREMENT $NEW_TAG
 
-$(echo "$COMMITS_AGG" | grep -E "^- (feat|fix|.+(\(.+\))?!:)" )"
+$COMMITS"
 
-echo "Tag: $NEW_TAG"
-echo "Message: \"$ANNOTATED_MESSAGE\""
+log "Tag: $NEW_TAG"
+log "Message: \"$ANNOTATED_MESSAGE\""
 
 if $DRY_RUN; then
-  echo "[Dry Run] Tag creation and push skipped."
+  log "Dry run: tag creation and push skipped."
   exit 0
 fi
 
 git tag -a "$NEW_TAG" -m "$ANNOTATED_MESSAGE"
 
 # Push the new tag to the remote
-echo "Pushing tag $NEW_TAG"
+log "Pushing tag $NEW_TAG"
 git push origin "$NEW_TAG"
 
 # # For github action
