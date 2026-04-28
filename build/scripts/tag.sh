@@ -70,11 +70,11 @@ if echo "$COMMITS_SINCE_STABLE" | grep -qE "^- .+(\(.+\))?!:"; then
   MINOR=0
   PATCH=0
   INCREMENT="Major"
-elif echo "$COMMITS_SINCE_STABLE" | grep -qE 'feat'; then
+elif echo "$COMMITS_SINCE_STABLE" | grep -qE 'feat(\(.+\))?:'; then
   MINOR=$((MINOR+1))
   PATCH=0
   INCREMENT="Minor"
-elif echo "$COMMITS_SINCE_STABLE" | grep -qE 'fix'; then
+elif echo "$COMMITS_SINCE_STABLE" | grep -qE 'fix(\(.+\))?:'; then
   PATCH=$((PATCH+1))
   INCREMENT="Patch"
 else
