@@ -14,7 +14,7 @@ data:
   {{- if not (empty .Values.ingress.className) }}
   {{- with (first .Values.ingress.rules) }}
   HOST: {{ .host }}
-  {{- if and (not (empty .path)) (not (equal .path "/")) }}BASE_PATH: {{ .path }}{{- end }}
+  {{- if and (not (empty .path)) (not (eq .path "/")) }}BASE_PATH: {{ .path }}{{- end }}
   {{- end }}
   {{- else }}
   HOST: {{ template "sphinx.serviceName" . }}
