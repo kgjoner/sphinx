@@ -33,7 +33,7 @@ test-env:
 test-env-down:
 	@docker compose -f docker-compose.test.yaml down -v
 
-test-e2e:
+test-e2e: test-env
 	@echo -e "\n🧪 Running E2E tests with real database and auxiliary services...\n"
 	@set -o pipefail; \
 	go test -v --short --coverpkg=./internal/... --coverprofile=docs/coverage_e2e.out ./test/e2e/... \
@@ -52,8 +52,9 @@ test-unit:
 test: test-unit test-e2e 
 
 release:
+	@echo "Starting release process with KIND=$(RELEASE_FLAG) and PLATFORM=$(PLATFORM)..."
 	@./build/scripts/tag.sh $(RELEASE_FLAG)
-	@./build/scripts/integration.sh $(RELEASE_FLAG) --platform=${PLATFORM}
+	@./build/scripts/integration.sh $(RELEASE_FLAG) --platform=$(PLATFORM)
 
 # Deploy logic is incomplete. Use with caution.
 # It deploys to $ENV namespace using helm/${ENV}-values.yaml file. Certify that the file exists 
