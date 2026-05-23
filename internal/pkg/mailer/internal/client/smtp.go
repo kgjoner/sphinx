@@ -24,7 +24,7 @@ func New(username, password, host, port string, allowInsecure bool) *Client {
 	smtpPassword := password
 	smtpHost := host
 	smtpAddress := smtpHost + ":" + port
-	senderAddress := smtpUsername + "@" + smtpHost
+	senderAddress := smtpUsername
 
 	var auth smtp.Auth
 	if smtpUsername != "" && smtpPassword != "" {
