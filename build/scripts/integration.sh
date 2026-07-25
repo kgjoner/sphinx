@@ -111,7 +111,7 @@ ssh-add ~/.ssh/id_ed25519
 
 echo "Building and pushing Docker image with version: $LATEST_TAG and kind: $RELEASE_KIND"
 
-PLATFORM_ARG=""
+PLATFORM_ARG="--platform linux/amd64,linux/arm64"
 if [ -n "$PLATFORM" ]; then
   PLATFORM_ARG="--platform $PLATFORM"
 fi
@@ -121,7 +121,7 @@ if [ -n "$DOCKER_REGISTRY" ]; then
   PUSH_ARG="--push"
 fi
 
-docker build -f Dockerfile . \
+docker buildx build -f Dockerfile . \
   --build-arg APP_VERSION="$LATEST_TAG" \
   $DOCKER_TAGS \
   --ssh default=$SSH_AUTH_SOCK \

@@ -52,7 +52,7 @@ test-unit:
 test: test-unit test-e2e 
 
 release:
-	@echo "Starting release process with KIND=$(RELEASE_FLAG) and PLATFORM=$(PLATFORM)..."
+	@echo "Starting release process with KIND=$(RELEASE_FLAG) and PLATFORM=$(PLATFORM || 'linux/amd64,linux/arm64')..."
 	@./build/scripts/tag.sh $(RELEASE_FLAG)
 	@./build/scripts/integration.sh $(RELEASE_FLAG) --platform=$(PLATFORM)
 
