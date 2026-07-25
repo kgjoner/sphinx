@@ -11,11 +11,11 @@ import (
 var Env struct {
 	// If "development" is set, SMTP connection will be insecure (TLS disabled) and CORS will allow all origins
 	// (it may be overridden by ALLOWED_ORIGINS env variable). Use only for local development.
-	APP_ENV      string `envconfig:"default=production"`
-	SCHEME       string `envconfig:"default=http"`
-	HOST         string `envconfig:"default=localhost:8080"`
-	APP_VERSION  string `envconfig:"default=v1.0.0"`
-	// BASE_PATH is the base path for all API endpoints, it will be automatically suffixed with the major 
+	APP_ENV     string `envconfig:"default=production"`
+	SCHEME      string `envconfig:"default=http"`
+	HOST        string `envconfig:"default=localhost:8080"`
+	APP_VERSION string `envconfig:"default=v1.0.0"`
+	// BASE_PATH is the base path for all API endpoints, it will be automatically suffixed with the major
 	// version from APP_VERSION.
 	BASE_PATH    string `envconfig:"optional"`
 	DATABASE_URL string
@@ -52,7 +52,8 @@ var Env struct {
 
 	SMTP struct {
 		USERNAME string
-		PASSWORD string
+		// Optional only in development mode.
+		PASSWORD string `envconfig:"optional"`
 		HOST     string
 		PORT     string
 	}
@@ -84,6 +85,10 @@ var Env struct {
 func Must() {
 	if err := envconfig.Init(&Env); err != nil {
 		panic(err)
+	}
+
+	if Env.APP_ENV != "development" && Env.SMTP.PASSWORD == "" {
+		panic("SMTP_PASSWORD must be set in non-development environment")
 	}
 
 	// Handle SWAGGER_AUTH JSON parsing manually
