@@ -48,7 +48,7 @@ done
 log "Release type: $RELEASE_TYPE (dry-run: $DRY_RUN)"
 
 # 1. Find last stable tag
-LAST_STABLE=$(git tag | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+LAST_STABLE=$(git tag | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
 if [ -z "$LAST_STABLE" ]; then
   LAST_STABLE="v0.0.0"
 fi
@@ -128,7 +128,7 @@ else
   PREV_TAG="$LAST_STABLE"
 fi
 
-if [ -z "$PREV_TAG" ]; then
+if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" == "v0.0.0" ]; then
   COMMITS_AGG=$(git log --oneline --pretty=format:"- %s (%h)" --no-merges HEAD)
 else
   COMMITS_AGG=$(git log --oneline --pretty=format:"- %s (%h)" --no-merges "$PREV_TAG"..HEAD)
