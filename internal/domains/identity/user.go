@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kgjoner/cornucopia/v3/apperr"
 	"github.com/kgjoner/cornucopia/v3/prim"
 	"github.com/kgjoner/cornucopia/v3/validator"
 	"github.com/kgjoner/cornucopia/v3/pwdgen"
@@ -121,20 +120,20 @@ func (u *User) VerifyUser(kind VerificationKind, code string) error {
 	switch kind {
 	case VerificationEmail:
 		if u.HasEmailBeenVerified && u.PendingEmail.IsZero() {
-			return apperr.NewRequestError("Email has already been verified.")
+			return ErrEmailAlreadyVerified
 		}
 	case VerificationPhone:
 		if u.HasPhoneBeenVerified && u.PendingPhone.IsZero() {
-			return apperr.NewRequestError("Phone has already been verified.")
+			return ErrPhoneAlreadyVerified
 		}
 	}
 
 	if u.VerificationCodes[kind] == "" {
-		return apperr.NewConflictError("User does not have a verification code.")
+		return ErrNoVerificationCode
 	}
 
 	if code != u.VerificationCodes[kind] {
-		return apperr.NewRequestError("Invalid code.")
+		return ErrInvalidVerificationCode
 	}
 
 	switch kind {
@@ -286,14 +285,14 @@ func (u *User) CancelPendingField(field string) error {
 	case "phone":
 		return u.cancelPendingPhone()
 	default:
-		return apperr.NewRequestError("Invalid field name.")
+		return ErrInvalidField
 	}
 }
 
 // Allows users to cancel their pending email update
 func (u *User) cancelPendingEmail() error {
 	if u.PendingEmail.IsZero() {
-		return apperr.NewRequestError("No pending email update to cancel.")
+		return ErrNoPendingField
 	}
 
 	var emptyEmail prim.Email
@@ -307,7 +306,7 @@ func (u *User) cancelPendingEmail() error {
 // Allows users to cancel their pending phone update
 func (u *User) cancelPendingPhone() error {
 	if u.PendingPhone.IsZero() {
-		return apperr.NewRequestError("No pending phone update to cancel.")
+		return ErrNoPendingField
 	}
 
 	var emptyPhone prim.PhoneNumber

@@ -35,4 +35,25 @@ var (
 		"external credential not found",
 		"identity.external_credential_not_found",
 	)
+
+	ErrEmailAlreadyVerified = apperr.NewRequestError(
+		"email has already been verified",
+		"identity.email_already_verified",
+	)
+	ErrPhoneAlreadyVerified = apperr.NewRequestError(
+		"phone number has already been verified",
+		"identity.phone_already_verified",
+	)
+	ErrNoPendingField = apperr.NewRequestError(
+		"user does not have a pending field to cancel",
+		"identity.no_pending_field",
+	)
+	ErrNoVerificationCode = apperr.NewConflictError(
+		"user does not have a verification code.",
+		"identity.no_verification_code",
+	)
+	ErrInvalidVerificationCode = apperr.NewRequestError(
+		"verification code is invalid.",
+		"identity.invalid_verification_code",
+	)
 )
