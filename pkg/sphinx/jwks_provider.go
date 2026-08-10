@@ -84,6 +84,10 @@ func (p *JWKSProvider) Validate(signedToken string) (*auth.Subject, auth.Intent,
 		return publicKey, nil
 	})
 
+	if err != nil {
+		fmt.Println("Error parsing token: ", err)
+	}
+
 	if token == nil || !token.Valid {
 		return nil, "", auth.ErrInvalidAccess
 	}
